@@ -1,0 +1,158 @@
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Welcome Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-2">
+            Welcome back, <%= user.name %>! 🌿
+        </h1>
+        <p class="text-xl text-gray-600">
+            How are you feeling today? Let's continue your wellness journey.
+        </p>
+    </div>
+
+    <!-- Daily Quote -->
+    <div class="mb-8">
+        <div class="gradient-bg text-white rounded-2xl p-6 md:p-8">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-quote-left text-2xl mr-3 opacity-75"></i>
+                <h2 class="text-xl font-semibold">Daily Inspiration</h2>
+            </div>
+            <p class="text-lg md:text-xl italic leading-relaxed">
+                "<%= quote %>"
+            </p>
+        </div>
+    </div>
+
+    <!-- Quick Actions Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Mood Check-in -->
+        <div class="card group hover:transform hover:scale-105 transition-transform duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-primary text-white p-3 rounded-lg mr-4 group-hover:bg-accent transition-colors duration-300">
+                    <i class="fas fa-heart text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-textMain">Mood Check-in</h3>
+                    <p class="text-sm text-gray-600">How are you feeling?</p>
+                </div>
+            </div>
+            <p class="text-gray-600 mb-4">Track your daily emotions and identify patterns over time.</p>
+            <a href="/mood-tracker" class="btn-primary w-full text-center">
+                Log Today's Mood
+            </a>
+        </div>
+
+        <!-- Music Therapy -->
+        <div class="card group hover:transform hover:scale-105 transition-transform duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-secondary text-white p-3 rounded-lg mr-4 group-hover:bg-accent transition-colors duration-300">
+                    <i class="fas fa-music text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-textMain">Music Therapy</h3>
+                    <p class="text-sm text-gray-600">Recommended for you</p>
+                </div>
+            </div>
+            <p class="text-gray-600 mb-4">Listen to curated playlists designed to improve your mood.</p>
+            <a href="/music" class="btn-secondary w-full text-center">
+                Explore Playlists
+            </a>
+        </div>
+
+        <!-- Panic Relief -->
+        <div class="card group hover:transform hover:scale-105 transition-transform duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-accent text-white p-3 rounded-lg mr-4 group-hover:bg-primary transition-colors duration-300">
+                    <i class="fas fa-lungs text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-textMain">Panic Relief</h3>
+                    <p class="text-sm text-gray-600">Breathing exercises</p>
+                </div>
+            </div>
+            <p class="text-gray-600 mb-4">Quick access to calming breathing exercises and grounding techniques.</p>
+            <a href="/panic" class="bg-accent hover:bg-accent/90 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 w-full text-center block">
+                Start Breathing Exercise
+            </a>
+        </div>
+    </div>
+
+    <!-- Additional Tools -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Art Therapy -->
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="bg-purple-500 text-white p-3 rounded-lg mr-4">
+                        <i class="fas fa-palette text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-textMain">Art Therapy</h3>
+                        <p class="text-gray-600">Express yourself creatively</p>
+                    </div>
+                </div>
+                <i class="fas fa-arrow-right text-gray-400 group-hover:text-primary transition-colors duration-300"></i>
+            </div>
+            <p class="text-gray-600 mb-6">Use our digital canvas to express your emotions through art. Art therapy can help reduce stress and improve self-awareness.</p>
+            <a href="/drawing" class="btn-primary">
+                Start Drawing
+            </a>
+        </div>
+
+        <!-- Therapist Support -->
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="bg-green-500 text-white p-3 rounded-lg mr-4">
+                        <i class="fas fa-user-md text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-textMain">Professional Support</h3>
+                        <p class="text-gray-600">Connect with therapists</p>
+                    </div>
+                </div>
+                <i class="fas fa-arrow-right text-gray-400 group-hover:text-primary transition-colors duration-300"></i>
+            </div>
+            <p class="text-gray-600 mb-6">Browse our directory of licensed mental health professionals and schedule consultations when you need additional support.</p>
+            <a href="/therapists" class="btn-secondary">
+                Find Therapists
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card">
+        <h2 class="text-2xl font-bold text-textMain mb-6">Recent Activity</h2>
+        <div class="space-y-4">
+            <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                <div class="bg-primary text-white p-2 rounded-full mr-4">
+                    <i class="fas fa-heart text-sm"></i>
+                </div>
+                <div class="flex-grow">
+                    <p class="font-medium text-textMain">Mood logged: Calm</p>
+                    <p class="text-sm text-gray-600">Yesterday at 9:30 AM</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                <div class="bg-secondary text-white p-2 rounded-full mr-4">
+                    <i class="fas fa-music text-sm"></i>
+                </div>
+                <div class="flex-grow">
+                    <p class="font-medium text-textMain">Listened to "Peaceful Mornings" playlist</p>
+                    <p class="text-sm text-gray-600">Yesterday at 7:15 AM</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                <div class="bg-purple-500 text-white p-2 rounded-full mr-4">
+                    <i class="fas fa-palette text-sm"></i>
+                </div>
+                <div class="flex-grow">
+                    <p class="font-medium text-textMain">Completed art therapy session</p>
+                    <p class="text-sm text-gray-600">2 days ago at 3:20 PM</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

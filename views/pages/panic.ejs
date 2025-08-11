@@ -1,0 +1,277 @@
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+                🫁 Panic Relief Center
+            </h1>
+            <p class="text-xl text-gray-600 mb-6">
+                Take control of anxiety and panic with guided breathing exercises and grounding techniques
+            </p>
+            <div class="bg-blue-100 border border-blue-200 rounded-lg p-4 inline-block">
+                <p class="text-blue-800 text-sm">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Remember: You are safe. This feeling will pass. Focus on your breathing.
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Relief Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <div class="text-center">
+                <h2 class="text-2xl font-bold text-textMain mb-6">Immediate Relief</h2>
+                
+                <!-- Breathing Animation -->
+                <div class="relative mb-8">
+                    <div id="breathing-circle" class="breathing-circle w-48 h-48 mx-auto bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg">
+                        <div class="text-white text-center">
+                            <div id="breath-instruction" class="text-2xl font-bold mb-2">Breathe</div>
+                            <div id="breath-count" class="text-lg opacity-75">Press Start</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Breathing Controls -->
+                <div class="space-y-4 mb-8">
+                    <div class="flex justify-center space-x-4">
+                        <button id="start-breathing" class="btn-primary text-lg py-3 px-8">
+                            <i class="fas fa-play mr-2"></i>Start Breathing Exercise
+                        </button>
+                        <button id="stop-breathing" class="bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 hidden">
+                            <i class="fas fa-stop mr-2"></i>Stop
+                        </button>
+                    </div>
+                    
+                    <div class="text-gray-600">
+                        <p id="breathing-instructions" class="text-lg">Click start to begin the 4-7-8 breathing technique</p>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div id="breathing-progress" class="hidden">
+                    <div class="bg-gray-200 rounded-full h-2 mb-4">
+                        <div id="progress-bar" class="bg-primary h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Cycle <span id="current-cycle">1</span> of <span id="total-cycles">4</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grounding Techniques -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="card">
+                <h3 class="text-xl font-bold text-textMain mb-4 flex items-center">
+                    <i class="fas fa-hand-paper text-primary mr-3"></i>
+                    5-4-3-2-1 Grounding
+                </h3>
+                <p class="text-gray-600 mb-4">Use your senses to ground yourself in the present moment:</p>
+                <ul class="space-y-3 text-gray-700">
+                    <li class="flex items-start">
+                        <span class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">5</span>
+                        <span>Name 5 things you can <strong>see</strong></span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-secondary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">4</span>
+                        <span>Name 4 things you can <strong>touch</strong></span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-accent text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">3</span>
+                        <span>Name 3 things you can <strong>hear</strong></span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</span>
+                        <span>Name 2 things you can <strong>smell</strong></span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-pink-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</span>
+                        <span>Name 1 thing you can <strong>taste</strong></span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3 class="text-xl font-bold text-textMain mb-4 flex items-center">
+                    <i class="fas fa-brain text-secondary mr-3"></i>
+                    Positive Affirmations
+                </h3>
+                <p class="text-gray-600 mb-4">Repeat these phrases to yourself:</p>
+                <div class="space-y-3">
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <p class="text-blue-800 italic">"This feeling is temporary and will pass"</p>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-lg">
+                        <p class="text-green-800 italic">"I am safe and in control"</p>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-lg">
+                        <p class="text-purple-800 italic">"I have overcome challenges before"</p>
+                    </div>
+                    <div class="bg-orange-50 p-3 rounded-lg">
+                        <p class="text-orange-800 italic">"I am stronger than I think"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Resources -->
+        <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-red-400 text-xl mr-4 mt-1"></i>
+                <div>
+                    <h3 class="text-lg font-semibold text-red-800 mb-2">Need Immediate Help?</h3>
+                    <p class="text-red-700 mb-4">
+                        If you're experiencing a mental health crisis or having thoughts of self-harm, please reach out for immediate support:
+                    </p>
+                    <div class="space-y-2">
+                        <p class="text-red-800 font-semibold">
+                            <i class="fas fa-phone mr-2"></i>
+                            Crisis Text Line: Text HOME to 741741
+                        </p>
+                        <p class="text-red-800 font-semibold">
+                            <i class="fas fa-phone mr-2"></i>
+                            National Suicide Prevention Lifeline: 988
+                        </p>
+                        <p class="text-red-800 font-semibold">
+                            <i class="fas fa-phone mr-2"></i>
+                            Emergency Services: 911
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Techniques -->
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-textMain text-center mb-8">More Calming Techniques</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card text-center">
+                    <div class="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-water text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-textMain mb-2">Cold Water</h3>
+                    <p class="text-gray-600">Splash cold water on your face or hold ice cubes to activate your dive response</p>
+                </div>
+
+                <div class="card text-center">
+                    <div class="bg-green-100 text-green-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-walking text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-textMain mb-2">Gentle Movement</h3>
+                    <p class="text-gray-600">Take a slow walk, stretch, or do light exercises to release tension</p>
+                </div>
+
+                <div class="card text-center">
+                    <div class="bg-purple-100 text-purple-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-music text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-textMain mb-2">Calming Sounds</h3>
+                    <p class="text-gray-600">Listen to soft music, nature sounds, or white noise to relax your mind</p>
+                    <a href="/music" class="btn-primary text-sm mt-3 inline-block">
+                        Go to Music Therapy
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Breathing exercise functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const startBtn = document.getElementById('start-breathing');
+    const stopBtn = document.getElementById('stop-breathing');
+    const breathingCircle = document.getElementById('breathing-circle');
+    const breathInstruction = document.getElementById('breath-instruction');
+    const breathCount = document.getElementById('breath-count');
+    const instructions = document.getElementById('breathing-instructions');
+    const progress = document.getElementById('breathing-progress');
+    const progressBar = document.getElementById('progress-bar');
+    const currentCycle = document.getElementById('current-cycle');
+    const totalCycles = document.getElementById('total-cycles');
+
+    let breathingInterval;
+    let isBreathing = false;
+    let currentPhase = 0; // 0: inhale, 1: hold, 2: exhale
+    let cycleCount = 0;
+    let phaseTime = 0;
+
+    const phases = [
+        { name: 'Inhale', duration: 4, instruction: 'Breathe In', color: 'from-primary to-accent' },
+        { name: 'Hold', duration: 7, instruction: 'Hold', color: 'from-accent to-secondary' },
+        { name: 'Exhale', duration: 8, instruction: 'Breathe Out', color: 'from-secondary to-primary' }
+    ];
+
+    function startBreathingExercise() {
+        isBreathing = true;
+        cycleCount = 0;
+        currentPhase = 0;
+        phaseTime = 0;
+        
+        startBtn.classList.add('hidden');
+        stopBtn.classList.remove('hidden');
+        progress.classList.remove('hidden');
+        instructions.textContent = 'Follow the circle and instructions to control your breathing';
+        
+        breathingInterval = setInterval(updateBreathing, 1000);
+        updateBreathing();
+    }
+
+    function stopBreathingExercise() {
+        isBreathing = false;
+        clearInterval(breathingInterval);
+        
+        startBtn.classList.remove('hidden');
+        stopBtn.classList.add('hidden');
+        progress.classList.add('hidden');
+        
+        breathInstruction.textContent = 'Breathe';
+        breathCount.textContent = 'Press Start';
+        instructions.textContent = 'Click start to begin the 4-7-8 breathing technique';
+        breathingCircle.className = 'breathing-circle w-48 h-48 mx-auto bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg';
+        
+        progressBar.style.width = '0%';
+        currentCycle.textContent = '1';
+    }
+
+    function updateBreathing() {
+        if (!isBreathing) return;
+
+        const phase = phases[currentPhase];
+        const progress = ((phaseTime + 1) / phase.duration) * 100;
+        
+        breathInstruction.textContent = phase.instruction;
+        breathCount.textContent = `${phaseTime + 1} / ${phase.duration}`;
+        
+        // Update circle appearance
+        breathingCircle.className = `breathing-circle w-48 h-48 mx-auto bg-gradient-to-br ${phase.color} rounded-full flex items-center justify-center shadow-lg`;
+        
+        phaseTime++;
+        
+        if (phaseTime >= phase.duration) {
+            phaseTime = 0;
+            currentPhase++;
+            
+            if (currentPhase >= phases.length) {
+                currentPhase = 0;
+                cycleCount++;
+                currentCycle.textContent = cycleCount + 1;
+                
+                // Update overall progress
+                const overallProgress = (cycleCount / 4) * 100;
+                progressBar.style.width = overallProgress + '%';
+                
+                if (cycleCount >= 4) {
+                    stopBreathingExercise();
+                    instructions.innerHTML = '<span class="text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>Great job! You completed the breathing exercise. How do you feel?</span>';
+                    return;
+                }
+            }
+        }
+    }
+
+    startBtn.addEventListener('click', startBreathingExercise);
+    stopBtn.addEventListener('click', stopBreathingExercise);
+});
+</script>

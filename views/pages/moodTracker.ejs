@@ -1,0 +1,306 @@
+views/pages/moodTracker.ejs
+
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+            📊 Mood Tracker
+        </h1>
+        <p class="text-xl text-gray-600">
+            Monitor your emotional patterns and identify triggers to better understand your mental health journey
+        </p>
+    </div>
+
+    <!-- Today's Mood Entry -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <!-- Mood Entry Form -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-textMain mb-6 flex items-center">
+                <i class="fas fa-heart text-primary mr-3"></i>
+                How are you feeling today?
+            </h2>
+            
+            <form action="/mood-tracker" method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-textMain mb-3">
+                        Select your current mood:
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <label class="mood-option cursor-pointer">
+                            <input type="radio" name="mood" value="Happy" class="sr-only" required>
+                            <div class="mood-card p-4 rounded-lg border-2 border-gray-200 text-center transition-all duration-200 hover:border-yellow-400">
+                                <div class="text-3xl mb-2">😊</div>
+                                <div class="font-medium text-sm">Happy</div>
+                            </div>
+                        </label>
+                        <label class="mood-option cursor-pointer">
+                            <input type="radio" name="mood" value="Calm" class="sr-only">
+                            <div class="mood-card p-4 rounded-lg border-2 border-gray-200 text-center transition-all duration-200 hover:border-green-400">
+                                <div class="text-3xl mb-2">😌</div>
+                                <div class="font-medium text-sm">Calm</div>
+                            </div>
+                        </label>
+                        <label class="mood-option cursor-pointer">
+                            <input type="radio" name="mood" value="Anxious" class="sr-only">
+                            <div class="mood-card p-4 rounded-lg border-2 border-gray-200 text-center transition-all duration-200 hover:border-orange-400">
+                                <div class="text-3xl mb-2">😰</div>
+                                <div class="font-medium text-sm">Anxious</div>
+                            </div>
+                        </label>
+                        <label class="mood-option cursor-pointer">
+                            <input type="radio" name="mood" value="Sad" class="sr-only">
+                            <div class="mood-card p-4 rounded-lg border-2 border-gray-200 text-center transition-all duration-200 hover:border-blue-400">
+                                <div class="text-3xl mb-2">😢</div>
+                                <div class="font-medium text-sm">Sad</div>
+                            </div>
+                        </label>
+                        <label class="mood-option cursor-pointer">
+                            <input type="radio" name="mood" value="Angry" class="sr-only">
+                            <div class="mood-card p-4 rounded-lg border-2 border-gray-200 text-center transition-all duration-200 hover:border-red-400">
+                                <div class="text-3xl mb-2">😠</div>
+                                <div class="font-medium text-sm">Angry</div>
+                            </div>
+                        </label>
+                        <label class="mood-option cursor-pointer">
+                            <input type="radio" name="mood" value="Neutral" class="sr-only">
+                            <div class="mood-card p-4 rounded-lg border-2 border-gray-200 text-center transition-all duration-200 hover:border-gray-400">
+                                <div class="text-3xl mb-2">😐</div>
+                                <div class="font-medium text-sm">Neutral</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="energy" class="block text-sm font-medium text-textMain mb-2">
+                        Energy Level (1-10):
+                    </label>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-500">Low</span>
+                        <input 
+                            type="range" 
+                            id="energy" 
+                            name="energy" 
+                            min="1" 
+                            max="10" 
+                            value="5" 
+                            class="flex-grow h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        >
+                        <span class="text-sm text-gray-500">High</span>
+                        <span id="energy-value" class="text-sm font-medium text-primary bg-primary/10 px-2 py-1 rounded">5</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="note" class="block text-sm font-medium text-textMain mb-2">
+                        Notes (optional):
+                    </label>
+                    <textarea 
+                        id="note" 
+                        name="note" 
+                        rows="4" 
+                        class="form-input resize-none"
+                        placeholder="What influenced your mood today? Any triggers or positive events?"
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="w-full btn-primary py-3 text-lg">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Today's Mood
+                </button>
+            </form>
+        </div>
+
+        <!-- Mood Insights -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-textMain mb-6 flex items-center">
+                <i class="fas fa-chart-line text-secondary mr-3"></i>
+                Your Mood Insights
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- This Week Summary -->
+                <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-textMain mb-3">This Week's Summary</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary">6.8</div>
+                            <div class="text-sm text-gray-600">Average Mood</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-secondary">7.2</div>
+                            <div class="text-sm text-gray-600">Average Energy</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mood Distribution -->
+                <div>
+                    <h3 class="font-semibold text-textMain mb-3">Most Common Moods</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-2 bg-green-50 rounded">
+                            <div class="flex items-center">
+                                <span class="mr-2">😌</span>
+                                <span class="text-sm">Calm</span>
+                            </div>
+                            <span class="text-sm font-medium">40%</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-yellow-50 rounded">
+                            <div class="flex items-center">
+                                <span class="mr-2">😊</span>
+                                <span class="text-sm">Happy</span>
+                            </div>
+                            <span class="text-sm font-medium">30%</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-orange-50 rounded">
+                            <div class="flex items-center">
+                                <span class="mr-2">😰</span>
+                                <span class="text-sm">Anxious</span>
+                            </div>
+                            <span class="text-sm font-medium">20%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Tips -->
+                <div>
+                    <h3 class="font-semibold text-textMain mb-3">Personalized Tips</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-start p-3 bg-blue-50 rounded-lg">
+                            <i class="fas fa-lightbulb text-blue-500 mr-3 mt-1"></i>
+                            <p class="text-sm text-blue-700">Try morning meditation when you wake up feeling anxious</p>
+                        </div>
+                        <div class="flex items-start p-3 bg-green-50 rounded-lg">
+                            <i class="fas fa-music text-green-500 mr-3 mt-1"></i>
+                            <p class="text-sm text-green-700">Listening to music seems to boost your mood consistently</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mood History -->
+    <div class="card">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-textMain flex items-center">
+                <i class="fas fa-history text-accent mr-3"></i>
+                Mood History
+            </h2>
+            <div class="flex space-x-2">
+                <button class="text-sm px-3 py-1 bg-primary text-white rounded-lg">Week</button>
+                <button class="text-sm px-3 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Month</button>
+                <button class="text-sm px-3 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Year</button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 font-semibold text-textMain">Date</th>
+                        <th class="text-left py-3 px-4 font-semibold text-textMain">Mood</th>
+                        <th class="text-left py-3 px-4 font-semibold text-textMain">Energy</th>
+                        <th class="text-left py-3 px-4 font-semibold text-textMain">Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% moodEntries.forEach(entry => { %>
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
+                        <td class="py-3 px-4 text-sm text-gray-600">
+                            <%= new Date(entry.date).toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            }) %>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
+                                <% if (entry.mood === 'Happy') { %>bg-yellow-200 text-yellow-800<% } %>
+                                <% if (entry.mood === 'Calm') { %>bg-green-200 text-green-800<% } %>
+                                <% if (entry.mood === 'Anxious') { %>bg-orange-200 text-orange-800<% } %>
+                                <% if (entry.mood === 'Sad') { %>bg-blue-200 text-blue-800<% } %>
+                                <% if (entry.mood === 'Angry') { %>bg-red-200 text-red-800<% } %>
+                                <% if (entry.mood === 'Neutral') { %>bg-gray-200 text-gray-800<% } %>
+                            ">
+                                <%= entry.mood %>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="w-12 h-2 bg-gray-200 rounded-full mr-2">
+                                    <div class="h-full bg-primary rounded-full energy-bar" data-energy="<%= entry.energy %>"></div>
+                                </div>
+                                <span class="text-sm text-gray-600"><%= entry.energy %>/10</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 max-w-xs truncate">
+                            <%= entry.note || 'No notes' %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <% if (moodEntries.length === 0) { %>
+        <div class="text-center py-12">
+            <i class="fas fa-chart-line text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-lg">No mood entries yet</p>
+            <p class="text-gray-400">Start tracking your mood to see your patterns over time</p>
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<style>
+.mood-option input:checked + .mood-card {
+    @apply border-primary bg-primary/5 transform scale-105;
+}
+
+/* Custom range slider styling */
+#energy::-webkit-slider-thumb {
+    @apply appearance-none w-5 h-5 bg-primary rounded-full cursor-pointer;
+}
+
+#energy::-moz-range-thumb {
+    @apply w-5 h-5 bg-primary rounded-full cursor-pointer border-0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Energy level slider
+    const energySlider = document.getElementById('energy');
+    const energyValue = document.getElementById('energy-value');
+    
+    energySlider.addEventListener('input', function() {
+        energyValue.textContent = this.value;
+    });
+
+    // Mood selection
+    const moodOptions = document.querySelectorAll('.mood-option input');
+    moodOptions.forEach(option => {
+        option.addEventListener('change', function() {
+            // Remove selected class from all options
+            document.querySelectorAll('.mood-card').forEach(card => {
+                card.classList.remove('border-primary', 'bg-primary/5', 'transform', 'scale-105');
+            });
+            
+            // Add selected class to chosen option
+            if (this.checked) {
+                const card = this.nextElementSibling;
+                card.classList.add('border-primary', 'bg-primary/5', 'transform', 'scale-105');
+            }
+        });
+    });
+
+    // Style energy bars
+    const energyBars = document.querySelectorAll('.energy-bar');
+    energyBars.forEach(bar => {
+        const energy = bar.dataset.energy;
+        const percentage = (energy / 10) * 100;
+        bar.style.width = percentage + '%';
+    });
+});
+</script>

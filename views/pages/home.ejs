@@ -1,0 +1,126 @@
+<!-- Hero Section -->
+<section class="gradient-bg text-white py-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h1 class="text-4xl md:text-6xl font-bold mb-6">Welcome to CalmTunes</h1>
+    <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
+      Your mental health companion offering music therapy, art expression, mood
+      tracking, and professional support
+    </p>
+    <div class="space-x-4">
+      <% if (user) { %>
+      <a
+        href="/dashboard"
+        class="inline-block bg-white text-primary hover:bg-gray-100 font-bold py-3 px-8 rounded-lg text-lg transition-colors duration-200"
+      >
+        Go to Dashboard
+      </a>
+      <% } else { %>
+      <a
+        href="/signup"
+        class="inline-block bg-white text-primary hover:bg-gray-100 font-bold py-3 px-8 rounded-lg text-lg transition-colors duration-200"
+      >
+        Get Started
+      </a>
+      <a
+        href="/about"
+        class="inline-block border-2 border-white text-white hover:bg-white hover:text-primary font-bold py-3 px-8 rounded-lg text-lg transition-all duration-200"
+      >
+        Learn More
+      </a>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-16 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+        Tools for Your Mental Wellness
+      </h2>
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        Discover a comprehensive suite of evidence-based tools designed to
+        support your mental health journey
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div
+        class="card text-center group hover:transform hover:scale-105 transition-transform duration-300"
+      >
+        <div
+          class="text-4xl mb-4 text-primary group-hover:text-accent transition-colors duration-300"
+        >
+          <i class="fas fa-music"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-textMain mb-2">Music Therapy</h3>
+        <p class="text-gray-600">
+          Curated playlists designed to calm anxiety, boost mood, and promote
+          relaxation
+        </p>
+      </div>
+
+      <div
+        class="card text-center group hover:transform hover:scale-105 transition-transform duration-300"
+      >
+        <div
+          class="text-4xl mb-4 text-secondary group-hover:text-accent transition-colors duration-300"
+        >
+          <i class="fas fa-palette"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-textMain mb-2">Art Therapy</h3>
+        <p class="text-gray-600">
+          Express yourself through digital drawing and creative expression
+        </p>
+      </div>
+
+      <div
+        class="card text-center group hover:transform hover:scale-105 transition-transform duration-300"
+      >
+        <div
+          class="text-4xl mb-4 text-accent group-hover:text-primary transition-colors duration-300"
+        >
+          <i class="fas fa-heart"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-textMain mb-2">Mood Tracking</h3>
+        <p class="text-gray-600">
+          Monitor your emotional patterns and identify triggers
+        </p>
+      </div>
+
+      <div
+        class="card text-center group hover:transform hover:scale-105 transition-transform duration-300"
+      >
+        <div
+          class="text-4xl mb-4 text-primary group-hover:text-secondary transition-colors duration-300"
+        >
+          <i class="fas fa-user-md"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-textMain mb-2">
+          Professional Support
+        </h3>
+        <p class="text-gray-600">
+          Connect with licensed therapists and mental health professionals
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-16 bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+      Start Your Wellness Journey Today
+    </h2>
+    <p class="text-xl text-gray-600 mb-8">
+      Join thousands of users who have found peace and balance with CalmTunes
+    </p>
+    <% if (!user) { %>
+    <a href="/signup" class="btn-primary text-lg py-3 px-8">
+      Create Free Account
+    </a>
+    <% } %>
+  </div>
+</section>

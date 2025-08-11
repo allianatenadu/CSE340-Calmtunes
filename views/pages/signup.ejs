@@ -1,0 +1,118 @@
+
+
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-bold text-textMain">Join CalmTunes</h2>
+            <p class="mt-2 text-gray-600">Create your free account and start your wellness journey</p>
+        </div>
+        
+        <div class="card">
+            <form action="/signup" method="POST" class="space-y-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-textMain mb-2">
+                        Full Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name" 
+                        required 
+                        class="form-input"
+                        placeholder="Your full name"
+                    >
+                </div>
+                
+                <div>
+                    <label for="email" class="block text-sm font-medium text-textMain mb-2">
+                        Email Address
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        required 
+                        class="form-input"
+                        placeholder="your@email.com"
+                    >
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-textMain mb-2">
+                        Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        class="form-input"
+                        placeholder="Create a strong password"
+                    >
+                </div>
+                
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-medium text-textMain mb-2">
+                        Confirm Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        required 
+                        class="form-input"
+                        placeholder="Confirm your password"
+                    >
+                </div>
+                
+                <div class="flex items-center">
+                    <input 
+                        id="terms" 
+                        name="terms" 
+                        type="checkbox" 
+                        required
+                        class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    >
+                    <label for="terms" class="ml-2 block text-sm text-gray-600">
+                        I agree to the <a href="#" class="text-primary hover:text-primary/80">Terms of Service</a> 
+                        and <a href="#" class="text-primary hover:text-primary/80">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="w-full btn-primary py-3 text-lg">
+                    Create Account
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-gray-600">
+                    Already have an account? 
+                    <a href="/login" class="font-medium text-primary hover:text-primary/80">Sign in here</a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Benefits -->
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h3 class="font-semibold text-textMain mb-3">What you'll get:</h3>
+            <ul class="space-y-2 text-sm text-gray-600">
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Access to therapeutic music playlists
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Digital art therapy tools
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Mood tracking and insights
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Connection to licensed therapists
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
