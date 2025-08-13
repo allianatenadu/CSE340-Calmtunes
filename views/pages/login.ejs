@@ -1,73 +1,83 @@
-
-
-<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div class="text-center">
-            <h2 class="text-3xl font-bold text-textMain">Welcome Back</h2>
-            <p class="mt-2 text-gray-600">Sign in to your CalmTunes account</p>
-        </div>
-        
-        <div class="card">
-            <form action="/login" method="POST" class="space-y-6">
-                <div>
-                    <label for="email" class="block text-sm font-medium text-textMain mb-2">
-                        Email Address
-                    </label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        required 
-                        class="form-input"
-                        placeholder="your@email.com"
-                    >
-                </div>
-                
-                <div>
-                    <label for="password" class="block text-sm font-medium text-textMain mb-2">
-                        Password
-                    </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        required 
-                        class="form-input"
-                        placeholder="Your password"
-                    >
-                </div>
-                
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <input 
-                            id="remember" 
-                            name="remember" 
-                            type="checkbox" 
-                            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                        >
-                        <label for="remember" class="ml-2 block text-sm text-gray-600">
-                            Remember me
-                        </label>
-                    </div>
-                    
-                    <div class="text-sm">
-                        <a href="#" class="font-medium text-primary hover:text-primary/80">
-                            Forgot password?
-                        </a>
-                    </div>
-                </div>
-                
-                <button type="submit" class="w-full btn-primary py-3 text-lg">
-                    Sign In
-                </button>
-            </form>
-            
-            <div class="mt-6 text-center">
-                <p class="text-gray-600">
-                    Don't have an account? 
-                    <a href="/signup" class="font-medium text-primary hover:text-primary/80">Sign up here</a>
-                </p>
-            </div>
-        </div>
+<div
+  class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+>
+  <div class="max-w-md w-full space-y-8">
+    <div class="text-center">
+      <h2 class="text-3xl font-bold text-textMain">Welcome Back</h2>
+      <p class="mt-2 text-gray-600">Sign in to your CalmTunes account</p>
     </div>
+
+    <div class="card">
+      <form action="/login" method="POST" class="space-y-6">
+        <div>
+          <label
+            for="email"
+            class="block text-sm font-medium text-textMain mb-2"
+          >
+            Email Address
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            class="form-input"
+            placeholder="your@email.com"
+          />
+        </div>
+
+        <div>
+          <label
+            for="password"
+            class="block text-sm font-medium text-textMain mb-2"
+          >
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            class="form-input"
+            placeholder="Your password"
+          />
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <input
+              id="remember"
+              name="remember"
+              type="checkbox"
+              class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+            />
+            <label for="remember" class="ml-2 block text-sm text-gray-600">
+              Remember me
+            </label>
+          </div>
+
+          <div class="text-sm">
+            <a href="#" class="font-medium text-primary hover:text-primary/80">
+              Forgot password?
+            </a>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full btn-primary py-3 text-lg">
+          Sign In
+        </button>
+      </form>
+
+      <div class="mt-6 text-center">
+        <p class="text-gray-600">
+          Don't have an account?
+          <a
+            href="/signup"
+            class="font-medium text-primary hover:text-primary/80"
+            >Sign up here</a
+          >
+        </p>
+      </div>
+    </div>
+  </div>
 </div>

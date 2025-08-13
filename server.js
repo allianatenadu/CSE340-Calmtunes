@@ -7,9 +7,9 @@ const pgSession = require('connect-pg-simple')(session);
 const flash = require('connect-flash');
 const expressLayouts = require('express-ejs-layouts');
 
-const pool = require('./config/database'); // your Pool from config/database.js
-const indexRoutes = require('./routes/index'); // your index routes (create/update later)
-const authRoutes = require('./routes/auth');   // auth routes (we'll add next steps)
+const pool = require('./config/database');
+const indexRoutes = require('./routes/index');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,29 +29,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Session store using Postgres
+// ✅ Trust proxy for production (needed for secure cookies on Render)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
+// ✅ Dynamic cookie settings based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+
 app.use(session({
   store: new pgSession({
-    pool: pool,                // Connection pool
-    tableName: 'session'       // Use the 'session' table
+    pool: pool,
+    tableName: 'session'
   }),
   secret: process.env.SESSION_SECRET || 'change_this_in_production',
   resave: false,
   saveUninitialized: false,
- cookie: {
-  secure: process.env.NODE_ENV === 'production', // must be true on Render
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-  httpOnly: true,
-  maxAge: 24 * 60 * 60 * 1000
-}
-
+  cookie: {
+    secure: isProduction, // true on Render, false locally
+    sameSite: isProduction ? 'none' : 'lax',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
 }));
-
 
 // Flash messages
 app.use(flash());
 
-// Global locals (available in all views)
+// Global locals
 app.use((req, res, next) => {
   res.locals.user = req.session?.user || null;
   res.locals.success = req.flash('success') || [];
@@ -59,8 +64,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes (index + auth)
-// If your ./routes/auth or ./routes/index doesn't exist yet, create empty ones for now.
+// Routes
 app.use('/', indexRoutes);
 app.use('/', authRoutes);
 
@@ -69,7 +73,7 @@ app.use((req, res) => {
   res.status(404).render('pages/404', { title: 'Not Found' });
 });
 
-// Test database connection first
+// Test DB connection and start server
 pool.connect((err, client, release) => {
   if (err) {
     console.error("❌ Database connection error:", err.stack);
@@ -77,11 +81,9 @@ pool.connect((err, client, release) => {
     console.log("✅ Database connected successfully");
     release();
 
-    // Start the server only after DB connection
     app.listen(PORT, () => {
       console.log(`🎵 CalmTunes server running on http://localhost:${PORT}`);
       console.log(`🌿 Mental health support at your fingertips`);
     });
   }
 });
-
