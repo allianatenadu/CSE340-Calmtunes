@@ -38,11 +38,13 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'change_this_in_production',
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // true only on HTTPS
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 1 day
-  }
+ cookie: {
+  secure: process.env.NODE_ENV === 'production', // must be true on Render
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  httpOnly: true,
+  maxAge: 24 * 60 * 60 * 1000
+}
+
 }));
 
 
