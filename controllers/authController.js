@@ -33,10 +33,12 @@ const authController = {
         return res.redirect("/login");
       }
 
+      // ✅ FIXED: Include role in session data
       req.session.user = {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role || 'user' // Include role, default to 'user' if null
       };
 
       req.flash("success", `Welcome back, ${user.name}!`);
@@ -84,10 +86,12 @@ const authController = {
         password_hash: hashedPassword,
       });
 
+      // ✅ FIXED: Include role in session data for new users too
       req.session.user = {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
+        role: newUser.role || 'user' // Include role, default to 'user'
       };
 
       req.flash("success", `Welcome to CalmTunes, ${newUser.name}!`);
@@ -99,20 +103,18 @@ const authController = {
     }
   },
 
-
   // GET /logout
- getLogout: (req, res, next) => {
-  req.flash("success", "You have been logged out.");
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Logout error:", err);
-      return next(err);
-    }
-    res.clearCookie("connect.sid", { path: "/" });
-    res.redirect("/");
-  });
-}
-
+  getLogout: (req, res, next) => {
+    req.flash("success", "You have been logged out.");
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return next(err);
+      }
+      res.clearCookie("connect.sid", { path: "/" });
+      res.redirect("/");
+    });
+  }
 };
 
 module.exports = authController;

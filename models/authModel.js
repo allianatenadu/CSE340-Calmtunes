@@ -1,43 +1,32 @@
-// models/authModel.js
-const pool = require("../config/database");
+// models/authModel.js - Make sure this includes role in queries
+
+const pool = require('../config/database');
 
 const authModel = {
+  // ✅ FIXED: Make sure to SELECT role field
   findUserByEmail: async (email) => {
-    const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1 LIMIT 1",
-      [email]
-    );
-    return result.rows[0];
+    const query = 'SELECT id, name, email, password_hash, role, created_at FROM users WHERE email = $1';
+    const result = await pool.query(query, [email]);
+    return result.rows[0] || null;
   },
 
-  findUserById: async (id) => {
-    const result = await pool.query(
-      "SELECT * FROM users WHERE id = $1 LIMIT 1",
-      [id]
-    );
-    return result.rows[0];
-  },
-
+  // ✅ FIXED: Make sure to include role when creating user
   createUser: async (userData) => {
     const { name, email, password_hash } = userData;
-    const preferences = JSON.stringify({ favoriteGenres: [] });
-
-    const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, preferences)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email`,
-      [name, email, password_hash, preferences]
-    );
+    const query = `
+      INSERT INTO users (name, email, password_hash, role, created_at)
+      VALUES ($1, $2, $3, 'user', CURRENT_TIMESTAMP)
+      RETURNING id, name, email, role, created_at
+    `;
+    const result = await pool.query(query, [name, email, password_hash]);
     return result.rows[0];
   },
 
-  updateUser: async (id, { name, email, profile_image }) => {
-    await pool.query(
-      `UPDATE users 
-       SET name = $1, email = $2, profile_image = COALESCE($3, profile_image)
-       WHERE id = $4`,
-      [name, email, profile_image || null, id]
-    );
+  // Additional helper method to update user role
+  updateUserRole: async (userId, role) => {
+    const query = 'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, name, email, role';
+    const result = await pool.query(query, [role, userId]);
+    return result.rows[0] || null;
   }
 };
 

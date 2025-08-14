@@ -4,6 +4,8 @@ const homeController = require('../controllers/homeController');
 const authController = require('../controllers/authController');
 const dashboardController = require('../controllers/dashboardController');
 const accountController = require('../controllers/accountController');
+const moodTrackerController = require('../controllers/moodTrackerController');
+
 
 
 // Middleware to check if user is authenticated
@@ -33,8 +35,6 @@ router.get('/dashboard', requireAuth, dashboardController.getDashboard);
 router.get('/music', requireAuth, dashboardController.getMusic);
 router.get('/drawing', requireAuth, dashboardController.getDrawing);
 router.get('/panic', requireAuth, dashboardController.getPanic);
-router.get('/mood-tracker', requireAuth, dashboardController.getMoodTracker);
-router.post('/mood-tracker', requireAuth, dashboardController.postMoodEntry);
 router.get('/therapists', requireAuth, dashboardController.getTherapists);
 router.get('/account', requireAuth, accountController.getAccount);
 

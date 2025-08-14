@@ -10,6 +10,9 @@ const expressLayouts = require('express-ejs-layouts');
 const pool = require('./config/database');
 const indexRoutes = require('./routes/index');
 const authRoutes = require('./routes/auth');
+const moodTrackerRoutes = require('./routes/moodTracker');
+const musicRoutes = require('./routes/music');
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,6 +28,7 @@ app.set('layout extractScripts', true);
 app.set('layout extractStyles', true);
 
 // Static & parsers
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -67,7 +71,8 @@ app.use((req, res, next) => {
 // Routes
 app.use('/', indexRoutes);
 app.use('/', authRoutes);
-
+app.use('/', moodTrackerRoutes);
+app.use('/api/music', musicRoutes);
 // 404 fallback
 app.use((req, res) => {
   res.status(404).render('pages/404', { title: 'Not Found' });

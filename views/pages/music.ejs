@@ -1,5 +1,3 @@
-
-
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
@@ -11,136 +9,1002 @@
         </p>
     </div>
 
+    <!-- Admin Controls -->
+    <% if (user && user.role === 'admin') { %>
+    <div class="mb-8 bg-gradient-to-r from-blue-800 to-purple-800 text-black rounded-2xl p-6">
+        <h2 class="text-2xl font-bold mb-6">Music Management</h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Spotify Import -->
+            <div class="bg-white/10 backdrop-blur rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fab fa-spotify mr-3 text-green-400"></i>Import from Spotify
+                </h3>
+                <form id="spotifyImportForm" class="space-y-4">
+                    <div>
+                        <label for="spotifyUrl" class="block text-sm font-medium mb-2">Spotify Album URL</label>
+                        <input type="url" 
+                               id="spotifyUrl" 
+                               name="spotifyUrl"
+                               placeholder="input here"
+                               class="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-black placeholder-black/70 focus:outline-none focus:ring-2 focus:ring-white/30"
+                               required>
+                    </div>
+                    <div>
+                        <label for="spotifyPlaylistSelect" class="block text-sm font-medium mb-2">Add to Playlist (Optional)</label>
+                        <select id="spotifyPlaylistSelect" 
+                                name="playlistId"
+                                class="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-black focus:outline-none focus:ring-2 focus:ring-white/30">
+                            <option value="">Select a playlist...</option>
+                            <% if (playlists && playlists.length > 0) { %>
+                                <% playlists.forEach(playlist => { %>
+                                    <option value="<%= playlist.id %>" class="text-gray-900"><%= playlist.title %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-white text-blue-600 hover:bg-gray-100 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                        <i class="fab fa-spotify mr-2"></i>Import Album
+                    </button>
+                </form>
+            </div>
+
+            <!-- MP3 Upload -->
+            <div class="bg-white/10 backdrop-blur rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-upload mr-3 text-blue-400"></i>Upload MP3 Files
+                </h3>
+                <form id="mp3UploadForm" enctype="multipart/form-data" class="space-y-4">
+                    <div>
+                        <label for="mp3Files" class="block text-sm font-medium mb-2">Select MP3 Files</label>
+                        <input type="file" 
+                               id="mp3Files" 
+                               name="mp3Files"
+                               multiple
+                               accept=".mp3,audio/mpeg"
+                               class="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-black file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white file:text-blue-600 file:font-semibold hover:file:bg-gray-100"
+                               required>
+                        <p class="text-xs text-black mt-2">Maximum 10 files, 50MB each</p>
+                    </div>
+                    <div>
+                        <label for="uploadPlaylistSelect" class="block text-sm font-medium mb-2">Add to Playlist (Optional)</label>
+                        <select id="uploadPlaylistSelect" 
+                                name="playlistId"
+                                class="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-black focus:outline-none focus:ring-2 focus:ring-white/30">
+                            <option value="">Select a playlist...</option>
+                            <% if (playlists && playlists.length > 0) { %>
+                                <% playlists.forEach(playlist => { %>
+                                    <option value="<%= playlist.id %>" class="text-gray-900"><%= playlist.title %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-white text-blue-600 hover:bg-gray-100 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                        <i class="fas fa-upload mr-2"></i>Upload Files
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Spotify Search -->
+        <div class="mt-6 bg-white/10 backdrop-blur rounded-xl p-6">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-search mr-3 text-yellow-400"></i>Search Spotify
+            </h3>
+            <div class="flex space-x-4">
+                <input type="text" 
+                       id="spotifySearchInput"
+                       placeholder="Search for songs on Spotify..."
+                       class="flex-1 px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/30">
+                <button onclick="handleSpotifySearch()"
+                        class="bg-white text-blue-600 hover:bg-gray-100 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-search mr-2"></i>Search
+                </button>
+            </div>
+            <div id="spotifyResults" class="mt-4 space-y-3 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+    <% } else { %>
+    <!-- Debug: Show if user is not admin -->
+    <div class="mb-8 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg p-4">
+        <p><strong>Debug Info:</strong> 
+        <% if (user) { %>
+            Logged in as: <%= user.username || user.email %> | Role: <%= user.role || 'no role' %>
+        <% } else { %>
+            Not logged in
+        <% } %>
+        </p>
+        <p class="text-sm mt-1">To see admin controls, your user role must be 'admin'</p>
+    </div>
+    <% } %>
+
     <!-- Featured Playlist -->
-    <div class="gradient-bg text-white rounded-2xl p-8 mb-12">
+    <% if (featuredPlaylist) { %>
+    <div class=" text-neutral-900  rounded-2xl p-8 mb-12">
         <div class="flex flex-col md:flex-row items-center">
             <div class="md:w-2/3 mb-6 md:mb-0">
                 <h2 class="text-2xl md:text-3xl font-bold mb-4">Today's Recommendation</h2>
-                <h3 class="text-xl font-semibold mb-2">Peaceful Mornings</h3>
+                <h3 class="text-xl font-semibold mb-2"><%= featuredPlaylist.title %></h3>
                 <p class="text-lg opacity-90 mb-4">
-                    Start your day with gentle, uplifting melodies designed to promote positive energy and mental clarity.
+                    <%= featuredPlaylist.description %>
                 </p>
                 <div class="flex space-x-4">
-                    <button class="bg-white text-primary hover:bg-gray-100 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                    <button class="bg-white text-blue-600 hover:bg-gray-100 font-bold py-3 px-6 rounded-lg transition-colors duration-200"
+                            onclick="playPlaylist('<%= featuredPlaylist.id %>')">
                         <i class="fas fa-play mr-2"></i>Play Now
                     </button>
-                    <button class="border-2 border-white text-white hover:bg-white hover:text-primary font-bold py-3 px-6 rounded-lg transition-all duration-200">
+                    <button class="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold py-3 px-6 rounded-lg transition-all duration-200"
+                            onclick="toggleFavorite('<%= featuredPlaylist.id %>')">
                         <i class="fas fa-heart mr-2"></i>Add to Favorites
                     </button>
                 </div>
             </div>
             <div class="md:w-1/3">
-                <img src="https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400" 
-                     alt="Peaceful morning scene" 
+                <img src="<%= featuredPlaylist.image || 'https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400' %>" 
+                     alt="<%= featuredPlaylist.title %>" 
                      class="rounded-xl shadow-lg w-full h-48 object-cover">
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Song Library Section -->
+    <div class="mb-8">
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Filters and Search -->
+            <div class="lg:w-1/4">
+                <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Music Library</h3>
+                    
+                    <!-- Search -->
+                    <div class="mb-4">
+                        <label for="songSearch" class="block text-sm font-medium text-gray-700 mb-2">Search Songs</label>
+                        <input type="text" 
+                               id="songSearch"
+                               placeholder="Search by title, artist, album..."
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <!-- Source Filter -->
+                    <div class="mb-4">
+                        <label for="sourceFilter" class="block text-sm font-medium text-gray-700 mb-2">Source</label>
+                        <select id="sourceFilter" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Sources</option>
+                            <option value="local">Local Files</option>
+                            <option value="spotify">Spotify</option>
+                        </select>
+                    </div>
+
+                    <!-- Genre Filter -->
+                    <div class="mb-4">
+                        <label for="genreFilter" class="block text-sm font-medium text-gray-700 mb-2">Genre</label>
+                        <select id="genreFilter" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Genres</option>
+                            <% if (genres && genres.length > 0) { %>
+                                <% genres.forEach(genre => { %>
+                                    <option value="<%= genre %>"><%= genre %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- Sort Options -->
+                    <div class="mb-4">
+                        <label for="sortBy" class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                        <select id="sortBy" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="created_at_desc">Recently Added</option>
+                            <option value="title_asc">Title A-Z</option>
+                            <option value="title_desc">Title Z-A</option>
+                            <option value="artist_asc">Artist A-Z</option>
+                            <option value="artist_desc">Artist Z-A</option>
+                            <option value="popularity_desc">Most Popular</option>
+                        </select>
+                    </div>
+
+                    <button onclick="applyFilters()" class="w-full bg-blue-500 text-white hover:bg-blue-600 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                        <i class="fas fa-filter mr-2"></i>Apply Filters
+                    </button>
+
+                    <!-- Library Stats -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Library Stats</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Songs:</span>
+                                <span class="font-medium" id="totalSongs">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Local Files:</span>
+                                <span class="font-medium" id="localSongs">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Spotify:</span>
+                                <span class="font-medium" id="spotifySongs">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Song List -->
+            <div class="lg:w-3/4">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">Music Collection</h3>
+                        <div class="flex items-center space-x-2">
+                            <button id="listView" class="p-2 text-gray-500 hover:text-blue-500 transition-colors" onclick="setViewMode('list')">
+                                <i class="fas fa-list"></i>
+                            </button>
+                            <button id="gridView" class="p-2 text-blue-500" onclick="setViewMode('grid')">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Song List Container -->
+                    <div id="songList" class="space-y-4">
+                        <!-- Songs will be loaded here dynamically -->
+                        <div class="text-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                            <p class="text-gray-600">Loading songs...</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="pagination" class="mt-8 flex justify-center">
+                        <!-- Pagination will be added here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Playlist Grid -->
     <div class="mb-8">
-        <h2 class="text-2xl font-bold text-textMain mb-6">All Playlists</h2>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">
+                Your Playlists
+                <% if (playlists && playlists.length > 0) { %>
+                    <span class="text-sm font-normal text-gray-500">(<%= playlists.length %> playlists)</span>
+                <% } %>
+            </h2>
+            <% if (user && user.role === 'admin') { %>
+            <a href="/admin/playlists/create" class="bg-blue-500 text-white hover:bg-blue-600 font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>Create Playlist
+            </a>
+            <% } %>
+        </div>
+
+        <% if (playlists && playlists.length > 0) { %>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <% playlists.forEach(playlist => { %>
-            <div class="card group hover:transform hover:scale-105 transition-all duration-300 cursor-pointer">
+            <div class="bg-white rounded-lg shadow-lg hover:shadow-xl group hover:transform hover:scale-105 transition-all duration-300 cursor-pointer" 
+                 data-playlist-id="<%= playlist.id %>">
                 <div class="relative mb-4">
-                    <img src="<%= playlist.image %>" 
+                    <img src="<%= playlist.image || '/images/default-playlist.jpg' %>" 
                          alt="<%= playlist.title %>" 
-                         class="w-full h-48 object-cover rounded-lg">
-                    <div class="absolute inset-0 bg-black bg-opacity-40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <button class="bg-white text-primary hover:bg-primary hover:text-white p-4 rounded-full transition-colors duration-200">
+                         class="w-full h-48 object-cover rounded-t-lg"
+                         onerror="this.src='https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400'">
+                    <div class="absolute inset-0 bg-black bg-opacity-40 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <button class="bg-white text-blue-600 hover:bg-blue-600 hover:text-white p-4 rounded-full transition-colors duration-200"
+                                onclick="playPlaylist('<%= playlist.id %>')">
                             <i class="fas fa-play text-xl"></i>
                         </button>
                     </div>
+                    
+                    <!-- Song Count Badge -->
+                    <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                        <span id="playlistSongCount-<%= playlist.id %>">-</span> songs
+                    </div>
                 </div>
-                <h3 class="text-lg font-semibold text-textMain mb-2 group-hover:text-primary transition-colors duration-200">
-                    <%= playlist.title %>
-                </h3>
-                <p class="text-gray-600 text-sm mb-4">
-                    <%= playlist.description %>
-                </p>
-                <div class="flex justify-between items-center">
-                    <button class="btn-primary text-sm py-2 px-4">
-                        <i class="fas fa-play mr-1"></i>Play
-                    </button>
-                    <div class="flex space-x-2">
-                        <button class="text-gray-400 hover:text-primary transition-colors duration-200">
-                            <i class="fas fa-heart"></i>
+                
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-200">
+                        <%= playlist.title %>
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                        <%= playlist.description %>
+                    </p>
+                    
+                    <div class="flex justify-between items-center">
+                        <button class="bg-blue-500 text-white hover:bg-blue-600 text-sm py-2 px-4 rounded-lg transition-colors duration-200" 
+                                onclick="playPlaylist('<%= playlist.id %>')">
+                            <i class="fas fa-play mr-1"></i>Play
                         </button>
-                        <button class="text-gray-400 hover:text-primary transition-colors duration-200">
-                            <i class="fas fa-share"></i>
-                        </button>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-400 hover:text-red-500 transition-colors duration-200"
+                                    onclick="toggleFavorite('<%= playlist.id %>')"
+                                    title="Add to Favorites">
+                                <i class="<%= playlist.is_favorite ? 'fas' : 'far' %> fa-heart <%= playlist.is_favorite ? 'text-red-500' : '' %>"></i>
+                            </button>
+                            <button class="text-gray-400 hover:text-blue-500 transition-colors duration-200"
+                                    onclick="viewPlaylistDetails('<%= playlist.id %>')"
+                                    title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <% if (user && (user.id === playlist.created_by || user.role === 'admin')) { %>
+                            <button class="text-gray-400 hover:text-blue-500 transition-colors duration-200"
+                                    onclick="editPlaylist('<%= playlist.id %>')"
+                                    title="Edit Playlist">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
             </div>
             <% }) %>
         </div>
+        <% } else { %>
+        <div class="text-center py-12">
+            <div class="text-gray-400 mb-4">
+                <i class="fas fa-music text-6xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No playlists found</h3>
+            <p class="text-gray-500 mb-6">
+                <% if (user && user.role === 'admin') { %>
+                    Start building your therapeutic music library by creating your first playlist.
+                <% } else { %>
+                    Check back soon for new therapeutic playlists.
+                <% } %>
+            </p>
+            <% if (user && user.role === 'admin') { %>
+            <a href="/admin/playlists/create" class="bg-blue-500 text-white hover:bg-blue-600 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>Create First Playlist
+            </a>
+            <% } %>
+        </div>
+        <% } %>
     </div>
 
-    <!-- Music Player Interface -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 sticky bottom-4 border border-gray-200">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mr-4">
-                    <i class="fas fa-music text-white"></i>
+    <!-- Enhanced Music Player Interface -->
+    <div id="musicPlayer" class="bg-white rounded-2xl shadow-lg p-6 sticky bottom-4 border border-gray-200">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center flex-1">
+                <div class="w-16 h-16 bg-blue-500 rounded-lg flex items-center justify-center mr-4 relative">
+                    <i id="playerIcon" class="fas fa-music text-white"></i>
+                    <div id="playingIndicator" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 </div>
-                <div>
-                    <h4 class="font-semibold text-textMain">No song selected</h4>
-                    <p class="text-sm text-gray-600">Choose a playlist to start listening</p>
+                <div class="flex-1">
+                    <h4 id="currentSong" class="font-semibold text-gray-800">No song selected</h4>
+                    <p id="currentArtist" class="text-sm text-gray-600">Choose a playlist to start listening</p>
+                    <p id="currentAlbum" class="text-xs text-gray-500"></p>
                 </div>
             </div>
             
             <div class="flex items-center space-x-4">
-                <button class="text-gray-400 hover:text-primary transition-colors duration-200">
+                <button id="shuffleBtn" class="text-gray-400 hover:text-blue-500 transition-colors duration-200" title="Shuffle">
+                    <i class="fas fa-random"></i>
+                </button>
+                <button id="prevBtn" class="text-gray-400 hover:text-blue-500 transition-colors duration-200" disabled>
                     <i class="fas fa-step-backward text-lg"></i>
                 </button>
-                <button class="bg-primary text-white hover:bg-primary/90 p-3 rounded-full transition-colors duration-200">
+                <button id="playPauseBtn" class="bg-blue-500 text-white hover:bg-blue-600 p-4 rounded-full transition-colors duration-200 relative">
                     <i class="fas fa-play"></i>
+                    <div id="loadingSpinner" class="hidden absolute inset-0 items-center justify-center">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    </div>
                 </button>
-                <button class="text-gray-400 hover:text-primary transition-colors duration-200">
+                <button id="nextBtn" class="text-gray-400 hover:text-blue-500 transition-colors duration-200" disabled>
                     <i class="fas fa-step-forward text-lg"></i>
+                </button>
+                <button id="repeatBtn" class="text-gray-400 hover:text-blue-500 transition-colors duration-200" title="Repeat">
+                    <i class="fas fa-redo"></i>
                 </button>
             </div>
             
-            <div class="flex items-center space-x-2">
-                <i class="fas fa-volume-down text-gray-400"></i>
-                <div class="w-20 h-2 bg-gray-200 rounded-full">
-                    <div class="w-3/5 h-full bg-primary rounded-full"></div>
+            <div class="hidden md:flex items-center space-x-2">
+                <button id="muteBtn" class="text-gray-400 hover:text-blue-500 transition-colors">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <div class="w-20 h-2 bg-gray-200 rounded-full cursor-pointer" id="volumeBar">
+                    <div id="volumeLevel" class="w-3/5 h-full bg-blue-500 rounded-full transition-all duration-300"></div>
                 </div>
-                <i class="fas fa-volume-up text-gray-400"></i>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="mb-2">
+            <div class="w-full bg-gray-200 rounded-full h-1 cursor-pointer" id="progressBar">
+                <div id="progress" class="bg-blue-500 h-1 rounded-full w-0 transition-all duration-300"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                <span id="currentTime">0:00</span>
+                <span id="totalTime">0:00</span>
+            </div>
+        </div>
+
+        <!-- Additional Controls -->
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <button id="playlistBtn" class="text-sm text-gray-600 hover:text-blue-500 transition-colors" title="View Current Playlist">
+                    <i class="fas fa-list mr-1"></i>
+                    <span id="currentPlaylistName">No playlist</span>
+                </button>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="favoriteCurrentBtn" class="text-gray-400 hover:text-red-500 transition-colors" title="Favorite Current Song">
+                    <i class="far fa-heart"></i>
+                </button>
+                <button id="shareCurrentBtn" class="text-gray-400 hover:text-blue-500 transition-colors" title="Share Current Song">
+                    <i class="fas fa-share"></i>
+                </button>
+                <button id="fullscreenPlayerBtn" class="text-gray-400 hover:text-blue-500 transition-colors" title="Fullscreen Player">
+                    <i class="fas fa-expand"></i>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Music Benefits Section -->
     <div class="mt-12 bg-gray-50 rounded-2xl p-8">
-        <h2 class="text-2xl font-bold text-textMain mb-6 text-center">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
             The Science Behind Music Therapy
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="text-center">
-                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div class="bg-blue-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-brain text-xl"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-textMain mb-2">Reduces Anxiety</h3>
-                <p class="text-gray-600">Music therapy has been shown to significantly reduce anxiety levels and promote relaxation.</p>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Reduces Anxiety</h3>
+                <p class="text-gray-600">Music therapy has been shown to significantly reduce anxiety levels and promote relaxation through specific frequencies and rhythms.</p>
             </div>
             
             <div class="text-center">
-                <div class="bg-secondary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div class="bg-purple-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-heart text-xl"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-textMain mb-2">Improves Mood</h3>
-                <p class="text-gray-600">Listening to therapeutic music can boost dopamine levels and improve overall mood.</p>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Improves Mood</h3>
+                <p class="text-gray-600">Listening to therapeutic music can boost dopamine levels and improve overall mood, helping combat depression and stress.</p>
             </div>
             
             <div class="text-center">
-                <div class="bg-accent text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div class="bg-green-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-moon text-xl"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-textMain mb-2">Better Sleep</h3>
-                <p class="text-gray-600">Calming melodies can help regulate sleep patterns and improve sleep quality.</p>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Better Sleep</h3>
+                <p class="text-gray-600">Calming melodies can help regulate sleep patterns and improve sleep quality by reducing cortisol levels.</p>
             </div>
+        </div>
+        
+        <div class="text-center mt-8">
+            <a href="/about/music-therapy" class="bg-purple-500 text-white hover:bg-purple-600 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                <i class="fas fa-book-open mr-2"></i>Learn More About Music Therapy
+            </a>
         </div>
     </div>
 </div>
+
+<!-- Modals -->
+<!-- Add to Playlist Modal -->
+<div id="addToPlaylistModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold mb-4">Add to Playlist</h3>
+        <div id="playlistSelection" class="space-y-2 max-h-60 overflow-y-auto mb-4">
+            <!-- Playlists will be loaded here -->
+        </div>
+        <div class="flex justify-end space-x-3">
+            <button onclick="closeAddToPlaylistModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+            <button onclick="confirmAddToPlaylist()" class="bg-blue-500 text-white hover:bg-blue-600 px-4 py-2 rounded-lg">Add Song</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notifications -->
+<div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" style="display: none;">
+    <div class="bg-white rounded-lg p-6 flex items-center">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
+        <span>Loading...</span>
+    </div>
+</div>
+
+<!-- Enhanced JavaScript with proper error handling -->
+<script>
+// Global variables
+let currentViewMode = 'grid';
+let selectedSongForPlaylist = null;
+
+// Enhanced form handling with proper error checking
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Music page loaded');
+    
+    // Initialize Spotify Import Form
+    const spotifyForm = document.getElementById('spotifyImportForm');
+    if (spotifyForm) {
+        spotifyForm.addEventListener('submit', handleSpotifyImport);
+        console.log('Spotify form handler attached');
+    }
+
+    // Initialize MP3 Upload Form
+    const mp3Form = document.getElementById('mp3UploadForm');
+    if (mp3Form) {
+        mp3Form.addEventListener('submit', handleMP3Upload);
+        console.log('MP3 form handler attached');
+    }
+
+    // Load initial data
+    loadPlaylistSongCounts();
+});
+
+// Enhanced Spotify Import Handler
+async function handleSpotifyImport(event) {
+    event.preventDefault();
+    console.log('Spotify import started');
+    
+    const formData = new FormData(event.target);
+    const spotifyUrl = formData.get('spotifyUrl');
+    const playlistId = formData.get('playlistId');
+
+    if (!spotifyUrl || !spotifyUrl.trim()) {
+        showToast('Please enter a valid Spotify URL', 'error');
+        return;
+    }
+
+    // Validate Spotify URL format
+    if (!spotifyUrl.includes('spotify.com') && !spotifyUrl.includes('spotify:')) {
+        showToast('Please enter a valid Spotify URL', 'error');
+        return;
+    }
+
+    showLoadingOverlay(true, 'Importing from Spotify...');
+
+    try {
+        const response = await fetch('/api/music/import/spotify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                spotifyUrl: spotifyUrl.trim(),
+                playlistId: playlistId || null
+            })
+        });
+
+        console.log('Spotify import response status:', response.status);
+        const result = await response.json();
+        console.log('Spotify import result:', result);
+
+        if (result.success) {
+            showToast(result.message, 'success');
+            event.target.reset();
+            
+            // Refresh the music library
+            if (window.musicManager) {
+                await window.musicManager.refreshSongList();
+                await window.musicManager.loadLibraryStats();
+            }
+        } else {
+            showToast(result.message || 'Import failed', 'error');
+        }
+    } catch (error) {
+        console.error('Spotify import error:', error);
+        showToast('Failed to import from Spotify. Please check your connection.', 'error');
+    } finally {
+        showLoadingOverlay(false);
+    }
+}
+
+// Enhanced MP3 Upload Handler
+async function handleMP3Upload(event) {
+    event.preventDefault();
+    console.log('MP3 upload started');
+    
+    const formData = new FormData(event.target);
+    const files = formData.getAll('mp3Files');
+    
+    if (!files || files.length === 0) {
+        showToast('Please select MP3 files to upload', 'error');
+        return;
+    }
+
+    // Validate file types
+    for (let file of files) {
+        if (!file.type.includes('audio') && !file.name.toLowerCase().endsWith('.mp3')) {
+            showToast(`Invalid file type: ${file.name}. Please select MP3 files only.`, 'error');
+            return;
+        }
+    }
+
+    showLoadingOverlay(true, 'Uploading MP3 files...');
+
+    try {
+        const response = await fetch('/api/music/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        console.log('MP3 upload response status:', response.status);
+        const result = await response.json();
+        console.log('MP3 upload result:', result);
+
+        if (result.success) {
+            showToast(result.message, 'success');
+            event.target.reset();
+            
+            // Refresh the music library
+            if (window.musicManager) {
+                await window.musicManager.refreshSongList();
+                await window.musicManager.loadLibraryStats();
+            }
+        } else {
+            showToast(result.message || 'Upload failed', 'error');
+        }
+    } catch (error) {
+        console.error('MP3 upload error:', error);
+        showToast('Failed to upload MP3 files. Please try again.', 'error');
+    } finally {
+        showLoadingOverlay(false);
+    }
+}
+
+// Enhanced Spotify Search
+async function handleSpotifySearch() {
+    const searchInput = document.getElementById('spotifySearchInput');
+    const resultsContainer = document.getElementById('spotifyResults');
+    const query = searchInput.value.trim();
+    
+    if (!query) {
+        showToast('Please enter a search term', 'error');
+        return;
+    }
+    
+    console.log('Searching Spotify for:', query);
+    showLoadingOverlay(true, 'Searching Spotify...');
+    
+    try {
+        const response = await fetch(`/api/music/search/spotify?q=${encodeURIComponent(query)}&limit=10`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displaySpotifyResults(result.data, resultsContainer);
+        } else {
+            showToast(result.message || 'Search failed', 'error');
+            resultsContainer.innerHTML = '<p class="text-white/70">Search failed</p>';
+        }
+    } catch (error) {
+        console.error('Spotify search error:', error);
+        showToast('Search failed. Please try again.', 'error');
+        resultsContainer.innerHTML = '<p class="text-white/70">Search failed</p>';
+    } finally {
+        showLoadingOverlay(false);
+    }
+}
+
+// Display Spotify search results
+function displaySpotifyResults(tracks, container) {
+    if (!tracks || tracks.length === 0) {
+        container.innerHTML = '<p class="text-white/70">No results found</p>';
+        return;
+    }
+    
+    container.innerHTML = tracks.map(track => `
+        <div class="bg-white/5 rounded-lg p-4 flex items-center justify-between">
+            <div class="flex-1">
+                <h4 class="text-white font-medium">${escapeHtml(track.title)}</h4>
+                <p class="text-white/70 text-sm">${escapeHtml(track.artist)}</p>
+                <p class="text-white/50 text-xs">${track.album ? escapeHtml(track.album) : ''}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                ${track.spotify_preview_url ? `
+                    <button onclick="previewTrack('${track.spotify_preview_url}')" 
+                            class="text-white/70 hover:text-white p-2" title="Preview">
+                        <i class="fas fa-play"></i>
+                    </button>
+                ` : ''}
+                <button onclick="importSingleTrack('${track.spotify_id}')" 
+                        class="bg-white text-blue-600 hover:bg-gray-100 px-3 py-1 rounded text-sm font-medium">
+                    Import
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Preview track function
+function previewTrack(previewUrl) {
+    const audio = new Audio(previewUrl);
+    audio.volume = 0.5;
+    audio.play();
+    
+    showToast('Playing 30-second preview', 'info');
+    
+    // Stop after 30 seconds
+    setTimeout(() => {
+        audio.pause();
+    }, 30000);
+}
+
+// Import single track
+async function importSingleTrack(spotifyId) {
+    showLoadingOverlay(true, 'Importing track...');
+    
+    try {
+        const response = await fetch('/api/music/import/spotify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                spotifyUrl: `https://open.spotify.com/track/${spotifyId}`
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('Track imported successfully', 'success');
+            if (window.musicManager) {
+                await window.musicManager.refreshSongList();
+                await window.musicManager.loadLibraryStats();
+            }
+        } else {
+            showToast(result.message || 'Import failed', 'error');
+        }
+    } catch (error) {
+        console.error('Import error:', error);
+        showToast('Failed to import track', 'error');
+    } finally {
+        showLoadingOverlay(false);
+    }
+}
+
+// View mode functions
+function setViewMode(mode) {
+    currentViewMode = mode;
+    const listBtn = document.getElementById('listView');
+    const gridBtn = document.getElementById('gridView');
+    
+    if (mode === 'list') {
+        listBtn.classList.add('text-blue-500');
+        listBtn.classList.remove('text-gray-500');
+        gridBtn.classList.add('text-gray-500');
+        gridBtn.classList.remove('text-blue-500');
+    } else {
+        gridBtn.classList.add('text-blue-500');
+        gridBtn.classList.remove('text-gray-500');
+        listBtn.classList.add('text-gray-500');
+        listBtn.classList.remove('text-blue-500');
+    }
+    
+    // Re-render song list with new view mode
+    if (window.musicManager) {
+        window.musicManager.currentViewMode = mode;
+        window.musicManager.refreshSongList();
+    }
+}
+
+// Filter functions
+function applyFilters() {
+    const search = document.getElementById('songSearch').value;
+    const source = document.getElementById('sourceFilter').value;
+    const genre = document.getElementById('genreFilter').value;
+    const sortBy = document.getElementById('sortBy').value;
+    
+    console.log('Applying filters:', { search, source, genre, sortBy });
+    
+    if (window.musicManager) {
+        window.musicManager.searchSongs(search, source, genre, sortBy);
+    }
+}
+
+// Playlist functions
+async function playPlaylist(playlistId) {
+    console.log('Playing playlist:', playlistId);
+    
+    if (window.musicManager) {
+        try {
+            const response = await fetch(`/api/music/playlist/${playlistId}/songs`);
+            const result = await response.json();
+            
+            if (result.success && result.data.length > 0) {
+                // Play first song in playlist
+                await window.musicManager.playSong(result.data[0].id, playlistId);
+                
+                // Update UI
+                const playlistName = document.querySelector(`[data-playlist-id="${playlistId}"] h3`);
+                const currentPlaylistName = document.getElementById('currentPlaylistName');
+                if (playlistName && currentPlaylistName) {
+                    currentPlaylistName.textContent = playlistName.textContent;
+                }
+            } else {
+                showToast('Playlist is empty', 'error');
+            }
+        } catch (error) {
+            console.error('Play playlist error:', error);
+            showToast('Failed to play playlist', 'error');
+        }
+    }
+}
+
+function viewPlaylistDetails(playlistId) {
+    window.location.href = `/playlists/${playlistId}`;
+}
+
+function editPlaylist(playlistId) {
+    window.location.href = `/admin/playlists/${playlistId}/edit`;
+}
+
+function toggleFavorite(playlistId) {
+    console.log('Toggle favorite for playlist:', playlistId);
+    showToast('Favorite functionality coming soon!', 'info');
+}
+
+// Modal functions
+function showAddToPlaylistModal(songId) {
+    selectedSongForPlaylist = songId;
+    const modal = document.getElementById('addToPlaylistModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    loadPlaylistsForModal();
+}
+
+function closeAddToPlaylistModal() {
+    const modal = document.getElementById('addToPlaylistModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    selectedSongForPlaylist = null;
+}
+
+async function loadPlaylistsForModal() {
+    try {
+        const response = await fetch('/api/playlists');
+        const result = await response.json();
+        
+        const container = document.getElementById('playlistSelection');
+        if (result.success) {
+            container.innerHTML = result.data.map(playlist => `
+                <label class="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="radio" name="playlistSelect" value="${playlist.id}" class="mr-3">
+                    <div>
+                        <div class="font-medium">${escapeHtml(playlist.title)}</div>
+                        <div class="text-sm text-gray-500">${playlist.song_count || 0} songs</div>
+                    </div>
+                </label>
+            `).join('');
+        } else {
+            container.innerHTML = '<p class="text-gray-500">No playlists available</p>';
+        }
+    } catch (error) {
+        console.error('Load playlists error:', error);
+        const container = document.getElementById('playlistSelection');
+        container.innerHTML = '<p class="text-red-500">Failed to load playlists</p>';
+    }
+}
+
+async function confirmAddToPlaylist() {
+    const selectedPlaylist = document.querySelector('input[name="playlistSelect"]:checked');
+    
+    if (!selectedPlaylist || !selectedSongForPlaylist) {
+        showToast('Please select a playlist', 'error');
+        return;
+    }
+    
+    if (window.musicManager) {
+        await window.musicManager.addSongToPlaylist(selectedSongForPlaylist, selectedPlaylist.value);
+    }
+    
+    closeAddToPlaylistModal();
+}
+
+// Load playlist song counts
+async function loadPlaylistSongCounts() {
+    const playlistElements = document.querySelectorAll('[data-playlist-id]');
+    
+    for (const element of playlistElements) {
+        const playlistId = element.dataset.playlistId;
+        try {
+            const response = await fetch(`/api/music/playlist/${playlistId}/songs`);
+            const result = await response.json();
+            
+            const countElement = document.getElementById(`playlistSongCount-${playlistId}`);
+            if (countElement && result.success) {
+                countElement.textContent = result.data.length;
+            }
+        } catch (error) {
+            console.error(`Error loading song count for playlist ${playlistId}:`, error);
+        }
+    }
+}
+
+// Utility functions
+function showLoadingOverlay(show, message = 'Loading...') {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        const messageElement = overlay.querySelector('span');
+        if (messageElement) {
+            messageElement.textContent = message;
+        }
+        overlay.style.display = show ? 'flex' : 'none';
+    }
+}
+
+function showToast(message, type = 'info') {
+    console.log(`Toast: ${type} - ${message}`);
+    
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed top-4 right-4 z-50';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `
+        px-6 py-4 rounded-lg shadow-lg text-white mb-4 transform translate-x-full transition-transform duration-300 max-w-md
+        ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-gray-500'}
+    `;
+    
+    toast.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-3"></i>
+                <span>${message}</span>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+
+    container.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+    }, 100);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Menu toggle function
+function toggleSongMenu(songId) {
+    const menu = document.getElementById(`songMenu-${songId}`);
+    if (menu) {
+        menu.classList.toggle('hidden');
+    }
+    
+    // Close other menus
+    document.querySelectorAll('[id^="songMenu-"]').forEach(otherMenu => {
+        if (otherMenu.id !== `songMenu-${songId}`) {
+            otherMenu.classList.add('hidden');
+        }
+    });
+}
+
+// Make functions globally available
+window.setViewMode = setViewMode;
+window.applyFilters = applyFilters;
+window.playPlaylist = playPlaylist;
+window.viewPlaylistDetails = viewPlaylistDetails;
+window.editPlaylist = editPlaylist;
+window.toggleFavorite = toggleFavorite;
+window.showAddToPlaylistModal = showAddToPlaylistModal;
+window.closeAddToPlaylistModal = closeAddToPlaylistModal;
+window.confirmAddToPlaylist = confirmAddToPlaylist;
+window.toggleSongMenu = toggleSongMenu;
+window.handleSpotifySearch = handleSpotifySearch;
+window.previewTrack = previewTrack;
+window.importSingleTrack = importSingleTrack;
+</script>
+
+<!-- Load musicManager.js after the page scripts -->
+<script src="/js/musicManager.js"></script>
