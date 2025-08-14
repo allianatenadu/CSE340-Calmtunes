@@ -19,39 +19,33 @@ const dashboardController = {
     });
   },
 
-  // GET /music - Updated with Spotify integration support
+  // GET /music - Fixed for MySQL and proper template data
   getMusic: async (req, res) => {
     try {
       // Initialize with empty data
       let playlists = [];
-      let featuredPlaylist = null;
-      let genres = [];
+      let featuredSongs = [];
 
       try {
-        // Try to get playlists if the table exists (PostgreSQL syntax)
-        const playlistsQuery = `
+        // Get playlists from MySQL (fixed syntax)
+        const [playlistRows] = await pool.execute(`
           SELECT p.*, 
                  COUNT(ps.song_id) as song_count
           FROM playlists p
           LEFT JOIN playlist_songs ps ON p.id = ps.playlist_id
-          WHERE p.is_public = true OR p.is_public IS NULL
-          GROUP BY p.id, p.title, p.description, p.image, p.category_id, p.created_by, p.is_public, p.created_at, p.updated_at
+          WHERE p.is_public = 1
+          GROUP BY p.id, p.title, p.description, p.cover_url, p.user_id, p.is_public, p.created_at
           ORDER BY p.created_at DESC
-        `;
-        
-        const playlistResult = await pool.query(playlistsQuery);
-        playlists = playlistResult.rows || [];
+        `);
+        playlists = playlistRows || [];
 
-        // Get featured playlist (first one with songs, or create a default one)
-        featuredPlaylist = playlists.find(p => parseInt(p.song_count) > 0) || {
-          id: 'default',
-          title: 'Peaceful Mornings',
-          description: 'Start your day with gentle, uplifting melodies designed to promote positive energy and mental clarity.',
-          image: 'https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400'
-        };
-
-        // Get genres from songs table
-        genres = await SongModel.getDistinctGenres();
+        // Get featured songs (what the template actually expects)
+        const [songRows] = await pool.execute(`
+          SELECT * FROM songs 
+          ORDER BY created_at DESC 
+          LIMIT 10
+        `);
+        featuredSongs = songRows || [];
         
       } catch (dbError) {
         console.log('Note: Database tables may not exist yet, using default data:', dbError.message);
@@ -60,50 +54,51 @@ const dashboardController = {
         playlists = [
           {
             id: 1,
-            title: 'Meditation Sounds',
-            description: 'Calming sounds for meditation and relaxation',
-            image: 'https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400',
+            title: 'Sleep Therapy',
+            description: 'Calming music for better sleep',
+            cover_url: 'https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400',
             song_count: 0,
-            is_favorite: false,
-            created_by: 1
+            is_public: 1,
+            user_id: null
           },
           {
             id: 2,
-            title: 'Nature Therapy',
-            description: 'Therapeutic nature sounds for stress relief',
-            image: 'https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400',
+            title: 'Anxiety Relief',
+            description: 'Therapeutic sounds for stress and anxiety relief',
+            cover_url: 'https://images.pexels.com/photos/1054218/pexels-photo-1054218.jpeg?auto=compress&cs=tinysrgb&w=400',
             song_count: 0,
-            is_favorite: false,
-            created_by: 1
+            is_public: 1,
+            user_id: null
+          },
+          {
+            id: 3,
+            title: 'Focus & Concentration',
+            description: 'Background music to enhance focus and productivity',
+            cover_url: 'https://images.pexels.com/photos/1181248/pexels-photo-1181248.jpeg?auto=compress&cs=tinysrgb&w=400',
+            song_count: 0,
+            is_public: 1,
+            user_id: null
           }
         ];
 
-        featuredPlaylist = {
-          id: 'default',
-          title: 'Peaceful Mornings',
-          description: 'Start your day with gentle, uplifting melodies designed to promote positive energy and mental clarity.',
-          image: 'https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400'
-        };
-
-        genres = ['Ambient', 'Meditation', 'Nature', 'Classical'];
+        // Default featured songs (empty for now)
+        featuredSongs = [];
       }
 
       res.render('pages/music', {
-        title: 'Therapeutic Music - CalmTunes',
+        title: 'Music Therapy',
         user: req.session.user || null,
         playlists: playlists,
-        featuredPlaylist: featuredPlaylist,
-        genres: genres
+        featuredSongs: featuredSongs // This is what the template expects
       });
       
     } catch (error) {
       console.error('Error in getMusic:', error);
       res.render('pages/music', {
-        title: 'Therapeutic Music - CalmTunes',
+        title: 'Music Therapy',
         user: req.session.user || null,
         playlists: [],
-        featuredPlaylist: null,
-        genres: [],
+        featuredSongs: [], // Always provide this even if empty
         error: 'Failed to load music library'
       });
     }
@@ -119,17 +114,25 @@ const dashboardController = {
     res.render('pages/panic', { title: 'Panic Relief - CalmTunes' });
   },
 
-  // GET /mood-tracker
+  // GET /mood-tracker - Fixed for MySQL
   getMoodTracker: async (req, res) => {
     try {
-      const userId = req.session.user.id; // use session
-      const { rows: moodEntries } = await pool.query(
-        `SELECT id, user_id, mood, note, energy, entry_date
-         FROM public.mood_entries
-         WHERE user_id = $1
-         ORDER BY entry_date DESC`,
-        [userId]
-      );
+      const userId = req.session.user.id;
+      
+      // Check if mood_entries table exists, if not provide empty data
+      let moodEntries = [];
+      try {
+        const [rows] = await pool.execute(
+          `SELECT id, user_id, mood, note, energy, entry_date
+           FROM mood_entries
+           WHERE user_id = ?
+           ORDER BY entry_date DESC`,
+          [userId]
+        );
+        moodEntries = rows;
+      } catch (tableError) {
+        console.log('Mood entries table may not exist yet:', tableError.message);
+      }
 
       res.render('pages/moodTracker', {
         title: 'Mood Tracker - CalmTunes',
@@ -137,19 +140,23 @@ const dashboardController = {
       });
     } catch (err) {
       console.error(err);
-      res.status(500).send('Server Error');
+      res.render('pages/moodTracker', {
+        title: 'Mood Tracker - CalmTunes',
+        moodEntries: [],
+        error: 'Failed to load mood tracker'
+      });
     }
   },
 
-  // POST /mood-tracker
+  // POST /mood-tracker - Fixed for MySQL
   postMoodEntry: async (req, res) => {
     try {
       const { mood, note, energy } = req.body;
-      const userId = req.session.user.id; // use session
+      const userId = req.session.user.id;
 
-      await pool.query(
-        `INSERT INTO public.mood_entries (user_id, mood, note, energy)
-         VALUES ($1, $2, $3, $4)`,
+      await pool.execute(
+        `INSERT INTO mood_entries (user_id, mood, note, energy)
+         VALUES (?, ?, ?, ?)`,
         [userId, mood, note, energy]
       );
 
@@ -157,14 +164,35 @@ const dashboardController = {
       res.redirect('/mood-tracker');
     } catch (err) {
       console.error(err);
-      res.status(500).send('Server Error');
+      req.flash('error', 'Failed to save mood entry');
+      res.redirect('/mood-tracker');
     }
   },
 
   // GET /therapists
   getTherapists: (req, res) => {
-    const therapists = [ /* your existing therapists */ ];
-    res.render('pages/therapists', { title: 'Find Therapists - CalmTunes', therapists });
+    const therapists = [
+      {
+        id: 1,
+        name: "Dr. Sarah Johnson",
+        specialization: "Anxiety & Depression",
+        rating: 4.8,
+        location: "Downtown",
+        image: "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=400"
+      },
+      {
+        id: 2,
+        name: "Dr. Michael Chen",
+        specialization: "Stress Management",
+        rating: 4.9,
+        location: "Midtown",
+        image: "https://images.pexels.com/photos/5452274/pexels-photo-5452274.jpeg?auto=compress&cs=tinysrgb&w=400"
+      }
+    ];
+    res.render('pages/therapists', { 
+      title: 'Find Therapists - CalmTunes', 
+      therapists 
+    });
   }
 };
 

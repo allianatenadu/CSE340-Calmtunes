@@ -119,8 +119,8 @@
                 <td class="py-3 px-4">
                   <div class="flex items-center space-x-2">
                     <div class="relative w-24 bg-gray-200 rounded-full h-3">
-                      <div class="absolute top-0 left-0 h-3 rounded-full energy-bar transition-all duration-300" 
-                           data-energy="<%= entry.energy || 5 %>"style="width: <%= entry.energy ? ((entry.energy/10)*100).toFixed(0) : 50 %>%; background-color: <%= entry.energy <= 3 ? '#EF4444' : entry.energy <= 7 ? '#F59E0B' : '#10B981' %>;"></div>
+                      <div class="absolute top-0 left-0 h-3 rounded-full energy-bar transition-all duration-300"
+                           data-energy="<%= entry.energy || 5 %>"></div>
                     </div>
                     <span class="text-xs text-gray-600"><%= entry.energy || 'N/A' %></span>
                   </div>

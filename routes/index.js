@@ -6,7 +6,8 @@ const dashboardController = require('../controllers/dashboardController');
 const accountController = require('../controllers/accountController');
 const moodTrackerController = require('../controllers/moodTrackerController');
 
-
+// Import music routes
+const musicRoutes = require('./music');
 
 // Middleware to check if user is authenticated
 function requireAuth(req, res, next) {
@@ -28,8 +29,6 @@ router.post('/signup', authController.postSignup);
 router.get('/logout', authController.getLogout);
 router.post('/account', requireAuth, accountController.postAccount);
 
-
-
 // Private routes (require authentication)
 router.get('/dashboard', requireAuth, dashboardController.getDashboard);
 router.get('/music', requireAuth, dashboardController.getMusic);
@@ -38,5 +37,7 @@ router.get('/panic', requireAuth, dashboardController.getPanic);
 router.get('/therapists', requireAuth, dashboardController.getTherapists);
 router.get('/account', requireAuth, accountController.getAccount);
 
+// Music API routes - mounted under /music
+router.use('/music', musicRoutes);
 
 module.exports = router;

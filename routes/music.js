@@ -1,242 +1,243 @@
 const express = require('express');
 const router = express.Router();
-const SpotifyController = require('../controllers/spotifyController');
-const UploadController = require('../controllers/uploadController');
-const SongModel = require('../models/songModel');
+const pool = require('../config/database');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs-extra');
 
-// Import from Spotify
-router.post('/import/spotify', SpotifyController.importFromSpotify);
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../public/audio');
+    fs.ensureDirSync(uploadPath);
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
 
-// Search Spotify
-router.get('/search/spotify', SpotifyController.searchSpotify);
+const upload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'audio/mpeg' || file.mimetype === 'audio/mp3') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only MP3 files allowed'), false);
+    }
+  }
+});
 
-// Upload MP3 files
-router.post('/upload', 
-    UploadController.getUploadMiddleware(), 
-    UploadController.uploadMP3Files
-);
+// Middleware to check authentication
+function requireAuth(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Authentication required' });
+  }
+}
 
-// Fixed: Get all songs with proper filtering
+// GET /music/playlists - Get all public playlists
+router.get('/playlists', async (req, res) => {
+  try {
+    const [playlists] = await pool.execute(
+      'SELECT * FROM playlists WHERE is_public = 1 ORDER BY created_at DESC'
+    );
+    res.json(playlists);
+  } catch (error) {
+    console.error('Error fetching playlists:', error);
+    res.status(500).json({ error: 'Failed to fetch playlists' });
+  }
+});
+
+// GET /music/playlist/:id/songs - Get songs from a specific playlist
+router.get('/playlist/:playlistId/songs', async (req, res) => {
+  try {
+    const { playlistId } = req.params;
+    
+    const [songs] = await pool.execute(`
+      SELECT s.*, ps.position 
+      FROM songs s
+      JOIN playlist_songs ps ON s.id = ps.song_id
+      WHERE ps.playlist_id = ?
+      ORDER BY ps.position
+    `, [playlistId]);
+    
+    res.json(songs);
+  } catch (error) {
+    console.error('Error fetching playlist songs:', error);
+    res.status(500).json({ error: 'Failed to fetch songs' });
+  }
+});
+
+// POST /music/local/upload - Upload local MP3 files
+router.post('/local/upload', requireAuth, upload.single('audioFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No audio file uploaded' });
+    }
+
+    // Try to extract metadata (basic version without node-id3 for now)
+    const title = req.body.title || req.file.originalname.replace('.mp3', '');
+    const artist = req.body.artist || 'Unknown Artist';
+    const genre = req.body.genre || 'Therapy';
+
+    const [result] = await pool.execute(
+      `INSERT INTO songs (title, artist, album, source, local_file_path, genre) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        title,
+        artist,
+        'Local Upload',
+        'local',
+        `/audio/${req.file.filename}`,
+        genre
+      ]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Local music added successfully!',
+      songId: result.insertId 
+    });
+  } catch (error) {
+    console.error('Error adding local music:', error);
+    res.status(500).json({ error: 'Failed to add local music' });
+  }
+});
+
+// POST /music/spotify/add-album - Add default Spotify album (placeholder for now)
+router.post('/spotify/add-album', requireAuth, async (req, res) => {
+  try {
+    // For now, create a default playlist with sample data
+    // Later you can integrate with Spotify API
+    
+    const [playlistResult] = await pool.execute(
+      'INSERT INTO playlists (title, description, cover_url, is_public) VALUES (?, ?, ?, ?)',
+      [
+        'Sleep Therapy', 
+        'Calming music for better sleep', 
+        'https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400',
+        1
+      ]
+    );
+    
+    const playlistId = playlistResult.insertId;
+    
+    // Add some sample songs (you can replace this with actual Spotify integration later)
+    const sampleSongs = [
+      {
+        title: 'Peaceful Dreams',
+        artist: 'Sleep Sounds',
+        album: 'Night Rest',
+        genre: 'Sleep',
+        source: 'spotify'
+      },
+      {
+        title: 'Ocean Waves',
+        artist: 'Nature Sounds',
+        album: 'Calm Waters',
+        genre: 'Sleep',
+        source: 'spotify'
+      },
+      {
+        title: 'Gentle Rain',
+        artist: 'Ambient Collective',
+        album: 'Weather Patterns',
+        genre: 'Sleep',
+        source: 'spotify'
+      }
+    ];
+
+    for (let i = 0; i < sampleSongs.length; i++) {
+      const song = sampleSongs[i];
+      
+      const [songResult] = await pool.execute(
+        `INSERT INTO songs (title, artist, album, source, genre, cover_url) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          song.title,
+          song.artist,
+          song.album,
+          song.source,
+          song.genre,
+          'https://images.pexels.com/photos/1021876/pexels-photo-1021876.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ]
+      );
+      
+      // Add to playlist
+      await pool.execute(
+        'INSERT INTO playlist_songs (playlist_id, song_id, position) VALUES (?, ?, ?)',
+        [playlistId, songResult.insertId, i + 1]
+      );
+    }
+    
+    res.json({ success: true, message: 'Default sleep playlist added successfully!' });
+  } catch (error) {
+    console.error('Error adding default playlist:', error);
+    res.status(500).json({ error: 'Failed to add playlist' });
+  }
+});
+
+// GET /music/songs - Get all songs
 router.get('/songs', async (req, res) => {
-    try {
-        const { page = 1, limit = 20, search, source, genre, sortBy = 'created_at_desc' } = req.query;
-        const offset = (page - 1) * limit;
-
-        let songs;
-        if (search && search.trim()) {
-            songs = await SongModel.search(search.trim(), source, genre, sortBy);
-        } else {
-            songs = await SongModel.getAll(parseInt(limit), offset, sortBy);
-        }
-
-        // Apply additional filters if no search term
-        if (!search && (source || genre)) {
-            songs = songs.filter(song => {
-                if (source && song.source !== source) return false;
-                if (genre && song.genre !== genre) return false;
-                return true;
-            });
-        }
-
-        res.json({
-            success: true,
-            data: songs,
-            pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total: songs.length,
-                totalPages: Math.ceil(songs.length / parseInt(limit))
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching songs:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch songs: ' + error.message
-        });
-    }
+  try {
+    const [songs] = await pool.execute(
+      'SELECT * FROM songs ORDER BY created_at DESC'
+    );
+    res.json(songs);
+  } catch (error) {
+    console.error('Error fetching songs:', error);
+    res.status(500).json({ error: 'Failed to fetch songs' });
+  }
 });
 
-// Get a single song by ID
-router.get('/songs/:id', async (req, res) => {
-    try {
-        const song = await SongModel.findById(req.params.id);
-        
-        if (!song) {
-            return res.status(404).json({
-                success: false,
-                message: 'Song not found'
-            });
-        }
+// POST /music/playlists - Create new playlist
+router.post('/playlists', requireAuth, async (req, res) => {
+  try {
+    const { title, description, is_public = true } = req.body;
+    const userId = req.session.user.id;
 
-        res.json({
-            success: true,
-            data: song
-        });
-    } catch (error) {
-        console.error('Error fetching song:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch song: ' + error.message
-        });
-    }
+    const [result] = await pool.execute(
+      'INSERT INTO playlists (title, description, is_public, user_id) VALUES (?, ?, ?, ?)',
+      [title, description, is_public, userId]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Playlist created successfully!',
+      playlistId: result.insertId 
+    });
+  } catch (error) {
+    console.error('Error creating playlist:', error);
+    res.status(500).json({ error: 'Failed to create playlist' });
+  }
 });
 
-// Get songs in a playlist
-router.get('/playlist/:id/songs', async (req, res) => {
-    try {
-        const songs = await SongModel.getPlaylistSongs(req.params.id);
-        res.json({
-            success: true,
-            data: songs
-        });
-    } catch (error) {
-        console.error('Error fetching playlist songs:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch playlist songs: ' + error.message
-        });
-    }
-});
+// POST /music/playlist/:id/add-song - Add song to playlist
+router.post('/playlist/:playlistId/add-song', requireAuth, async (req, res) => {
+  try {
+    const { playlistId } = req.params;
+    const { songId } = req.body;
 
-// Add song to playlist
-router.post('/playlist/:playlistId/songs/:songId', async (req, res) => {
-    try {
-        const { playlistId, songId } = req.params;
-        
-        // Check if song exists
-        const song = await SongModel.findById(songId);
-        if (!song) {
-            return res.status(404).json({
-                success: false,
-                message: 'Song not found'
-            });
-        }
+    // Get current max position
+    const [positionResult] = await pool.execute(
+      'SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM playlist_songs WHERE playlist_id = ?',
+      [playlistId]
+    );
+    
+    const nextPosition = positionResult[0].next_position;
 
-        await SongModel.addToPlaylist(playlistId, songId);
-        res.json({
-            success: true,
-            message: 'Song added to playlist successfully'
-        });
-    } catch (error) {
-        console.error('Error adding song to playlist:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to add song to playlist: ' + error.message
-        });
-    }
-});
+    await pool.execute(
+      'INSERT INTO playlist_songs (playlist_id, song_id, position) VALUES (?, ?, ?)',
+      [playlistId, songId, nextPosition]
+    );
 
-// Remove song from playlist
-router.delete('/playlist/:playlistId/songs/:songId', async (req, res) => {
-    try {
-        const success = await SongModel.removeFromPlaylist(req.params.playlistId, req.params.songId);
-        
-        if (!success) {
-            return res.status(404).json({
-                success: false,
-                message: 'Song not found in playlist'
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Song removed from playlist successfully'
-        });
-    } catch (error) {
-        console.error('Error removing song from playlist:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to remove song from playlist: ' + error.message
-        });
-    }
-});
-
-// Delete a song
-router.delete('/songs/:id', async (req, res) => {
-    try {
-        const song = await SongModel.findById(req.params.id);
-        if (!song) {
-            return res.status(404).json({
-                success: false,
-                message: 'Song not found'
-            });
-        }
-
-        // Delete local file if it exists
-        if (song.local_file_path && song.source === 'local') {
-            try {
-                const fs = require('fs').promises;
-                const path = require('path');
-                const filePath = path.join(__dirname, '../public', song.local_file_path);
-                await fs.unlink(filePath);
-                console.log('Deleted local file:', filePath);
-            } catch (fileError) {
-                console.error('Error deleting file:', fileError);
-                // Continue with database deletion even if file deletion fails
-            }
-        }
-
-        const success = await SongModel.delete(req.params.id);
-        if (!success) {
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to delete song from database'
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Song deleted successfully'
-        });
-    } catch (error) {
-        console.error('Error deleting song:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to delete song: ' + error.message
-        });
-    }
-});
-
-// Get library statistics
-router.get('/stats', async (req, res) => {
-    try {
-        const stats = await SongModel.getStats();
-        const genres = await SongModel.getDistinctGenres();
-        
-        res.json({
-            success: true,
-            data: {
-                ...stats,
-                genres: genres
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching stats:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch statistics: ' + error.message
-        });
-    }
-});
-
-// Add favorite song endpoint
-router.post('/songs/:id/favorite', async (req, res) => {
-    try {
-        // This would require a favorites table - for now just return success
-        res.json({
-            success: true,
-            data: {
-                is_favorite: true // Toggle logic would go here
-            }
-        });
-    } catch (error) {
-        console.error('Error toggling favorite:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to toggle favorite: ' + error.message
-        });
-    }
+    res.json({ success: true, message: 'Song added to playlist!' });
+  } catch (error) {
+    console.error('Error adding song to playlist:', error);
+    res.status(500).json({ error: 'Failed to add song to playlist' });
+  }
 });
 
 module.exports = router;

@@ -1,191 +1,124 @@
+// models/songModel.js
 const pool = require('../config/database');
 
-class SongModel {
-    static async create(songData) {
-        // Fixed PostgreSQL query with proper RETURNING clause
-        const query = `
-            INSERT INTO songs (
-                title, artist, album, duration, spotify_id, spotify_preview_url,
-                local_file_path, file_size, genre, release_date, popularity,
-                explicit, source, created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
-            RETURNING id
-        `;
-        
-        const values = [
-            songData.title,
-            songData.artist,
-            songData.album || null,
-            songData.duration || null,
-            songData.spotify_id || null,
-            songData.spotify_preview_url || null,
-            songData.local_file_path || null,
-            songData.file_size || null,
-            songData.genre || null,
-            songData.release_date || null,
-            songData.popularity || 0,
-            songData.explicit || false,
-            songData.source
-        ];
+exports.upsertSpotifySong = async (song) => {
+  const q = `
+    INSERT INTO songs (title, artist, album, duration_ms, source, spotify_id, spotify_preview_url, cover_url, genre)
+    VALUES ($1,$2,$3,$4,'spotify',$5,$6,$7,$8)
+    ON CONFLICT (spotify_id) DO UPDATE
+    SET title = EXCLUDED.title,
+        artist = EXCLUDED.artist,
+        album = EXCLUDED.album,
+        duration_ms = EXCLUDED.duration_ms,
+        spotify_preview_url = EXCLUDED.spotify_preview_url,
+        cover_url = EXCLUDED.cover_url
+    RETURNING *;
+  `;
+  const vals = [
+    song.title,
+    song.artist,
+    song.album,
+    song.duration_ms || null,
+    song.spotify_id,
+    song.preview_url || null,
+    song.cover_url || null,
+    song.genre || null,
+  ];
+  const { rows } = await pool.query(q, vals);
+  return rows[0];
+};
 
-        try {
-            const result = await pool.query(query, values);
-            return result.rows[0].id;
-        } catch (error) {
-            if (error.code === '23505') { // PostgreSQL unique violation
-                throw new Error('Song already exists');
-            }
-            console.error('Database error in SongModel.create:', error);
-            throw error;
-        }
-    }
+exports.createLocalSong = async ({ title, artist, album, duration_ms, local_file_path, cover_url, genre }) => {
+  const q = `
+    INSERT INTO songs (title, artist, album, duration_ms, source, local_file_path, cover_url, genre)
+    VALUES ($1,$2,$3,$4,'local',$5,$6,$7) RETURNING *;
+  `;
+  const vals = [title, artist || null, album || null, duration_ms || null, local_file_path, cover_url || null, genre || null];
+  const { rows } = await pool.query(q, vals);
+  return rows[0];
+};
 
-    static async search(searchTerm, source = null, genre = null, sortBy = 'created_at_desc') {
-        let query = `
-            SELECT * FROM songs 
-            WHERE (title ILIKE $1 OR artist ILIKE $2 OR album ILIKE $3)
-        `;
-        let params = [`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`];
+exports.findBySpotifyId = async (spotifyId) => {
+  const { rows } = await pool.query(`SELECT * FROM songs WHERE spotify_id = $1`, [spotifyId]);
+  return rows[0];
+};
 
-        if (source) {
-            query += ` AND source = $${params.length + 1}`;
-            params.push(source);
-        }
+exports.findById = async (id) => {
+  const { rows } = await pool.query(`SELECT * FROM songs WHERE id = $1`, [id]);
+  return rows[0];
+};
 
-        if (genre) {
-            query += ` AND genre = $${params.length + 1}`;
-            params.push(genre);
-        }
+exports.getAll = async (limit = 50, offset = 0, sortBy = 'created_at_desc') => {
+  const order = sortBy === 'title_asc' ? 'title ASC' :
+                sortBy === 'title_desc' ? 'title DESC' :
+                'created_at DESC';
+  const { rows } = await pool.query(`SELECT * FROM songs ORDER BY ${order} LIMIT $1 OFFSET $2`, [limit, offset]);
+  return rows;
+};
 
-        // Add proper sorting
-        switch (sortBy) {
-            case 'title_asc':
-                query += ' ORDER BY title ASC';
-                break;
-            case 'title_desc':
-                query += ' ORDER BY title DESC';
-                break;
-            case 'artist_asc':
-                query += ' ORDER BY artist ASC';
-                break;
-            case 'artist_desc':
-                query += ' ORDER BY artist DESC';
-                break;
-            case 'popularity_desc':
-                query += ' ORDER BY popularity DESC, title ASC';
-                break;
-            default:
-                query += ' ORDER BY created_at DESC';
-        }
+exports.search = async (q, source, genre, sortBy = 'created_at_desc') => {
+  const order = sortBy === 'title_asc' ? 'title ASC' :
+                sortBy === 'title_desc' ? 'title DESC' :
+                'created_at DESC';
+  const params = [];
+  const where = [];
 
-        const result = await pool.query(query, params);
-        return result.rows;
-    }
+  if (q) {
+    params.push(`%${q}%`);
+    where.push(`(title ILIKE $${params.length} OR artist ILIKE $${params.length})`);
+  }
+  if (source) {
+    params.push(source);
+    where.push(`source = $${params.length}`);
+  }
+  if (genre) {
+    params.push(genre);
+    where.push(`genre = $${params.length}`);
+  }
 
-    // Fixed other methods with proper PostgreSQL syntax
-    static async findById(id) {
-        const query = 'SELECT * FROM songs WHERE id = $1';
-        const result = await pool.query(query, [id]);
-        return result.rows[0] || null;
-    }
+  const sql = `
+    SELECT * FROM songs
+    ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+    ORDER BY ${order}
+    LIMIT 200
+  `;
+  const { rows } = await pool.query(sql, params);
+  return rows;
+};
 
-    static async findBySpotifyId(spotifyId) {
-        const query = 'SELECT * FROM songs WHERE spotify_id = $1';
-        const result = await pool.query(query, [spotifyId]);
-        return result.rows[0] || null;
-    }
+exports.delete = async (id) => {
+  const { rowCount } = await pool.query(`DELETE FROM songs WHERE id = $1`, [id]);
+  return rowCount > 0;
+};
 
-    static async getAll(limit = 50, offset = 0, sortBy = 'created_at_desc') {
-        let query = 'SELECT * FROM songs ';
-        
-        switch (sortBy) {
-            case 'title_asc':
-                query += 'ORDER BY title ASC ';
-                break;
-            case 'title_desc':
-                query += 'ORDER BY title DESC ';
-                break;
-            case 'artist_asc':
-                query += 'ORDER BY artist ASC ';
-                break;
-            case 'artist_desc':
-                query += 'ORDER BY artist DESC ';
-                break;
-            case 'popularity_desc':
-                query += 'ORDER BY popularity DESC, title ASC ';
-                break;
-            default:
-                query += 'ORDER BY created_at DESC ';
-        }
-        
-        query += 'LIMIT $1 OFFSET $2';
-        
-        const result = await pool.query(query, [limit, offset]);
-        return result.rows;
-    }
+exports.getDistinctGenres = async () => {
+  const { rows } = await pool.query(`SELECT DISTINCT genre FROM songs WHERE genre IS NOT NULL ORDER BY genre ASC`);
+  return rows.map(r => r.genre);
+};
 
-    static async addToPlaylist(playlistId, songId, position = null) {
-        if (!position) {
-            const posResult = await pool.query(
-                'SELECT COALESCE(MAX(position), 0) as max_pos FROM playlist_songs WHERE playlist_id = $1',
-                [playlistId]
-            );
-            position = (posResult.rows[0].max_pos || 0) + 1;
-        }
+exports.getStats = async () => {
+  const totalRes = await pool.query(`SELECT COUNT(*)::int AS total FROM songs`);
+  const localRes = await pool.query(`SELECT COUNT(*)::int AS local FROM songs WHERE source='local'`);
+  const spotifyRes = await pool.query(`SELECT COUNT(*)::int AS spotify FROM songs WHERE source='spotify'`);
+  return { total: totalRes.rows[0].total, local: localRes.rows[0].local, spotify: spotifyRes.rows[0].spotify };
+};
 
-        const query = `
-            INSERT INTO playlist_songs (playlist_id, song_id, position, added_at)
-            VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-            ON CONFLICT (playlist_id, song_id) 
-            DO UPDATE SET position = EXCLUDED.position, added_at = CURRENT_TIMESTAMP
-        `;
-        
-        await pool.query(query, [playlistId, songId, position]);
-        return true;
-    }
+exports.getPlaylistSongs = async (playlistId) => {
+  const { rows } = await pool.query(`
+    SELECT s.*
+    FROM playlist_songs ps
+    JOIN songs s ON s.id = ps.song_id
+    WHERE ps.playlist_id = $1
+    ORDER BY COALESCE(ps.position, 999999), s.title ASC
+  `, [playlistId]);
+  return rows;
+};
 
-    static async getPlaylistSongs(playlistId) {
-        const query = `
-            SELECT s.*, ps.position, ps.added_at
-            FROM songs s
-            JOIN playlist_songs ps ON s.id = ps.song_id
-            WHERE ps.playlist_id = $1
-            ORDER BY ps.position ASC
-        `;
-        
-        const result = await pool.query(query, [playlistId]);
-        return result.rows;
-    }
-
-    static async removeFromPlaylist(playlistId, songId) {
-        const query = 'DELETE FROM playlist_songs WHERE playlist_id = $1 AND song_id = $2';
-        const result = await pool.query(query, [playlistId, songId]);
-        return result.rowCount > 0;
-    }
-
-    static async delete(id) {
-        const query = 'DELETE FROM songs WHERE id = $1';
-        const result = await pool.query(query, [id]);
-        return result.rowCount > 0;
-    }
-
-    static async getDistinctGenres() {
-        const query = 'SELECT DISTINCT genre FROM songs WHERE genre IS NOT NULL ORDER BY genre ASC';
-        const result = await pool.query(query);
-        return result.rows.map(row => row.genre);
-    }
-
-    static async getStats() {
-        const query = `
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN source = 'local' THEN 1 ELSE 0 END) as local_count,
-                SUM(CASE WHEN source = 'spotify' THEN 1 ELSE 0 END) as spotify_count
-            FROM songs
-        `;
-        const result = await pool.query(query);
-        return result.rows[0];
-    }
-}
-
-module.exports = SongModel;
+exports.addToPlaylist = async (playlistId, songId) => {
+  await pool.query(`
+    INSERT INTO playlist_songs (playlist_id, song_id, position)
+    VALUES ($1,$2,
+      (SELECT COALESCE(MAX(position),0)+1 FROM playlist_songs WHERE playlist_id = $1))
+    ON CONFLICT DO NOTHING
+  `, [playlistId, songId]);
+};

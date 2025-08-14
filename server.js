@@ -28,7 +28,7 @@ app.set('layout extractScripts', true);
 app.set('layout extractStyles', true);
 
 // Static & parsers
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/audio', express.static(path.join(__dirname, 'public/audio')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
