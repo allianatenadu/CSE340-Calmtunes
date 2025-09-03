@@ -1,562 +1,277 @@
-
-< class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
-    <!-- Header -->
-    <header class="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-music text-purple-600 text-2xl"></i>
-                    <h1 class="text-2xl font-bold text-gray-800">CalmTunes Music Therapy</h1>
-                </div>
-                <nav class="hidden md:flex space-x-6">
-                    <a href="#playlists" class="text-gray-600 hover:text-purple-600 transition-colors">Playlists</a>
-                    <a href="#featured" class="text-gray-600 hover:text-purple-600 transition-colors">Featured</a>
-                    <a href="#upload" class="text-gray-600 hover:text-purple-600 transition-colors">Upload</a>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <!-- Music Player (Fixed at bottom) -->
-    <div id="musicPlayer" class="fixed bottom-0 left-0 right-0 music-player text-white shadow-2xl z-40 transform translate-y-full transition-transform duration-300">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4 flex-1">
-                    <img id="currentCover" src="https://via.placeholder.com/60x60?text=♪" alt="Now Playing" class="w-15 h-15 rounded-lg shadow-md">
-                    <div class="flex-1 min-w-0">
-                        <h4 id="currentTitle" class="font-semibold text-white truncate">Select a song</h4>
-                        <p id="currentArtist" class="text-purple-200 text-sm truncate">Artist</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center space-x-4">
-                    <button id="prevBtn" class="p-2 hover:bg-white/20 rounded-full transition-colors">
-                        <i class="fas fa-step-backward"></i>
-                    </button>
-                    <button id="playPauseBtn" class="bg-white/20 hover:bg-white/30 p-4 rounded-full transition-colors">
-                        <i class="fas fa-play text-xl"></i>
-                    </button>
-                    <button id="nextBtn" class="p-2 hover:bg-white/20 rounded-full transition-colors">
-                        <i class="fas fa-step-forward"></i>
-                    </button>
-                </div>
-
-                <div class="flex items-center space-x-4 flex-1 justify-end">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-volume-up text-sm"></i>
-                        <input type="range" id="volumeSlider" min="0" max="100" value="50" class="w-20 h-2 bg-white/30 rounded-lg appearance-none slider">
-                    </div>
-                    <button id="closePlayer" class="p-2 hover:bg-white/20 rounded-full transition-colors">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Progress bar -->
-            <div class="mt-3">
-                <div class="flex justify-between text-xs text-purple-200 mb-1">
-                    <span id="currentTime">0:00</span>
-                    <span id="totalTime">0:00</span>
-                </div>
-                <div class="w-full bg-white/30 rounded-full h-1">
-                    <div id="progressBar" class="bg-white h-1 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-        <audio id="audioPlayer" preload="metadata"></audio>
+<!-- Music Therapy Page Content -->
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">🎧 Music Therapy</h1>
+        <p class="text-gray-600 text-lg">
+          Browse calming playlists and therapeutic sounds designed to support
+          your mental wellbeing
+        </p>
+      </div>
+      <!-- Now Playing Indicator -->
+      <div id="now-playing" class="hidden lg:block"></div>
     </div>
-
-    <!-- Main Content -->
-    <main class="container mx-auto px-6 py-8 pb-32">
-        <!-- Hero Section -->
-        <section class="text-center mb-12">
-            <div class="bg-white/60 backdrop-blur-sm rounded-3xl p-8 shadow-lg">
-                <h2 class="text-4xl font-bold text-gray-800 mb-4">Find Your Inner Peace</h2>
-                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                    Discover curated music therapy playlists designed to help you relax, focus, sleep better, and manage anxiety.
-                </p>
-                <div class="mt-6 flex flex-wrap justify-center gap-3">
-                    <span class="bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium">Sleep Aid</span>
-                    <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">Anxiety Relief</span>
-                    <span class="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium">Focus</span>
-                    <span class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-medium">Relaxation</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Therapy Playlists -->
-        <section id="playlists" class="mb-16">
-            <div class="flex items-center justify-between mb-8">
-                <h3 class="text-3xl font-bold text-gray-800">Therapy Playlists</h3>
-                <button id="refreshPlaylistsBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
-                    <i class="fas fa-sync-alt mr-2"></i>Refresh
-                </button>
-            </div>
-            
-            <div id="playlistsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <% if (typeof playlists !== 'undefined' && playlists && playlists.length > 0) { %>
-                    <% playlists.forEach(playlist => { %>
-                    <div class="playlist-card bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg transition-all duration-300 cursor-pointer hover:shadow-xl"
-                         data-playlist-id="<%= playlist.id %>">
-                        <div class="flex items-center space-x-4 mb-4">
-                            <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-blue-500 rounded-xl flex items-center justify-center">
-                                <% if (playlist.cover_url) { %>
-                                    <img src="<%= playlist.cover_url %>" alt="<%= playlist.title %>" class="w-full h-full object-cover rounded-xl">
-                                <% } else { %>
-                                    <i class="fas fa-music text-white text-xl"></i>
-                                <% } %>
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="font-bold text-gray-800 text-lg"><%= playlist.title %></h4>
-                                <p class="text-gray-600 text-sm"><%= playlist.description || 'Therapeutic music collection' %></p>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-purple-600 text-sm font-medium">
-                                <i class="fas fa-list mr-1"></i>View Songs
-                            </span>
-                            <button class="play-playlist-btn bg-purple-100 hover:bg-purple-200 text-purple-700 p-2 rounded-lg transition-colors"
-                                    data-playlist-id="<%= playlist.id %>">
-                                <i class="fas fa-play"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <% }) %>
-                <% } else { %>
-                    <!-- Empty state for playlists -->
-                    <div class="col-span-full text-center py-12">
-                        <div class="w-20 h-20 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-list-music text-white text-2xl"></i>
-                        </div>
-                        <h4 class="text-gray-600 text-xl font-medium mb-2">No Playlists Yet</h4>
-                        <p class="text-gray-500 mb-4">Create your first therapeutic playlist to get started with music therapy.</p>
-                        <button id="initializeSpotifyBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors">
-                            <i class="fas fa-plus mr-2"></i>Add Default Playlist
-                        </button>
-                    </div>
-                <% } %>
-            </div>
-        </section>
-
-        <!-- Featured Songs -->
-        <section id="featured" class="mb-16">
-            <h3 class="text-3xl font-bold text-gray-800 mb-8">Featured Songs</h3>
-            <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
-                <div id="featuredSongs" class="space-y-3">
-                    <% if (typeof featuredSongs !== 'undefined' && featuredSongs && featuredSongs.length > 0) { %>
-                        <% featuredSongs.forEach((song, index) => { %>
-                        <div class="song-item flex items-center justify-between p-4 hover:bg-white/50 rounded-xl transition-colors cursor-pointer group"
-                             data-song='<%- JSON.stringify(song) %>'>
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
-                                    <% if (song.cover_url) { %>
-                                        <img src="<%= song.cover_url %>" alt="<%= song.title %>" class="w-full h-full object-cover rounded-lg">
-                                    <% } else { %>
-                                        <i class="fas fa-music text-white"></i>
-                                    <% } %>
-                                </div>
-                                <div>
-                                    <h5 class="font-semibold text-gray-800"><%= song.title %></h5>
-                                    <p class="text-gray-600 text-sm"><%= song.artist %></p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xs text-gray-500">
-                                    <% if (song.source === 'spotify') { %>
-                                        <i class="fab fa-spotify text-green-500 mr-1"></i>Spotify
-                                    <% } else { %>
-                                        <i class="fas fa-file-audio text-blue-500 mr-1"></i>Local
-                                    <% } %>
-                                </span>
-                                <button class="opacity-0 group-hover:opacity-100 bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-all">
-                                    <i class="fas fa-play text-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <% }) %>
-                    <% } else { %>
-                        <!-- Empty state when no songs are available -->
-                        <div class="text-center py-12">
-                            <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-music text-white text-xl"></i>
-                            </div>
-                            <h4 class="text-gray-600 text-lg font-medium mb-2">No Songs Yet</h4>
-                            <p class="text-gray-500 text-sm">Upload some music or add Spotify playlists to get started!</p>
-                            <a href="#upload" class="inline-block mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
-                                <i class="fas fa-upload mr-2"></i>Upload Music
-                            </a>
-                        </div>
-                    <% } %>
-                </div>
-            </div>
-        </section>
-
-        <!-- Upload Local Music -->
-        <section id="upload" class="mb-16">
-            <h3 class="text-3xl font-bold text-gray-800 mb-8">Add Your Own Music</h3>
-            <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-                <form id="uploadForm" enctype="multipart/form-data" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-gray-700 font-semibold mb-2">Audio File (MP3)</label>
-                            <input type="file" id="audioFile" name="audioFile" accept=".mp3,audio/mpeg" 
-                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-semibold mb-2">Therapy Category</label>
-                            <select name="genre" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                                <option value="Sleep">Sleep Aid</option>
-                                <option value="Anxiety">Anxiety Relief</option>
-                                <option value="Focus">Focus</option>
-                                <option value="Relaxation">Relaxation</option>
-                                <option value="Meditation">Meditation</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
-                        <i class="fas fa-upload mr-2"></i>Upload Music
-                    </button>
-                </form>
-            </div>
-        </section>
-    </main>
-
-    <!-- Playlist Modal -->
-    <div id="playlistModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-3xl p-8 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Playlist Songs</h3>
-                    <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <div id="modalSongs" class="space-y-3">
-                    <!-- Songs will be loaded here -->
-                </div>
-            </div>
+    <!-- Player Status Display -->
+    <div id="player-status" class="mt-4">
+      <% if (!spotifyToken) { %>
+      <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-blue-800 font-medium flex items-center">
+              <i class="fas fa-music mr-2"></i> Connect Spotify for Full
+              Playback
+            </p>
+            <p class="text-sm text-blue-600 mt-1">
+              Currently showing 30-second previews only. Connect your Spotify
+              account to play full tracks.
+            </p>
+          </div>
+          <a
+            href="/spotify/login"
+            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center"
+          >
+            <i class="fab fa-spotify mr-2"></i> Connect Spotify
+          </a>
         </div>
+      </div>
+      <% } else { %>
+      <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-green-800 font-medium flex items-center">
+              <i class="fas fa-check-circle mr-2"></i> Spotify Connected
+            </p>
+            <p class="text-sm text-green-600 mt-1">
+              Loading Spotify Web Player...
+            </p>
+          </div>
+          <div class="flex space-x-2">
+            <a
+              href="/spotify/logout"
+              class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+            >
+              <i class="fas fa-unlink mr-1"></i> Disconnect
+            </a>
+            <a
+              href="/spotify/refresh"
+              class="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+            >
+              <i class="fas fa-sync-alt mr-1"></i> Refresh Token
+            </a>
+          </div>
+        </div>
+      </div>
+      <% } %>
     </div>
-
-    <!-- JavaScript -->
-    <script>
-        let currentPlaylist = [];
-        let currentSongIndex = 0;
-        let isPlaying = false;
-        
-        const audioPlayer = document.getElementById('audioPlayer');
-        const musicPlayer = document.getElementById('musicPlayer');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const progressBar = document.getElementById('progressBar');
-        const currentTimeDisplay = document.getElementById('currentTime');
-        const totalTimeDisplay = document.getElementById('totalTime');
-        const volumeSlider = document.getElementById('volumeSlider');
-
-        // Initialize volume
-        audioPlayer.volume = 0.5;
-
-        // Event Listeners - Using proper event delegation instead of inline handlers
-        document.addEventListener('DOMContentLoaded', function() {
-            // Playlist card clicks
-            document.addEventListener('click', function(e) {
-                const playlistCard = e.target.closest('.playlist-card');
-                const playBtn = e.target.closest('.play-playlist-btn');
-                const songItem = e.target.closest('.song-item');
-                
-                if (playBtn) {
-                    e.stopPropagation();
-                    const playlistId = playBtn.dataset.playlistId;
-                    playPlaylist(playlistId);
-                } else if (playlistCard) {
-                    const playlistId = playlistCard.dataset.playlistId;
-                    loadPlaylist(playlistId);
-                } else if (songItem) {
-                    const songData = JSON.parse(songItem.dataset.song);
-                    playSong(songData);
-                }
-            });
-
-            // Button event listeners
-            document.getElementById('refreshPlaylistsBtn')?.addEventListener('click', refreshPlaylists);
-            document.getElementById('initializeSpotifyBtn')?.addEventListener('click', initializeSpotifyPlaylist);
-            document.getElementById('closeModalBtn')?.addEventListener('click', closePlaylistModal);
-            
-            // Player controls
-            playPauseBtn.addEventListener('click', togglePlayPause);
-            document.getElementById('prevBtn').addEventListener('click', playPrevious);
-            document.getElementById('nextBtn').addEventListener('click', playNext);
-            document.getElementById('closePlayer').addEventListener('click', closePlayer);
-            
-            // Volume and progress
-            volumeSlider.addEventListener('input', function() {
-                audioPlayer.volume = this.value / 100;
-            });
-
-            // Audio events
-            audioPlayer.addEventListener('timeupdate', updateProgress);
-            audioPlayer.addEventListener('ended', playNext);
-        });
-
-        // Player functions
-        function togglePlayPause() {
-            if (isPlaying) {
-                audioPlayer.pause();
-                playPauseBtn.innerHTML = '<i class="fas fa-play text-xl"></i>';
-                isPlaying = false;
-            } else {
-                audioPlayer.play();
-                playPauseBtn.innerHTML = '<i class="fas fa-pause text-xl"></i>';
-                isPlaying = true;
-            }
-        }
-
-        function updateProgress() {
-            if (audioPlayer.duration) {
-                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-                progressBar.style.width = progress + '%';
-                currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
-                totalTimeDisplay.textContent = formatTime(audioPlayer.duration);
-            }
-        }
-
-        function closePlayer() {
-            audioPlayer.pause();
-            musicPlayer.classList.add('translate-y-full');
-            isPlaying = false;
-            playPauseBtn.innerHTML = '<i class="fas fa-play text-xl"></i>';
-        }
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function playSong(song) {
-            const audioSrc = song.source === 'spotify' ? song.spotify_preview_url : song.local_file_path;
-            
-            if (!audioSrc) {
-                alert('Audio preview not available for this song');
-                return;
-            }
-
-            audioPlayer.src = audioSrc;
-            document.getElementById('currentTitle').textContent = song.title;
-            document.getElementById('currentArtist').textContent = song.artist;
-            document.getElementById('currentCover').src = song.cover_url || 'https://via.placeholder.com/60x60?text=♪';
-            
-            musicPlayer.classList.remove('translate-y-full');
-            audioPlayer.play();
-            playPauseBtn.innerHTML = '<i class="fas fa-pause text-xl"></i>';
-            isPlaying = true;
-        }
-
-        function playNext() {
-            if (currentPlaylist.length > 0) {
-                currentSongIndex = (currentSongIndex + 1) % currentPlaylist.length;
-                playSong(currentPlaylist[currentSongIndex]);
-            }
-        }
-
-        function playPrevious() {
-            if (currentPlaylist.length > 0) {
-                currentSongIndex = currentSongIndex > 0 ? currentSongIndex - 1 : currentPlaylist.length - 1;
-                playSong(currentPlaylist[currentSongIndex]);
-            }
-        }
-
-        async function loadPlaylist(playlistId) {
-            try {
-                const response = await fetch(`/music/playlist/${playlistId}/songs`);
-                const songs = await response.json();
-                
-                const modalSongs = document.getElementById('modalSongs');
-                modalSongs.innerHTML = songs.map((song, index) => `
-                    <div class="modal-song-item flex items-center justify-between p-4 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer group"
-                         data-song-index="${index}">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
-                                ${song.cover_url ? 
-                                    `<img src="${song.cover_url}" alt="${song.title}" class="w-full h-full object-cover rounded-lg">` :
-                                    '<i class="fas fa-music text-white"></i>'
-                                }
-                            </div>
-                            <div>
-                                <h5 class="font-semibold text-gray-800">${song.title}</h5>
-                                <p class="text-gray-600 text-sm">${song.artist}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <span class="text-xs text-gray-500">
-                                ${song.source === 'spotify' ? 
-                                    '<i class="fab fa-spotify text-green-500 mr-1"></i>Spotify' :
-                                    '<i class="fas fa-file-audio text-blue-500 mr-1"></i>Local'
-                                }
-                            </span>
-                            <button class="opacity-0 group-hover:opacity-100 bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-all">
-                                <i class="fas fa-play text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-                
-                // Add event listeners for modal songs
-                modalSongs.addEventListener('click', function(e) {
-                    const songItem = e.target.closest('.modal-song-item');
-                    if (songItem) {
-                        const songIndex = parseInt(songItem.dataset.songIndex);
-                        playSongFromModal(songIndex);
-                    }
-                });
-                
-                document.getElementById('playlistModal').classList.remove('hidden');
-                currentPlaylist = songs;
-                currentSongIndex = 0;
-            } catch (error) {
-                console.error('Error loading playlist:', error);
-                alert('Failed to load playlist songs');
-            }
-        }
-
-        function playSongFromModal(index) {
-            currentSongIndex = index;
-            playSong(currentPlaylist[index]);
-            closePlaylistModal();
-        }
-
-        async function playPlaylist(playlistId) {
-            try {
-                const response = await fetch(`/music/playlist/${playlistId}/songs`);
-                const songs = await response.json();
-                
-                if (songs.length > 0) {
-                    currentPlaylist = songs;
-                    currentSongIndex = 0;
-                    playSong(songs[0]);
-                }
-            } catch (error) {
-                console.error('Error playing playlist:', error);
-                alert('Failed to play playlist');
-            }
-        }
-
-        function closePlaylistModal() {
-            document.getElementById('playlistModal').classList.add('hidden');
-        }
-
-        async function refreshPlaylists() {
-            try {
-                const response = await fetch('/music/playlists');
-                const playlists = await response.json();
-                
-                const container = document.getElementById('playlistsContainer');
-                container.innerHTML = playlists.map(playlist => `
-                    <div class="playlist-card bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg transition-all duration-300 cursor-pointer hover:shadow-xl"
-                         data-playlist-id="${playlist.id}">
-                        <div class="flex items-center space-x-4 mb-4">
-                            <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-blue-500 rounded-xl flex items-center justify-center">
-                                ${playlist.cover_url ? 
-                                    `<img src="${playlist.cover_url}" alt="${playlist.title}" class="w-full h-full object-cover rounded-xl">` :
-                                    '<i class="fas fa-music text-white text-xl"></i>'
-                                }
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="font-bold text-gray-800 text-lg">${playlist.title}</h4>
-                                <p class="text-gray-600 text-sm">${playlist.description || 'Therapeutic music collection'}</p>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-purple-600 text-sm font-medium">
-                                <i class="fas fa-list mr-1"></i>View Songs
-                            </span>
-                            <button class="play-playlist-btn bg-purple-100 hover:bg-purple-200 text-purple-700 p-2 rounded-lg transition-colors"
-                                    data-playlist-id="${playlist.id}">
-                                <i class="fas fa-play"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error refreshing playlists:', error);
-            }
-        }
-
-        async function initializeSpotifyPlaylist() {
-            try {
-                const response = await fetch('/music/spotify/add-album', {
-                    method: 'POST'
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Default sleep playlist added!');
-                    location.reload();
-                } else {
-                    alert('Failed to add playlist. Make sure Spotify API is configured.');
-                }
-            } catch (error) {
-                console.error('Error adding playlist:', error);
-                alert('Error adding playlist. Check your server setup.');
-            }
-        }
-
-        // File upload form
-        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const audioFile = document.getElementById('audioFile').files[0];
-            
-            if (!audioFile) {
-                alert('Please select an audio file');
-                return;
-            }
-
-            try {
-                const response = await fetch('/music/local/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Music uploaded successfully!');
-                    this.reset();
-                    location.reload();
-                } else {
-                    alert('Upload failed: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Upload error:', error);
-                alert('Upload failed. Please try again.');
-            }
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.code === 'Space' && !e.target.matches('input, textarea, select')) {
-                e.preventDefault();
-                togglePlayPause();
-            } else if (e.code === 'ArrowLeft' && e.ctrlKey) {
-                e.preventDefault();
-                playPrevious();
-            } else if (e.code === 'ArrowRight' && e.ctrlKey) {
-                e.preventDefault();
-                playNext();
-            }
-        });
-
-        // Close modal when clicking outside
-        document.getElementById('playlistModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closePlaylistModal();
-            }
-        });
-    </script>
-
-    <!-- Loading indicator -->
-    <div id="loadingIndicator" class="fixed top-4 right-4 bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg hidden">
-        <i class="fas fa-spinner fa-spin mr-2"></i>Loading...
+  </div>
+  <!-- Categories Grid -->
+  <div class="mb-8">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">
+      Therapy Categories
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% categories.forEach((cat, index) => { %>
+      <div
+        class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group transform hover:-translate-y-1"
+      >
+        <!-- Category Image -->
+        <div class="relative overflow-hidden">
+          <img
+            src="<%= cat.cover_url %>"
+            alt="<%= cat.title %>"
+            class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          ></div>
+        </div>
+        <!-- Category Content -->
+        <div class="p-6">
+          <h3
+            class="text-xl font-bold mb-2 text-gray-800 group-hover:text-primary transition-colors"
+          >
+            <%= cat.title %>
+          </h3>
+          <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+            <%= cat.description %>
+          </p>
+          <!-- Category Stats -->
+          <div
+            class="flex items-center justify-between text-xs text-gray-500 mb-4"
+          >
+            <span class="flex items-center">
+              <i class="fas fa-music mr-1"></i> <%= (allSongs[cat.id] ||
+              []).length %> tracks
+            </span>
+            <span class="flex items-center">
+              <i class="fas fa-clock mr-1"></i> ~<%= Math.floor(Math.random() *
+              30 + 15) %> min
+            </span>
+          </div>
+          <!-- Action Button -->
+          <button
+            class="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all duration-200 font-medium category-btn group-hover:shadow-md flex items-center justify-center"
+            data-category-id="<%= cat.id %>"
+          >
+            <i class="fas fa-play mr-2"></i> View Songs
+          </button>
+        </div>
+      </div>
+      <% }) %>
     </div>
+  </div>
+  <!-- Usage Instructions -->
+  <div class="mb-8">
+    <div
+      class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-6"
+    >
+      <h3 class="text-xl font-semibold text-blue-900 mb-4 flex items-center">
+        <i class="fas fa-info-circle mr-2"></i> How to Use Music Therapy
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Without Spotify -->
+        <div class="bg-white/50 rounded-lg p-4">
+          <h4 class="font-semibold text-blue-800 mb-3 flex items-center">
+            <i class="fas fa-headphones mr-2"></i> Without Spotify
+          </h4>
+          <ul class="space-y-2 text-sm text-blue-700">
+            <li class="flex items-start">
+              <i class="fas fa-check-circle mr-2 mt-0.5 text-green-600"></i>
+              Listen to 30-second previews of all tracks
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle mr-2 mt-0.5 text-green-600"></i> Use
+              built-in audio controls for easy playback
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle mr-2 mt-0.5 text-green-600"></i>
+              Browse and discover new therapeutic music
+            </li>
+          </ul>
+        </div>
+        <!-- With Spotify -->
+        <div class="bg-white/50 rounded-lg p-4">
+          <h4 class="font-semibold text-blue-800 mb-3 flex items-center">
+            <i class="fab fa-spotify mr-2"></i> With Spotify Premium
+          </h4>
+          <ul class="space-y-2 text-sm text-blue-700">
+            <li class="flex items-start">
+              <i class="fas fa-check-circle mr-2 mt-0.5 text-green-600"></i>
+              Play full tracks without interruption
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle mr-2 mt-0.5 text-green-600"></i>
+              Control playback remotely across devices
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle mr-2 mt-0.5 text-green-600"></i>
+              Create seamless, therapeutic listening experiences
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- Tips Section -->
+      <div class="mt-6 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+        <h4 class="font-semibold text-yellow-800 mb-2 flex items-center">
+          <i class="fas fa-lightbulb mr-2"></i> Therapeutic Listening Tips
+        </h4>
+        <div
+          class="text-sm text-yellow-700 grid grid-cols-1 md:grid-cols-2 gap-3"
+        >
+          <div>• Find a quiet, comfortable space</div>
+          <div>• Use quality headphones if possible</div>
+          <div>• Set aside 15-30 minutes for sessions</div>
+          <div>• Focus on your breathing while listening</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Enhanced Modal -->
+<div
+  id="categoryModal"
+  class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 p-4"
+>
+  <div
+    class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+  >
+    <!-- Modal Header -->
+    <div
+      class="flex justify-between items-center p-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+    >
+      <div>
+        <h2 id="modalTitle" class="text-2xl font-bold">Category</h2>
+        <p id="modalSubtitle" class="text-blue-100 text-sm mt-1">
+          Therapeutic music collection
+        </p>
+      </div>
+      <button
+        id="closeModalBtn"
+        class="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/10 transition-colors"
+      >
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    <!-- Modal Instructions -->
+    <div
+      id="modalInstructions"
+      class="mx-6 mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+    >
+      <div class="flex items-start">
+        <i class="fas fa-lightbulb text-yellow-600 mr-2 mt-0.5"></i>
+        <div class="text-sm text-yellow-800">
+          <strong>Listening Guide:</strong>
+          <span id="instructionText"
+            >Click play buttons for full tracks (Spotify Premium) or use audio
+            controls for 30-second previews.</span
+          >
+        </div>
+      </div>
+    </div>
+    <!-- Modal Content -->
+    <div class="p-6 max-h-[60vh] overflow-y-auto">
+      <div id="modalSongs" class="space-y-3">
+        <!-- Songs will be injected here by music.js -->
+      </div>
+      <!-- Empty State -->
+      <div id="modalEmptyState" class="hidden text-center py-12">
+        <i class="fas fa-music text-gray-300 text-4xl mb-4"></i>
+        <h3 class="text-lg font-semibold text-gray-600 mb-2">
+          No Songs Available
+        </h3>
+        <p class="text-gray-500">
+          This category doesn't have any songs yet. Please try another category
+          or check back later.
+        </p>
+      </div>
+    </div>
+    <!-- Modal Footer -->
+    <div
+      class="px-6 py-4 bg-gray-50 border-t flex justify-between items-center"
+    >
+      <div class="text-sm text-gray-600">
+        <i class="fas fa-heart text-red-500 mr-1"></i> Music therapy can help
+        reduce stress and anxiety
+      </div>
+      <button
+        id="closeModalBtn2"
+        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+<!-- Temporary Message Container -->
+<div id="temp-message" class="hidden"></div>
+<!-- Data Storage (Hidden) -->
+<div id="categories-data" style="display: none">
+  <%- JSON.stringify(categories || []) %>
+</div>
+<div id="songs-data" style="display: none">
+  <%- JSON.stringify(allSongs || {}) %>
+</div>
+<!-- Page-specific JavaScript -->
 

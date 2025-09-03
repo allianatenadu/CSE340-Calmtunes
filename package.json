@@ -5,13 +5,16 @@
   "private": true,
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "concurrently \"nodemon server.js\" \"npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/output.css --watch\"",
     "start": "node server.js",
     "build-css": "tailwindcss -i ./public/css/tailwind.css -o ./public/css/output.css --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "type": "module"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.12",
     "axios": "^1.11.0",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^10.0.0",
@@ -23,15 +26,19 @@
     "express-validator": "^7.0.1",
     "fs-extra": "^11.3.1",
     "multer": "^2.0.2",
+    "node-fetch": "^2.7.0",
     "node-id3": "^0.2.9",
     "path": "^0.12.7",
     "pg": "^8.16.3",
+    "postcss": "^8.5.6",
     "querystring": "^0.2.1",
+    "sharp": "^0.34.3",
     "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
+    "concurrently": "^9.2.0",
     "nodemon": "^3.0.2",
-    "tailwindcss": "^3.3.6"
+    "tailwindcss": "^3.4.17"
   },
   "keywords": [
     "mental-health",

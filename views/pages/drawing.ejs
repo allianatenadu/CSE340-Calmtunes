@@ -1,307 +1,175 @@
-
-
+<!-- views/pages/drawing.ejs -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-            🎨 Digital Art Therapy
-        </h1>
-        <p class="text-xl text-gray-600">
-            Express your emotions through art. Let creativity be your guide to healing and self-discovery.
-        </p>
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+      🎨 Digital Art Therapy
+    </h1>
+    <p class="text-xl text-gray-600">
+      Express your emotions through art. Let creativity be your guide to healing and self-discovery.
+    </p>
+  </div>
+
+  <!-- Benefits -->
+  <div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="text-center">
+        <div class="bg-purple-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+          <i class="fas fa-heart"></i>
+        </div>
+        <h3 class="font-semibold text-textMain mb-1">Emotional Release</h3>
+        <p class="text-sm text-gray-600">Express feelings that are hard to put into words</p>
+      </div>
+      <div class="text-center">
+        <div class="bg-pink-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+          <i class="fas fa-brain"></i>
+        </div>
+        <h3 class="font-semibold text-textMain mb-1">Stress Reduction</h3>
+        <p class="text-sm text-gray-600">Lower cortisol levels through creative activity</p>
+      </div>
+      <div class="text-center">
+        <div class="bg-indigo-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+          <i class="fas fa-lightbulb"></i>
+        </div>
+        <h3 class="font-semibold text-textMain mb-1">Self-Discovery</h3>
+        <p class="text-sm text-gray-600">Gain insights into your thoughts and emotions</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawing Interface -->
+  <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+    <!-- Toolbar -->
+    <div class="bg-gray-50 p-4 border-b border-gray-200">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <!-- Tools -->
+        <div class="flex items-center space-x-2">
+          <button id="pencil-tool" class="tool-btn active bg-primary text-white px-3 py-2 rounded-lg text-sm font-medium">
+            <i class="fas fa-pencil-alt mr-1"></i> Pencil
+          </button>
+          <button id="brush-tool" class="tool-btn bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
+            <i class="fas fa-paint-brush mr-1"></i> Brush
+          </button>
+          <button id="eraser-tool" class="tool-btn bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
+            <i class="fas fa-eraser mr-1"></i> Eraser
+          </button>
+        </div>
+
+        <!-- Colors -->
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-medium text-gray-700 mr-2">Color:</span>
+          <button class="color-btn w-8 h-8 rounded-full bg-black border-2 border-gray-300 active" data-color="#000000"></button>
+          <button class="color-btn w-8 h-8 rounded-full bg-red-500 border-2 border-gray-300" data-color="#EF4444"></button>
+          <button class="color-btn w-8 h-8 rounded-full bg-blue-500 border-2 border-gray-300" data-color="#3B82F6"></button>
+          <button class="color-btn w-8 h-8 rounded-full bg-green-500 border-2 border-gray-300" data-color="#10B981"></button>
+          <button class="color-btn w-8 h-8 rounded-full bg-yellow-500 border-2 border-gray-300" data-color="#F59E0B"></button>
+          <button class="color-btn w-8 h-8 rounded-full bg-purple-500 border-2 border-gray-300" data-color="#8B5CF6"></button>
+          <button class="color-btn w-8 h-8 rounded-full bg-pink-500 border-2 border-gray-300" data-color="#EC4899"></button>
+          <input type="color" id="custom-color" class="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer" value="#000000">
+        </div>
+
+        <!-- Size -->
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-medium text-gray-700">Size:</span>
+          <input type="range" id="brush-size" min="1" max="50" value="5" class="w-20">
+          <span id="size-display" class="text-sm text-gray-600 w-8">5px</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center space-x-2">
+          <button id="clear-canvas" class="bg-red-500 text-white px-3 py-2 rounded-lg text-sm font-medium">
+            <i class="fas fa-trash mr-1"></i> Clear
+          </button>
+          <button id="save-artwork" class="bg-secondary text-white px-3 py-2 rounded-lg text-sm font-medium">
+            <i class="fas fa-download mr-1"></i> Save
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Art Therapy Benefits -->
-    <div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6 mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="text-center">
-                <div class="bg-purple-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-heart"></i>
-                </div>
-                <h3 class="font-semibold text-textMain mb-1">Emotional Release</h3>
-                <p class="text-sm text-gray-600">Express feelings that are hard to put into words</p>
-            </div>
-            <div class="text-center">
-                <div class="bg-pink-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-brain"></i>
-                </div>
-                <h3 class="font-semibold text-textMain mb-1">Stress Reduction</h3>
-                <p class="text-sm text-gray-600">Lower cortisol levels through creative activity</p>
-            </div>
-            <div class="text-center">
-                <div class="bg-indigo-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-lightbulb"></i>
-                </div>
-                <h3 class="font-semibold text-textMain mb-1">Self-Discovery</h3>
-                <p class="text-sm text-gray-600">Gain insights into your thoughts and emotions</p>
-            </div>
+    <!-- Canvas -->
+    <div class="relative bg-white" id="canvas-container">
+      <canvas id="drawing-canvas" width="800" height="500"
+        class="w-full h-96 md:h-[500px] border-gray-200 cursor-crosshair"
+        style="touch-action: none;"></canvas>
+
+      <!-- Instructions -->
+      <div id="canvas-instructions"
+        class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div class="text-center text-gray-400">
+          <i class="fas fa-palette text-4xl mb-4"></i>
+          <p class="text-lg">Start drawing to begin your art therapy session</p>
+          <p class="text-sm">Let your emotions flow through your creativity</p>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Drawing Interface -->
-    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <!-- Toolbar -->
-        <div class="bg-gray-50 p-4 border-b border-gray-200">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <!-- Drawing Tools -->
-                <div class="flex items-center space-x-2">
-                    <button id="pencil-tool" class="tool-btn active bg-primary text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-                        <i class="fas fa-pencil-alt mr-1"></i> Pencil
-                    </button>
-                    <button id="brush-tool" class="tool-btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-                        <i class="fas fa-paint-brush mr-1"></i> Brush
-                    </button>
-                    <button id="eraser-tool" class="tool-btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-                        <i class="fas fa-eraser mr-1"></i> Eraser
-                    </button>
-                </div>
-
-                <!-- Color Palette -->
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm font-medium text-gray-700 mr-2">Color:</span>
-                    <button class="color-btn w-8 h-8 rounded-full bg-black border-2 border-gray-300 active" data-color="#000000"></button>
-                    <button class="color-btn w-8 h-8 rounded-full bg-red-500 border-2 border-gray-300" data-color="#EF4444"></button>
-                    <button class="color-btn w-8 h-8 rounded-full bg-blue-500 border-2 border-gray-300" data-color="#3B82F6"></button>
-                    <button class="color-btn w-8 h-8 rounded-full bg-green-500 border-2 border-gray-300" data-color="#10B981"></button>
-                    <button class="color-btn w-8 h-8 rounded-full bg-yellow-500 border-2 border-gray-300" data-color="#F59E0B"></button>
-                    <button class="color-btn w-8 h-8 rounded-full bg-purple-500 border-2 border-gray-300" data-color="#8B5CF6"></button>
-                    <button class="color-btn w-8 h-8 rounded-full bg-pink-500 border-2 border-gray-300" data-color="#EC4899"></button>
-                    <input type="color" id="custom-color" class="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer" value="#000000">
-                </div>
-
-                <!-- Brush Size -->
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm font-medium text-gray-700">Size:</span>
-                    <input type="range" id="brush-size" min="1" max="50" value="5" class="w-20">
-                    <span id="size-display" class="text-sm text-gray-600 w-8">5px</span>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex items-center space-x-2">
-                    <button id="clear-canvas" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-                        <i class="fas fa-trash mr-1"></i> Clear
-                    </button>
-                    <button id="save-artwork" class="bg-secondary hover:bg-secondary/90 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-                        <i class="fas fa-download mr-1"></i> Save
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Canvas Area -->
-        <div class="relative bg-white" id="canvas-container">
-            <canvas 
-                id="drawing-canvas" 
-                width="800" 
-                height="600" 
-                class="w-full h-96 md:h-[600px] border-gray-200 cursor-crosshair"
-                style="touch-action: none;"
-            ></canvas>
-            
-            <!-- Canvas Instructions -->
-            <div id="canvas-instructions" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div class="text-center text-gray-400">
-                    <i class="fas fa-palette text-4xl mb-4"></i>
-                    <p class="text-lg">Start drawing to begin your art therapy session</p>
-                    <p class="text-sm">Let your emotions flow through your creativity</p>
-                </div>
-            </div>
-        </div>
+  <!-- Prompts -->
+  <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="card">
+      <h3 class="text-lg font-semibold text-textMain mb-3">
+        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i> Creative Prompts
+      </h3>
+      <ul class="space-y-2 text-sm text-gray-600">
+        <li>• Draw how you're feeling right now</li>
+        <li>• Create a safe space in your mind</li>
+        <li>• Illustrate a peaceful memory</li>
+        <li>• Express your hopes for tomorrow</li>
+      </ul>
     </div>
-
-    <!-- Art Therapy Prompts -->
-    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="card">
-            <h3 class="text-lg font-semibold text-textMain mb-3">
-                <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
-                Creative Prompts
-            </h3>
-            <ul class="space-y-2 text-sm text-gray-600">
-                <li>• Draw how you're feeling right now</li>
-                <li>• Create a safe space in your mind</li>
-                <li>• Illustrate a peaceful memory</li>
-                <li>• Express your hopes for tomorrow</li>
-            </ul>
-        </div>
-
-        <div class="card">
-            <h3 class="text-lg font-semibold text-textMain mb-3">
-                <i class="fas fa-palette text-purple-500 mr-2"></i>
-                Color Therapy
-            </h3>
-            <ul class="space-y-2 text-sm text-gray-600">
-                <li>• <span class="text-blue-500">Blue</span> - Calming and peaceful</li>
-                <li>• <span class="text-green-500">Green</span> - Growth and renewal</li>
-                <li>• <span class="text-yellow-500">Yellow</span> - Joy and optimism</li>
-                <li>• <span class="text-red-500">Red</span> - Energy and passion</li>
-            </ul>
-        </div>
-
-        <div class="card">
-            <h3 class="text-lg font-semibold text-textMain mb-3">
-                <i class="fas fa-heart text-pink-500 mr-2"></i>
-                Mindful Drawing
-            </h3>
-            <ul class="space-y-2 text-sm text-gray-600">
-                <li>• Focus on the present moment</li>
-                <li>• Don't judge your artwork</li>
-                <li>• Let your hand move freely</li>
-                <li>• Embrace imperfection</li>
-            </ul>
-        </div>
+    <div class="card">
+      <h3 class="text-lg font-semibold text-textMain mb-3">
+        <i class="fas fa-palette text-purple-500 mr-2"></i> Color Therapy
+      </h3>
+      <ul class="space-y-2 text-sm text-gray-600">
+        <li>• <span class="text-blue-500">Blue</span> - Calming and peaceful</li>
+        <li>• <span class="text-green-500">Green</span> - Growth and renewal</li>
+        <li>• <span class="text-yellow-500">Yellow</span> - Joy and optimism</li>
+        <li>• <span class="text-red-500">Red</span> - Energy and passion</li>
+      </ul>
     </div>
-
-    <!-- Gallery Section -->
-    <div class="mt-12">
-        <h2 class="text-2xl font-bold text-textMain mb-6">Your Art Therapy Journey</h2>
-        <div id="artwork-gallery" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <!-- Saved artworks will appear here -->
-            <div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-                <div class="text-center text-gray-400">
-                    <i class="fas fa-plus text-2xl mb-2"></i>
-                    <p class="text-sm">Your first artwork</p>
-                </div>
-            </div>
-        </div>
+    <div class="card">
+      <h3 class="text-lg font-semibold text-textMain mb-3">
+        <i class="fas fa-heart text-pink-500 mr-2"></i> Mindful Drawing
+      </h3>
+      <ul class="space-y-2 text-sm text-gray-600">
+        <li>• Focus on the present moment</li>
+        <li>• Don't judge your artwork</li>
+        <li>• Let your hand move freely</li>
+        <li>• Embrace imperfection</li>
+      </ul>
     </div>
+  </div>
+
+  <!-- Gallery -->
+<div class="mt-12">
+  <h2 class="text-2xl font-bold text-textMain mb-6">Your Art Therapy Journey</h2>
+  <div id="artwork-gallery" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <% if (artworks && artworks.length > 0) { %>
+      <% artworks.forEach(art => { %>
+        <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
+          <img src="data:image/png;base64,<%= art.image_data %>" 
+               alt="Artwork" 
+               class="w-full h-full object-cover">
+
+          <!-- Delete button -->
+          <button class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 text-xs delete-artwork"
+                  data-id="<%= art.id %>">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+        <div class="text-center text-gray-400">
+          <i class="fas fa-plus text-2xl mb-2"></i>
+          <p class="text-sm">Your first artwork</p>
+        </div>
+      </div>
+    <% } %>
+  </div>
 </div>
 
-<script>
-// Simple drawing canvas implementation
-document.addEventListener('DOMContentLoaded', function() {
-    const canvas = document.getElementById('drawing-canvas');
-    const ctx = canvas.getContext('2d');
-    const instructions = document.getElementById('canvas-instructions');
-    
-    // Set canvas size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    
-    let isDrawing = false;
-    let currentTool = 'pencil';
-    let currentColor = '#000000';
-    let currentSize = 5;
-    let hasDrawn = false;
 
-    // Tool selection
-    document.querySelectorAll('.tool-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white'));
-            this.classList.add('active', 'bg-primary', 'text-white');
-            currentTool = this.id.replace('-tool', '');
-        });
-    });
-
-    // Color selection
-    document.querySelectorAll('.color-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentColor = this.dataset.color;
-        });
-    });
-
-    // Custom color
-    document.getElementById('custom-color').addEventListener('change', function() {
-        currentColor = this.value;
-        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-    });
-
-    // Brush size
-    const brushSize = document.getElementById('brush-size');
-    const sizeDisplay = document.getElementById('size-display');
-    brushSize.addEventListener('input', function() {
-        currentSize = this.value;
-        sizeDisplay.textContent = this.value + 'px';
-    });
-
-    // Drawing functions
-    function startDrawing(e) {
-        isDrawing = true;
-        if (!hasDrawn) {
-            instructions.style.display = 'none';
-            hasDrawn = true;
-        }
-        draw(e);
-    }
-
-    function draw(e) {
-        if (!isDrawing) return;
-        
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        ctx.lineWidth = currentSize;
-        ctx.lineCap = 'round';
-        
-        if (currentTool === 'eraser') {
-            ctx.globalCompositeOperation = 'destination-out';
-        } else {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = currentColor;
-        }
-        
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-    }
-
-    function stopDrawing() {
-        if (isDrawing) {
-            isDrawing = false;
-            ctx.beginPath();
-        }
-    }
-
-    // Mouse events
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-
-    // Touch events for mobile
-    canvas.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    });
-
-    canvas.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    });
-
-    canvas.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        const mouseEvent = new MouseEvent('mouseup', {});
-        canvas.dispatchEvent(mouseEvent);
-    });
-
-    // Clear canvas
-    document.getElementById('clear-canvas').addEventListener('click', function() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (!hasDrawn) {
-            instructions.style.display = 'flex';
-        }
-    });
-
-    // Save artwork
-    document.getElementById('save-artwork').addEventListener('click', function() {
-        const link = document.createElement('a');
-        link.download = 'my-artwork-' + new Date().getTime() + '.png';
-        link.href = canvas.toDataURL();
-        link.click();
-    });
-});
-</script>
+</div>

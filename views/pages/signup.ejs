@@ -1,5 +1,3 @@
-
-
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
         <div class="text-center">
@@ -36,6 +34,49 @@
                         placeholder="your@email.com"
                     >
                 </div>
+
+                <!-- Role Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-textMain mb-3">
+                        Account Type
+                    </label>
+                    <div class="space-y-3">
+                        <div class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <input 
+                                id="role-patient" 
+                                name="role" 
+                                type="radio" 
+                                value="patient"
+                                checked
+                                class="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                            >
+                            <div class="ml-3 flex-1">
+                                <label for="role-patient" class="block text-sm font-medium text-textMain cursor-pointer">
+                                    <i class="fas fa-user-circle text-primary mr-2"></i>
+                                    Patient
+                                </label>
+                                <p class="text-xs text-gray-500 mt-1">I'm looking for mental health support and therapy resources</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <input 
+                                id="role-therapist" 
+                                name="role" 
+                                type="radio" 
+                                value="therapist"
+                                class="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                            >
+                            <div class="ml-3 flex-1">
+                                <label for="role-therapist" class="block text-sm font-medium text-textMain cursor-pointer">
+                                    <i class="fas fa-user-md text-primary mr-2"></i>
+                                    Therapist
+                                </label>
+                                <p class="text-xs text-gray-500 mt-1">I'm a licensed therapist looking to connect with patients</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div>
                     <label for="password" class="block text-sm font-medium text-textMain mb-2">
@@ -48,7 +89,9 @@
                         required 
                         class="form-input"
                         placeholder="Create a strong password"
+                        minlength="8"
                     >
+                    <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
                 </div>
                 
                 <div>
@@ -92,9 +135,12 @@
             </div>
         </div>
         
-        <!-- Benefits -->
-        <div class="bg-gray-50 rounded-lg p-6">
-            <h3 class="font-semibold text-textMain mb-3">What you'll get:</h3>
+        <!-- Role-specific Benefits -->
+        <div id="patient-benefits" class="bg-blue-50 rounded-lg p-6 role-benefits">
+            <h3 class="font-semibold text-textMain mb-3 flex items-center">
+                <i class="fas fa-heart text-primary mr-2"></i>
+                Patient Benefits:
+            </h3>
             <ul class="space-y-2 text-sm text-gray-600">
                 <li class="flex items-center">
                     <i class="fas fa-check text-primary mr-2"></i>
@@ -112,7 +158,146 @@
                     <i class="fas fa-check text-primary mr-2"></i>
                     Connection to licensed therapists
                 </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    24/7 panic relief resources
+                </li>
+            </ul>
+        </div>
+
+        <div id="therapist-benefits" class="bg-green-50 rounded-lg p-6 role-benefits hidden">
+            <h3 class="font-semibold text-textMain mb-3 flex items-center">
+                <i class="fas fa-stethoscope text-primary mr-2"></i>
+                Therapist Features:
+            </h3>
+            <ul class="space-y-2 text-sm text-gray-600">
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Patient management dashboard
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Access to therapeutic resources
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Patient mood tracking insights
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Professional networking tools
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-primary mr-2"></i>
+                    Specialized therapist resources
+                </li>
             </ul>
         </div>
     </div>
 </div>
+
+<script>
+// Dynamic benefits display based on role selection
+document.addEventListener('DOMContentLoaded', function() {
+    const patientRadio = document.getElementById('role-patient');
+    const therapistRadio = document.getElementById('role-therapist');
+    const patientBenefits = document.getElementById('patient-benefits');
+    const therapistBenefits = document.getElementById('therapist-benefits');
+
+    function updateBenefits() {
+        if (patientRadio.checked) {
+            patientBenefits.classList.remove('hidden');
+            therapistBenefits.classList.add('hidden');
+        } else if (therapistRadio.checked) {
+            patientBenefits.classList.add('hidden');
+            therapistBenefits.classList.remove('hidden');
+        }
+    }
+
+    patientRadio.addEventListener('change', updateBenefits);
+    therapistRadio.addEventListener('change', updateBenefits);
+
+    // Password confirmation validation
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+
+    function validatePassword() {
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity("Passwords don't match");
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+
+    password.addEventListener('change', validatePassword);
+    confirmPassword.addEventListener('keyup', validatePassword);
+});
+</script>
+
+<style>
+.card {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+}
+
+.textMain {
+    color: #1f2937;
+}
+
+.text-primary {
+    color: #3b82f6;
+}
+
+.role-benefits {
+    transition: all 0.3s ease-in-out;
+}
+
+.role-benefits.hidden {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+/* Radio button styling */
+input[type="radio"]:checked + div label {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+input[type="radio"]:checked + div {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+</style>

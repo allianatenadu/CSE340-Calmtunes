@@ -1,480 +1,375 @@
-<!-- account.ejs -->
+<!-- Enhanced Account Page Template -->
 <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">My Account</h1>
-            <p class="text-gray-600">Manage your profile information and preferences</p>
-        </div>
-
-        <!-- Flash Messages -->
-        <% if (success && success.length > 0) { %>
-            <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-green-700"><%= success %></p>
-                    </div>
-                </div>
-            </div>
-        <% } %>
-
-        <% if (error && error.length > 0) { %>
-            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-red-700"><%= error %></p>
-                    </div>
-                </div>
-            </div>
-        <% } %>
-
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Profile Picture Section -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h2>
-                    
-                    <div class="flex flex-col items-center">
-                        <div class="relative mb-4">
-                            <% if (user.profile_image) { %>
-                                <img src="<%= user.profile_image %>" 
-                                     alt="Profile Picture" 
-                                     class="w-32 h-32 rounded-full object-cover border-4 border-teal-100"
-                                     id="profilePreview">
-                            <% } else { %>
-                                <div class="w-32 h-32 rounded-full bg-teal-100 flex items-center justify-center border-4 border-teal-200" id="profilePreview">
-                                    <svg class="w-12 h-12 text-teal-500" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                            <% } %>
-                            
-                            <!-- Camera Icon Overlay -->
-                            <button type="button" 
-                                    class="absolute bottom-0 right-0 bg-teal-500 hover:bg-teal-600 text-white rounded-full p-2 transition-colors duration-200"
-                                    onclick="document.getElementById('profileImageInput').click()">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <p class="text-sm text-gray-500 text-center mb-4">
-                            Upload a new profile picture or enter an image URL below
-                        </p>
-
-                        <!-- Hidden file input -->
-                        <input type="file" 
-                               id="profileImageInput" 
-                               accept="image/*" 
-                               class="hidden"
-                               onchange="handleImageUpload(this)">
-
-                        <button type="button" 
-                                class="w-full bg-teal-50 hover:bg-teal-100 text-teal-700 px-4 py-2 rounded-lg border border-teal-200 transition-colors duration-200"
-                                onclick="document.getElementById('profileImageInput').click()">
-                            Choose File
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Account Stats -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Stats</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Member since</span>
-                            <span class="font-medium text-gray-900">
-                                <%= new Date(user.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %>
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Profile completed</span>
-                            <span class="font-medium text-teal-600">
-                                <%= user.profile_image ? '100%' : '80%' %>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Account Information Form -->
-            <div class="lg:col-span-2">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-6">Account Information</h2>
-
-                    <form action="/account" method="POST" class="space-y-6" id="accountForm">
-                        <!-- Personal Information -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Full Name *
-                                </label>
-                                <input type="text" 
-                                       id="name"
-                                       name="name" 
-                                       value="<%= user.name %>" 
-                                       required
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors duration-200">
-                            </div>
-
-                            <div>
-                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Email Address *
-                                </label>
-                                <input type="email" 
-                                       id="email"
-                                       name="email" 
-                                       value="<%= user.email %>" 
-                                       required
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors duration-200">
-                            </div>
-                        </div>
-
-                        <!-- Profile Image URL -->
-                        <div>
-                            <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-2">
-                                Profile Image URL
-                            </label>
-                            <input type="url" 
-                                   id="profile_image"
-                                   name="profile_image" 
-                                   value="<%= user.profile_image || '' %>" 
-                                   placeholder="https://example.com/your-image.jpg"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors duration-200"
-                                   onchange="previewImageUrl(this.value)">
-                            <p class="text-sm text-gray-500 mt-1">
-                                Enter a direct link to an image, or upload a file using the button above
-                            </p>
-                        </div>
-
-                        <!-- User ID (Read-only) -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                User ID
-                            </label>
-                            <input type="text" 
-                                   value="<%= user.id %>" 
-                                   readonly
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed">
-                            <p class="text-sm text-gray-500 mt-1">This is your unique identifier and cannot be changed</p>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-                            <button type="submit" 
-                                    class="flex-1 bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
-                                Update Profile
-                            </button>
-                            
-                            <button type="button" 
-                                    onclick="resetForm()"
-                                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors duration-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                                Reset Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Additional Settings -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
-                    
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between py-3 border-b border-gray-200">
-                            <div>
-                                <h4 class="font-medium text-gray-900">Email Notifications</h4>
-                                <p class="text-sm text-gray-500">Receive updates about new playlists and features</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-                            </label>
-                        </div>
-
-                        <div class="flex items-center justify-between py-3 border-b border-gray-200">
-                            <div>
-                                <h4 class="font-medium text-gray-900">Privacy Mode</h4>
-                                <p class="text-sm text-gray-500">Hide your listening activity from other users</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-                            </label>
-                        </div>
-
-                        <div class="flex items-center justify-between py-3">
-                            <div>
-                                <h4 class="font-medium text-gray-900">Two-Factor Authentication</h4>
-                                <p class="text-sm text-gray-500">Add an extra layer of security to your account</p>
-                            </div>
-                            <button class="text-teal-600 hover:text-teal-700 font-medium text-sm transition-colors duration-200">
-                                Enable
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Danger Zone -->
-                <div class="bg-white rounded-xl shadow-sm border border-red-200 p-6 mt-6">
-                    <h3 class="text-lg font-semibold text-red-900 mb-4">Danger Zone</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between py-3">
-                            <div>
-                                <h4 class="font-medium text-red-900">Delete Account</h4>
-                                <p class="text-sm text-red-600">Permanently delete your account and all associated data</p>
-                            </div>
-                            <button onclick="confirmDelete()" 
-                                    class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-medium transition-colors duration-200">
-                                Delete Account
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">My Account</h1>
+      <p class="mt-2 text-gray-600">Manage your profile and account settings</p>
     </div>
-</div>
 
-<script>
-// Handle image upload preview
-function handleImageUpload(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            const preview = document.getElementById('profilePreview');
-            preview.innerHTML = `<img src="${e.target.result}" alt="Profile Preview" class="w-32 h-32 rounded-full object-cover border-4 border-teal-100">`;
-            
-            // Set the URL in the form field (you'll need to handle actual upload to a service)
-            document.getElementById('profile_image').value = e.target.result;
-        };
-        
-        reader.readAsDataURL(input.files[0]);
-    }
-}
+    <!-- Account Type Badge -->
+    <div class="mb-6">
+      <div
+        id="roleBadge"
+        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= user.role === 'therapist' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %>"
+      >
+        <% if (user.role === 'therapist') { %>
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Licensed Therapist <% } else { %>
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        Patient <% } %>
+      </div>
+    </div>
 
-// Preview image from URL
-function previewImageUrl(url) {
-    if (url.trim()) {
-        const preview = document.getElementById('profilePreview');
-        const img = new Image();
-        
-        img.onload = function() {
-            preview.innerHTML = `<img src="${url}" alt="Profile Preview" class="w-32 h-32 rounded-full object-cover border-4 border-teal-100">`;
-        };
-        
-        img.onerror = function() {
-            // If URL is invalid, show default avatar
-            preview.innerHTML = `
-                <div class="w-32 h-32 rounded-full bg-teal-100 flex items-center justify-center border-4 border-teal-200">
-                    <svg class="w-12 h-12 text-teal-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-            `;
-        };
-        
-        img.src = url;
-    }
-}
-
-// Reset form to original values
-function resetForm() {
-    document.getElementById('accountForm').reset();
-    
-    // Reset profile image preview
-    const originalImage = '<%= user.profile_image || "" %>';
-    if (originalImage) {
-        document.getElementById('profilePreview').innerHTML = 
-            `<img src="${originalImage}" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-teal-100">`;
-    } else {
-        document.getElementById('profilePreview').innerHTML = `
-            <div class="w-32 h-32 rounded-full bg-teal-100 flex items-center justify-center border-4 border-teal-200">
-                <svg class="w-12 h-12 text-teal-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                </svg>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Profile Card -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-center">
+            <div class="mb-4">
+              <% if (user.profile_image) { %>
+              <img
+                src="<%= user.profile_image %>"
+                alt="<%= user.name %>"
+                class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-gray-200"
+              />
+              <% } else { %>
+              <div
+                class="w-32 h-32 bg-gray-300 rounded-full mx-auto flex items-center justify-center"
+              >
+                <i class="fas fa-user text-4xl text-gray-500"></i>
+              </div>
+              <% } %>
             </div>
-        `;
-    }
-}
 
-// Confirm account deletion
-function confirmDelete() {
-    if (confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently remove all your data, playlists, and preferences.')) {
-        if (confirm('This is your final warning. Clicking OK will permanently delete your account. Are you sure?')) {
-            // Redirect to delete endpoint
-            window.location.href = '/account/delete';
-        }
-    }
-}
+            <h2 class="text-xl font-semibold text-gray-900">
+              <%= user.name %>
+            </h2>
+            <p class="text-gray-600"><%= user.email %></p>
 
-// Form validation
-document.getElementById('accountForm').addEventListener('submit', function(e) {
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    
-    if (!name || !email) {
-        e.preventDefault();
-        alert('Please fill in all required fields.');
-        return false;
-    }
-    
-    // Basic email validation
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-        e.preventDefault();
-        alert('Please enter a valid email address.');
-        return false;
-    }
-});
+            <!-- Role-specific info -->
+            <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+              <% if (user.role === 'therapist') { %>
+              <div class="text-center">
+                <i class="fas fa-stethoscope text-green-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">
+                  Licensed Therapist
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                  Helping patients on their wellness journey
+                </p>
+              </div>
+              <% } else { %>
+              <div class="text-center">
+                <i class="fas fa-heart text-blue-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">
+                  Wellness Journey
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                  Member since <%= new
+                  Date(user.created_at).toLocaleDateString() %>
+                </p>
+              </div>
+              <% } %>
+            </div>
+          </div>
+          
+          <!-- Profile Completion -->
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-gray-700">Profile Completion</span>
+              <span id="profileCompletion" class="text-sm font-semibold text-teal-600">0%</span>
+            </div>
+            <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+              <div id="completionBar" class="bg-teal-600 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
 
-// Auto-save indicator (optional enhancement)
-let saveTimeout;
-function showSaveIndicator() {
-    clearTimeout(saveTimeout);
-    const indicator = document.getElementById('saveIndicator');
-    if (indicator) {
-        indicator.textContent = 'Changes detected...';
-        indicator.className = 'text-orange-500 text-sm';
-        
-        saveTimeout = setTimeout(() => {
-            indicator.textContent = 'All changes saved';
-            indicator.className = 'text-green-500 text-sm';
-        }, 2000);
-    }
-}
+        <!-- Quick Stats (for therapists) -->
+        <% if (user.role === 'therapist') { %>
+        <div class="bg-white rounded-lg shadow p-6 mt-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Active Patients</span>
+              <span class="font-semibold text-green-600">12</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">This Month</span>
+              <span class="font-semibold text-blue-600">48 Sessions</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Rating</span>
+              <span class="font-semibold text-yellow-600">4.9 ⭐</span>
+            </div>
+          </div>
+        </div>
+        <% } %>
+      </div>
 
-// Add change listeners for auto-save indication
-document.querySelectorAll('input[type="text"], input[type="email"], input[type="url"]').forEach(input => {
-    input.addEventListener('input', showSaveIndicator);
-});
-</script>
+      <!-- Account Settings Form -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+              Account Information
+            </h3>
+            <p class="mt-1 text-gray-600">
+              Update your personal information and profile settings
+            </p>
+          </div>
 
-<style>
-/* Custom styles for enhanced appearance */
-.bg-teal-500 {
-    background-color: #4DB6AC;
-}
+          <!-- Flash Messages Container -->
+          <div id="flashMessages" class="px-6"></div>
 
-.bg-teal-600 {
-    background-color: #26A69A;
-}
+          <form
+            id="accountForm"
+            action="/account"
+            method="POST"
+            enctype="multipart/form-data"
+            class="p-6"
+          >
+            <!-- Name -->
+            <div class="mb-6">
+              <label
+                for="name"
+                class="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value="<%= user.name %>"
+                required
+                class="form-input"
+              />
+            </div>
 
-.border-teal-500 {
-    border-color: #4DB6AC;
-}
+            <!-- Email -->
+            <div class="mb-6">
+              <label
+                for="email"
+                class="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value="<%= user.email %>"
+                required
+                class="form-input"
+              />
+            </div>
 
-.text-teal-500 {
-    color: #4DB6AC;
-}
+            <!-- Role Selection -->
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-3">
+                Account Type
+              </label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                  id="patientLabel"
+                  class="relative flex cursor-pointer rounded-lg border p-4 focus:outline-none <%= user.role === 'patient' ? 'border-blue-200 bg-blue-50' : 'border-gray-200' %>"
+                >
+                  <input type="radio" id="role-patient" name="role"
+                  value="patient" <%= user.role === 'patient' ? 'checked' : ''
+                  %> class="sr-only" >
+                  <label
+                    for="role-patient"
+                    class="role-option role-option-patient <%= user.role === 'patient' ? 'selected' : '' %>"
+                  >
+                    <div class="flex items-center">
+                      <i
+                        class="fas fa-user-circle text-blue-600 text-2xl mr-3"
+                      ></i>
+                      <div>
+                        <div class="font-medium text-gray-900">Patient</div>
+                        <div class="text-sm text-gray-500">
+                          Seeking mental health support
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+                  <div
+                    id="patient-border"
+                    class="absolute -inset-px rounded-lg border-2 pointer-events-none <%= user.role === 'patient' ? 'border-blue-500' : 'border-transparent' %>"
+                  ></div>
+                </div>
 
-.text-teal-600 {
-    color: #26A69A;
-}
+                <div
+                  id="therapistLabel"
+                  class="relative flex cursor-pointer rounded-lg border p-4 focus:outline-none <%= user.role === 'therapist' ? 'border-purple-200 bg-purple-50' : 'border-gray-200' %>"
+                >
+                  <input type="radio" id="role-therapist" name="role"
+                  value="therapist" <%= user.role === 'therapist' ? 'checked' :
+                  '' %> class="sr-only" >
+                  <label
+                    for="role-therapist"
+                    class="role-option role-option-therapist <%= user.role === 'therapist' ? 'selected' : '' %>"
+                  >
+                    <div class="flex items-center">
+                      <i
+                        class="fas fa-user-md text-green-600 text-2xl mr-3"
+                      ></i>
+                      <div>
+                        <div class="font-medium text-gray-900">Therapist</div>
+                        <div class="text-sm text-gray-500">
+                          Licensed mental health professional
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+                  <div
+                    id="therapist-border"
+                    class="absolute -inset-px rounded-lg border-2 pointer-events-none <%= user.role === 'therapist' ? 'border-purple-500' : 'border-transparent' %>"
+                  ></div>
+                </div>
+              </div>
+            </div>
 
-.text-teal-700 {
-    color: #00695C;
-}
+            <!-- Profile Image Upload -->
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Profile Image
+              </label>
 
-.bg-teal-50 {
-    background-color: #E0F2F1;
-}
+              <!-- Main profile preview circle -->
+              <div class="flex justify-center mb-4">
+                <div id="profilePreview" class="relative">
+                  <% if (user.profile_image) { %>
+                  <img
+                    src="<%= user.profile_image %>"
+                    alt="<%= user.name %>"
+                    class="w-32 h-32 rounded-full object-cover border-4 border-teal-100"
+                  />
+                  <% } else { %>
+                  <div
+                    class="w-32 h-32 rounded-full bg-teal-100 flex items-center justify-center border-4 border-teal-200"
+                  >
+                    <svg
+                      class="w-12 h-12 text-teal-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <% } %>
+                </div>
+              </div>
 
-.bg-teal-100 {
-    background-color: #B2DFDB;
-}
+              <!-- Drag and drop zone -->
+              <div
+                id="dropZone"
+                class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4 cursor-pointer hover:border-teal-400 transition-colors"
+              >
+                <div class="space-y-2">
+                  <svg
+                    class="mx-auto h-12 w-12 text-gray-400"
+                    stroke="currentColor"
+                    fill="none"
+                    viewBox="0 0 48 48"
+                  >
+                    <path
+                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l3.172-3.172a4 4 0 015.656 0L20 32"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <div class="flex text-sm text-gray-600 justify-center">
+                    <label
+                      for="profileImageInput"
+                      class="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500"
+                    >
+                      <span>Upload a file</span>
+                      <input
+                        type="file"
+                        id="profileImageInput"
+                        name="profile_image_file"
+                        accept="image/*"
+                        class="sr-only"
+                      />
+                    </label>
+                    <p class="pl-1">or drag and drop</p>
+                  </div>
+                  <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                </div>
+              </div>
 
-.border-teal-100 {
-    border-color: #B2DFDB;
-}
+              <!-- Image preview area -->
+              <div id="imagePreviewArea" class="mb-4 hidden">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-sm font-medium text-gray-700"
+                    >Selected Image Preview</span
+                  >
+                  <button
+                    type="button"
+                    onclick="removeImage()"
+                    class="text-sm text-red-600 hover:text-red-800"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <img
+                  id="imagePreview"
+                  src=""
+                  alt="Preview"
+                  class="max-w-full h-auto rounded-lg border border-gray-200"
+                />
+              </div>
 
-.border-teal-200 {
-    border-color: #80CBC4;
-}
+              <!-- URL input as alternative -->
+              <div class="space-y-2">
+                <p class="text-sm text-gray-600">Or enter an image URL:</p>
+                <input
+                  type="url"
+                  id="profile_image"
+                  name="profile_image"
+                  value="<%= user.profile_image || '' %>"
+                  placeholder="https://example.com/image.jpg"
+                  class="form-input w-full"
+                />
+              </div>
 
-.hover\:bg-teal-100:hover {
-    background-color: #B2DFDB;
-}
+              <!-- Save status message -->
+              <div
+                id="saveStatus"
+                class="text-sm text-gray-600 mt-2 hidden"
+              ></div>
+            </div>
 
-.hover\:bg-teal-600:hover {
-    background-color: #26A69A;
-}
-
-.focus\:ring-teal-500:focus {
-    --tw-ring-color: #4DB6AC;
-}
-
-.focus\:border-teal-500:focus {
-    border-color: #4DB6AC;
-}
-
-.peer-checked\:bg-teal-500:checked {
-    background-color: #4DB6AC;
-}
-
-.peer-focus\:ring-teal-300:focus {
-    --tw-ring-color: #4DB6AC40;
-}
-
-/* Smooth transitions */
-input, button {
-    transition: all 0.2s ease-in-out;
-}
-
-/* Profile picture hover effect */
-#profilePreview {
-    transition: transform 0.2s ease-in-out;
-}
-
-#profilePreview:hover {
-    transform: scale(1.05);
-}
-
-/* Form validation styles */
-input:invalid {
-    border-color: #EF4444;
-}
-
-input:valid {
-    border-color: #10B981;
-}
-
-/* Loading animation for image upload */
-.loading {
-    opacity: 0.7;
-    pointer-events: none;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid #4DB6AC;
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-</style>
+            <!-- Save Button -->
+            <div class="flex justify-end space-x-3">
+              <button
+                type="button"
+                onclick="confirmDelete()"
+                class="px-4 py-2 text-red-600 hover:text-red-800 text-sm font-medium"
+              >
+                Delete Account
+              </button>
+              <button type="submit" class="btn-primary">Update Profile</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
