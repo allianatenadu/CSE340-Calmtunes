@@ -4,11 +4,12 @@ const homeController = require('../controllers/homeController');
 const authController = require('../controllers/authController');
 const dashboardController = require('../controllers/dashboardController');
 const accountController = require('../controllers/accountController');
+const musicController = require('../controllers/musicController'); // ✅ Add this import
 
 // Middleware to check if user is authenticated
 function requireAuth(req, res, next) {
-  console.log("🔒 Auth check - Session:", !!req.session);
-  console.log("🔒 Auth check - User:", req.session?.user ? 'exists' : 'missing');
+  console.log("🔐 Auth check - Session:", !!req.session);
+  console.log("🔐 Auth check - User:", req.session?.user ? 'exists' : 'missing');
   
   if (req.session && req.session.user && req.session.user.id) {
     console.log("✅ Auth check passed for user:", req.session.user.name);
@@ -55,8 +56,6 @@ router.get('/logout', authController.getLogout);
 
 // Shared authenticated routes (both patients and therapists)
 router.get('/dashboard', requireAuth, dashboardController.getDashboard);
-router.get('/music', requireAuth, dashboardController.getMusic);
-router.get('/drawing', requireAuth, dashboardController.getDrawing);
 
 // Account management routes
 router.get('/account', requireAuth, accountController.getAccount);
