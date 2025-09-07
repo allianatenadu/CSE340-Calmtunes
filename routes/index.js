@@ -1,93 +1,85 @@
+// routes/index.js - Fixed version with better error handling
 const express = require('express');
 const router = express.Router();
-const homeController = require('../controllers/homeController');
-const authController = require('../controllers/authController');
 const dashboardController = require('../controllers/dashboardController');
-const accountController = require('../controllers/accountController');
-const musicController = require('../controllers/musicController'); // ✅ Add this import
+const { requireAuth, requirePatient, requireAuthGeneral } = require('../middleware/auth');
 
-// Middleware to check if user is authenticated
-function requireAuth(req, res, next) {
-  console.log("🔐 Auth check - Session:", !!req.session);
-  console.log("🔐 Auth check - User:", req.session?.user ? 'exists' : 'missing');
-  
-  if (req.session && req.session.user && req.session.user.id) {
-    console.log("✅ Auth check passed for user:", req.session.user.name);
-    next();
-  } else {
-    console.log("❌ Auth check failed - redirecting to login");
-    req.flash('error', 'Please log in to access this page');
-    res.redirect('/login');
-  }
-}
-
-// Middleware to check if user is a therapist
-function requireTherapist(req, res, next) {
-  if (req.session && req.session.user && req.session.user.role === 'therapist') {
-    console.log("✅ Therapist access granted for:", req.session.user.name);
-    next();
-  } else {
-    console.log("❌ Therapist access denied for:", req.session.user?.name || 'anonymous');
-    req.flash('error', 'Access denied. Therapist account required.');
-    res.redirect('/dashboard');
-  }
-}
-
-// Middleware to check if user is a patient
-function requirePatient(req, res, next) {
-  if (req.session && req.session.user && req.session.user.role === 'patient') {
-    console.log("✅ Patient access granted for:", req.session.user.name);
-    next();
-  } else {
-    console.log("❌ Patient access denied for:", req.session.user?.name || 'anonymous');
-    req.flash('error', 'Access denied. Patient account required.');
-    res.redirect('/dashboard');
-  }
-}
-
-// Public routes
-router.get('/', homeController.getHome);
-router.get('/about', homeController.getAbout);
-router.get('/login', authController.getLogin);
-router.get('/signup', authController.getSignup);
-router.post('/login', authController.postLogin);
-router.post('/signup', authController.postSignup);
-router.get('/logout', authController.getLogout);
-
-// Shared authenticated routes (both patients and therapists)
-router.get('/dashboard', requireAuth, dashboardController.getDashboard);
-
-// Account management routes
-router.get('/account', requireAuth, accountController.getAccount);
-router.post('/account', requireAuth, accountController.postAccount);
-router.get('/account/delete', requireAuth, accountController.deleteAccount);
-
-// Patient-specific routes
-router.get('/panic', requireAuth, requirePatient, dashboardController.getPanic);
-router.get('/therapists', requireAuth, requirePatient, dashboardController.getTherapists);
-
-// Therapist-specific routes
-router.get('/patients', requireAuth, requireTherapist, dashboardController.getPatients);
-
-// Alternative route that redirects based on user role
-router.get('/find-help', requireAuth, (req, res) => {
-  if (req.session.user.role === 'therapist') {
-    res.redirect('/patients');
-  } else {
-    res.redirect('/therapists');
+// Home page - redirect authenticated users to their appropriate dashboard
+router.get('/', (req, res) => {
+  try {
+    // If user is logged in, redirect to appropriate dashboard
+    if (req.session && req.session.user) {
+      switch (req.session.user.role) {
+        case 'admin':
+          return res.redirect('/admin');
+        case 'therapist':
+          return res.redirect('/therapist');
+        case 'patient':
+        default:
+          return res.redirect('/dashboard');
+      }
+    }
+    
+    // Show home page for non-authenticated users
+    res.render('pages/home', { 
+      title: 'CalmTunes - Mental Health Support',
+      user: null 
+    });
+  } catch (error) {
+    console.error('Home route error:', error);
+    res.render('pages/home', { 
+      title: 'CalmTunes - Mental Health Support',
+      user: null 
+    });
   }
 });
 
-// Debug route (remove in production)
-router.get('/debug-session', requireAuth, (req, res) => {
-  res.json({
-    session: {
-      user: req.session.user,
-      sessionID: req.sessionID,
-      role: req.session.user?.role
-    },
-    timestamp: new Date().toISOString()
-  });
+// Patient Dashboard - Only accessible to patients
+// Let's make this more flexible to handle different user types gracefully
+router.get('/dashboard', requireAuth, (req, res, next) => {
+  // If user is not a patient, redirect them to their appropriate dashboard
+  if (req.session.user.role === 'admin') {
+    return res.redirect('/admin');
+  }
+  if (req.session.user.role === 'therapist') {
+    return res.redirect('/therapist');
+  }
+  // Continue to dashboard controller for patients
+  next();
+}, dashboardController.getDashboard);
+
+// General therapy features - Available to all authenticated users
+router.get('/panic', requireAuth, dashboardController.getPanic);
+
+// Public pages
+router.get('/about', (req, res) => {
+  try {
+    res.render('pages/about', { 
+      title: 'About CalmTunes',
+      user: req.session.user || null 
+    });
+  } catch (error) {
+    console.error('About page error:', error);
+    res.render('pages/about', { 
+      title: 'About CalmTunes',
+      user: null 
+    });
+  }
+});
+
+router.get('/contact', (req, res) => {
+  try {
+    res.render('pages/contact', { 
+      title: 'Contact Us - CalmTunes',
+      user: req.session.user || null 
+    });
+  } catch (error) {
+    console.error('Contact page error:', error);
+    res.render('pages/contact', { 
+      title: 'Contact Us - CalmTunes',
+      user: null 
+    });
+  }
 });
 
 module.exports = router;

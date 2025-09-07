@@ -1,14 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const drawingController = require("../controllers/drawingController");
+const { requireAuth, requirePatient } = require("../middleware/auth");
 
-// Page
-router.get("/", drawingController.renderDrawingPage);
-
-// Save
-router.post("/save", drawingController.saveDrawing);
-
-// Delete
-router.delete("/:id", drawingController.deleteDrawing);
+// only patients can access Drawing
+router.get("/", requireAuth, requirePatient, drawingController.renderDrawingPage);
+router.post("/save", requireAuth, requirePatient, drawingController.saveDrawing);
+router.delete("/:id", requireAuth, requirePatient, drawingController.deleteDrawing);
 
 module.exports = router;

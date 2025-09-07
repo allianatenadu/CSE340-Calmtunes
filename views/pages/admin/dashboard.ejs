@@ -1,0 +1,21 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <h1 class="text-3xl font-bold text-textMain mb-6">🛠️ Admin Dashboard</h1>
+  <p class="text-gray-600 mb-6">Welcome, <%= user?.name %>. Manage therapists and patients from here.</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <a href="/admin/applications" class="card hover:shadow-lg transition">
+      <h2 class="text-xl font-semibold mb-2">Therapist Applications</h2>
+      <p class="text-gray-600">Review pending therapist applications and approve/reject them.</p>
+    </a>
+
+    <a href="/admin/users" class="card hover:shadow-lg transition">
+      <h2 class="text-xl font-semibold mb-2">Manage Users</h2>
+      <p class="text-gray-600">View and manage registered patients and therapists.</p>
+    </a>
+
+    <a href="/admin/settings" class="card hover:shadow-lg transition">
+      <h2 class="text-xl font-semibold mb-2">Settings</h2>
+      <p class="text-gray-600">Control system settings and configurations.</p>
+    </a>
+  </div>
+</div>

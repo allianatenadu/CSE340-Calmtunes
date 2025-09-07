@@ -1,0 +1,292 @@
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-primary to-secondary text-white p-6">
+      <h1 class="text-3xl font-bold mb-2">👩‍⚕️ Therapist Application</h1>
+      <p class="text-lg opacity-90">Join our team of qualified mental health professionals</p>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="bg-gray-50 px-6 py-4">
+      <div class="flex items-center justify-between max-w-2xl mx-auto">
+        <div class="flex items-center">
+          <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+          <span class="ml-2 text-sm font-medium text-primary">Application</span>
+        </div>
+        <div class="flex-1 h-1 bg-gray-300 mx-4"></div>
+        <div class="flex items-center">
+          <div class="w-8 h-8 bg-gray-300 text-gray-500 rounded-full flex items-center justify-center text-sm font-bold">2</div>
+          <span class="ml-2 text-sm text-gray-500">Review</span>
+        </div>
+        <div class="flex-1 h-1 bg-gray-300 mx-4"></div>
+        <div class="flex items-center">
+          <div class="w-8 h-8 bg-gray-300 text-gray-500 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+          <span class="ml-2 text-sm text-gray-500">Approval</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="p-6">
+      <form method="POST" action="/therapist/apply" enctype="multipart/form-data" class="space-y-8">
+        
+        <!-- Personal Information -->
+        <div class="space-y-6">
+          <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-user-circle text-blue-600 mr-3"></i>
+            Personal Information
+          </h2>
+          
+          <!-- Profile Image Upload -->
+          <div>
+            <label class="block text-sm font-medium text-gray-800 mb-2">
+              Profile Image <span class="text-gray-500">(Optional)</span>
+            </label>
+            <div class="flex items-center space-x-6">
+              <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                <img id="imagePreview" class="w-full h-full object-cover hidden">
+                <i class="fas fa-camera text-gray-500 text-2xl" id="cameraIcon"></i>
+              </div>
+              <div>
+                <input 
+                  type="file" 
+                  name="profileImage" 
+                  accept="image/*" 
+                  class="hidden" 
+                  id="profileImageInput"
+                  onchange="previewImage(this)"
+                >
+                <button 
+                  type="button" 
+                  onclick="document.getElementById('profileImageInput').click()" 
+                  class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <i class="fas fa-upload mr-2"></i>Upload Photo
+                </button>
+                <p class="text-sm text-gray-500 mt-1">JPG, PNG up to 2MB</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Specialty -->
+          <div>
+            <label class="block text-sm font-medium text-gray-800 mb-2">
+              Specialty <span class="text-red-500">*</span>
+            </label>
+            <select name="specialty" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="">Select your specialty</option>
+              <option value="anxiety">Anxiety & Depression</option>
+              <option value="cbt">Cognitive Behavioral Therapy</option>
+              <option value="trauma">Trauma & PTSD</option>
+              <option value="couples">Couples Therapy</option>
+              <option value="family">Family Therapy</option>
+              <option value="addiction">Addiction Counseling</option>
+              <option value="child">Child Psychology</option>
+              <option value="grief">Grief Counseling</option>
+            </select>
+          </div>
+
+          <!-- Years of Experience -->
+          <div>
+            <label class="block text-sm font-medium text-gray-800 mb-2">
+              Years of Experience <span class="text-red-500">*</span>
+            </label>
+            <select name="experience" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="">Select experience level</option>
+              <option value="1-3">1-3 years</option>
+              <option value="4-7">4-7 years</option>
+              <option value="8-15">8-15 years</option>
+              <option value="15+">15+ years</option>
+            </select>
+          </div>
+
+          <!-- Bio -->
+          <div>
+            <label class="block text-sm font-medium text-gray-800 mb-2">
+              Professional Bio <span class="text-red-500">*</span>
+            </label>
+            <textarea 
+              name="bio" 
+              rows="4" 
+              required 
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+              placeholder="Tell us about your background, approach to therapy, and what makes you passionate about mental health care..."
+            ></textarea>
+            <p class="text-sm text-gray-500 mt-1">This will be displayed on your public profile</p>
+          </div>
+        </div>
+
+        <!-- Documentation -->
+        <div class="space-y-6">
+          <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-file-medical text-blue-600 mr-3"></i>
+            Required Documents
+          </h2>
+
+          <!-- Resume Upload -->
+          <div>
+            <label class="block text-sm font-medium text-gray-800 mb-2">
+              Resume/CV <span class="text-red-500">*</span>
+            </label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+              <input type="file" name="resume" accept=".pdf,.doc,.docx" required class="hidden" id="resumeInput">
+              <button 
+                type="button" 
+                onclick="document.getElementById('resumeInput').click()" 
+                class="text-blue-600 hover:text-blue-800"
+              >
+                <i class="fas fa-cloud-upload-alt text-3xl mb-3"></i>
+                <div class="text-lg font-medium">Upload Resume</div>
+                <div class="text-sm text-gray-500">PDF, DOC, DOCX up to 5MB</div>
+              </button>
+              <div id="resumeFileName" class="mt-2 text-sm text-green-600 hidden"></div>
+            </div>
+          </div>
+
+          <!-- Certifications Upload -->
+          <div>
+            <label class="block text-sm font-medium text-gray-800 mb-2">
+              License & Certifications <span class="text-gray-500">(Optional but recommended)</span>
+            </label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+              <input type="file" name="certifications" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden" id="certificationsInput">
+              <button 
+                type="button" 
+                onclick="document.getElementById('certificationsInput').click()" 
+                class="text-blue-600 hover:text-blue-800"
+              >
+                <i class="fas fa-certificate text-3xl mb-3"></i>
+                <div class="text-lg font-medium">Upload Certifications</div>
+                <div class="text-sm text-gray-500">PDF, DOC, DOCX, JPG, PNG up to 5MB</div>
+              </button>
+              <div id="certificationsFileName" class="mt-2 text-sm text-green-600 hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terms and Conditions -->
+        <div class="space-y-4">
+          <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-check-circle text-blue-600 mr-3"></i>
+            Agreement
+          </h2>
+          
+          <div class="bg-gray-50 rounded-lg p-6">
+            <div class="flex items-start space-x-3">
+              <input type="checkbox" id="terms" name="terms" required class="mt-1">
+              <label for="terms" class="text-sm text-gray-700">
+                I confirm that I am a licensed mental health professional and agree to the 
+                <a href="/terms" class="text-blue-600 hover:underline">Terms of Service</a> and 
+                <a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>. 
+                I understand that my application will be reviewed and that providing false information may result in rejection or termination.
+              </label>
+            </div>
+            
+            <div class="flex items-start space-x-3 mt-4">
+              <input type="checkbox" id="consent" name="consent" required class="mt-1">
+              <label for="consent" class="text-sm text-gray-700">
+                I consent to background verification and understand that my credentials will be verified before approval. 
+                I agree to maintain professional standards and follow all platform guidelines.
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <button 
+            type="button" 
+            onclick="window.history.back()" 
+            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <i class="fas fa-paper-plane mr-2"></i>
+            Submit Application
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+:root {
+  --primary: #3b82f6;
+  --secondary: #1d4ed8;
+}
+</style>
+
+<script>
+function previewImage(input) {
+  const preview = document.getElementById('imagePreview');
+  const cameraIcon = document.getElementById('cameraIcon');
+  
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.classList.remove('hidden');
+      cameraIcon.classList.add('hidden');
+    };
+    
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// File name display for resume
+document.getElementById('resumeInput').addEventListener('change', function(e) {
+  const fileName = e.target.files[0]?.name;
+  const fileNameDiv = document.getElementById('resumeFileName');
+  
+  if (fileName) {
+    fileNameDiv.textContent = `✓ ${fileName}`;
+    fileNameDiv.classList.remove('hidden');
+  }
+});
+
+// File name display for certifications
+document.getElementById('certificationsInput').addEventListener('change', function(e) {
+  const fileName = e.target.files[0]?.name;
+  const fileNameDiv = document.getElementById('certificationsFileName');
+  
+  if (fileName) {
+    fileNameDiv.textContent = `✓ ${fileName}`;
+    fileNameDiv.classList.remove('hidden');
+  }
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+  const terms = document.getElementById('terms').checked;
+  const consent = document.getElementById('consent').checked;
+  
+  if (!terms || !consent) {
+    e.preventDefault();
+    alert('Please accept all terms and conditions to proceed.');
+    return;
+  }
+  
+  const specialty = document.querySelector('select[name="specialty"]').value;
+  const experience = document.querySelector('select[name="experience"]').value;
+  const bio = document.querySelector('textarea[name="bio"]').value.trim();
+  const resume = document.getElementById('resumeInput').files.length;
+  
+  if (!specialty || !experience || !bio || !resume) {
+    e.preventDefault();
+    alert('Please fill in all required fields.');
+    return;
+  }
+  
+  if (bio.length < 50) {
+    e.preventDefault();
+    alert('Professional bio must be at least 50 characters long.');
+    return;
+  }
+});
+</script>

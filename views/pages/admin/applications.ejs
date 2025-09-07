@@ -1,0 +1,40 @@
+<div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow">
+  <h1 class="text-2xl font-bold mb-4">Therapist Applications</h1>
+  <% if (applications.length > 0) { %>
+    <table class="w-full border">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="p-2">Name</th>
+          <th class="p-2">Email</th>
+          <th class="p-2">Resume</th>
+          <th class="p-2">Certifications</th>
+          <th class="p-2">Status</th>
+          <th class="p-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% applications.forEach(app => { %>
+          <tr class="border-t">
+            <td class="p-2"><%= app.name %></td>
+            <td class="p-2"><%= app.email %></td>
+            <td class="p-2"><%= app.resume %></td>
+            <td class="p-2"><%= app.certifications %></td>
+            <td class="p-2"><%= app.status %></td>
+            <td class="p-2">
+              <% if (app.status === 'pending') { %>
+                <form method="POST" action="/admin/applications/<%= app.id %>/approve" class="inline">
+                  <button class="bg-green-500 text-white px-2 py-1 rounded">Approve</button>
+                </form>
+                <form method="POST" action="/admin/applications/<%= app.id %>/reject" class="inline">
+                  <button class="bg-red-500 text-white px-2 py-1 rounded">Reject</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p>No applications yet.</p>
+  <% } %>
+</div>

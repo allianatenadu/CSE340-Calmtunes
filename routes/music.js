@@ -1,14 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const musicController = require("../controllers/musicController");
+const { requireAuth, requirePatient } = require("../middleware/auth");
 
-// auth gate
-function requireAuth(req, res, next) {
-  if (req.session && req.session.user) return next();
-  req.flash("error", "Please log in to access Music");
-  res.redirect("/login");
-}
-
-router.get("/", requireAuth, musicController.getMusicPage);
+// only patients can access Music
+router.get("/", requireAuth, requirePatient, musicController.getMusicPage);
 
 module.exports = router;

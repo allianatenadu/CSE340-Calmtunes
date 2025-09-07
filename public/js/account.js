@@ -1,5 +1,4 @@
-// Enhanced Account Page JavaScript with File Upload Support
-
+//public/js/account.js
 // Global variables
 let selectedFile = null;
 let isUploading = false;

@@ -1,7 +1,63 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-50">
-  <div class="text-center">
-    <h1 class="text-4xl font-bold text-primary mb-4">404 - Page Not Found</h1>
-    <p class="text-gray-600">The page you are looking for doesn't exist.</p>
-    <a href="/" class="btn-primary mt-4 inline-block">Go Home</a>
-  </div>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+    <div class="text-center max-w-md mx-auto px-6">
+        <!-- 404 Icon -->
+        <div class="mb-8">
+            <div class="w-32 h-32 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                <i class="fas fa-search text-4xl text-primary/60"></i>
+            </div>
+        </div>
+        
+        <!-- Error Message -->
+        <h1 class="text-6xl font-bold text-primary mb-4">404</h1>
+        <h2 class="text-2xl font-semibold text-textMain mb-4">Page Not Found</h2>
+        <p class="text-gray-600 mb-8">
+            <%= typeof message !== 'undefined' ? message : 'The page you are looking for does not exist or may have been moved.' %>
+        </p>
+        
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+            <a href="/" class="btn-primary inline-flex items-center">
+                <i class="fas fa-home mr-2"></i>
+                Go Home
+            </a>
+            
+            <% if (user) { %>
+                <div class="mt-4">
+                    <% if (user.role === 'patient') { %>
+                        <a href="/dashboard" class="btn-secondary inline-flex items-center">
+                            <i class="fas fa-tachometer-alt mr-2"></i>
+                            Patient Dashboard
+                        </a>
+                    <% } else if (user.role === 'therapist') { %>
+                        <a href="/therapist" class="btn-secondary inline-flex items-center">
+                            <i class="fas fa-user-md mr-2"></i>
+                            Therapist Dashboard
+                        </a>
+                    <% } else if (user.role === 'admin') { %>
+                        <a href="/admin" class="btn-secondary inline-flex items-center">
+                            <i class="fas fa-cog mr-2"></i>
+                            Admin Panel
+                        </a>
+                    <% } %>
+                </div>
+            <% } else { %>
+                <div class="mt-4">
+                    <a href="/login" class="btn-secondary inline-flex items-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Login
+                    </a>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Help Links -->
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <p class="text-sm text-gray-500 mb-4">Looking for something specific?</p>
+            <div class="flex flex-wrap justify-center gap-4 text-sm">
+                <a href="/find-therapist" class="text-primary hover:text-primary/80">Find a Therapist</a>
+                <a href="/about" class="text-primary hover:text-primary/80">About Us</a>
+                <a href="/contact" class="text-primary hover:text-primary/80">Contact</a>
+            </div>
+        </div>
+    </div>
 </div>
