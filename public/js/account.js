@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeFormValidation();
     initializeRoleSelection();
     loadExistingProfileImage();
+    initializeVolumeSlider();
+    initializeDeleteConfirmation();
 });
 
 // Initialize all image-related event handlers
@@ -33,6 +35,204 @@ function initializeImageHandlers() {
     // URL input change handler
     if (urlInput) {
         urlInput.addEventListener('input', debounce(previewImageUrl, 500));
+    }
+}
+
+// Role selection handlers - FIXED VERSION
+function initializeRoleSelection() {
+    const roleInputs = document.querySelectorAll('input[name="role"]');
+    const patientLabel = document.getElementById('patientLabel');
+    const therapistLabel = document.getElementById('therapistLabel');
+    const patientBorder = document.getElementById('patient-border');
+    const therapistBorder = document.getElementById('therapist-border');
+
+    if (!roleInputs.length || !patientLabel || !therapistLabel) {
+        console.log('Role selection elements not found');
+        return;
+    }
+
+    roleInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            console.log('Role changed to:', this.value);
+            
+            // Reset all labels to default state
+            patientLabel.className = 'relative flex cursor-pointer rounded-xl border p-4 focus:outline-none border-gray-200';
+            therapistLabel.className = 'relative flex cursor-pointer rounded-xl border p-4 focus:outline-none border-gray-200';
+            
+            // Reset borders to transparent
+            if (patientBorder) {
+                patientBorder.className = 'absolute -inset-px rounded-xl border-2 pointer-events-none border-transparent';
+            }
+            if (therapistBorder) {
+                therapistBorder.className = 'absolute -inset-px rounded-xl border-2 pointer-events-none border-transparent';
+            }
+
+            // Apply styles based on selection
+            if (this.value === 'patient') {
+                patientLabel.className = 'relative flex cursor-pointer rounded-xl border p-4 focus:outline-none border-blue-200 bg-blue-50';
+                if (patientBorder) {
+                    patientBorder.className = 'absolute -inset-px rounded-xl border-2 pointer-events-none border-blue-500';
+                }
+            } else if (this.value === 'therapist') {
+                therapistLabel.className = 'relative flex cursor-pointer rounded-xl border p-4 focus:outline-none border-purple-200 bg-purple-50';
+                if (therapistBorder) {
+                    therapistBorder.className = 'absolute -inset-px rounded-xl border-2 pointer-events-none border-purple-500';
+                }
+            }
+
+            // Update role badge
+            updateRoleBadge(this.value);
+            
+            showSaveStatus('Account type changed. Click "Update Profile" to save.', 'info');
+        });
+    });
+
+    // Set initial state based on checked input
+    const checkedRole = document.querySelector('input[name="role"]:checked');
+    if (checkedRole) {
+        // Trigger change event to set initial styling
+        checkedRole.dispatchEvent(new Event('change'));
+    }
+}
+
+function updateRoleBadge(role) {
+    const roleBadge = document.getElementById('roleBadge');
+    const accountType = document.getElementById('accountType');
+    
+    if (roleBadge) {
+        if (role === 'therapist') {
+            roleBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 shadow-lg';
+            roleBadge.innerHTML = `
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Licensed Therapist
+            `;
+        } else {
+            roleBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 shadow-lg';
+            roleBadge.innerHTML = `
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+                Patient
+            `;
+        }
+    }
+    
+    if (accountType) {
+        accountType.textContent = role === 'therapist' ? 'Therapist' : 'Patient';
+        accountType.className = role === 'therapist' ? 'font-medium text-purple-600' : 'font-medium text-blue-600';
+    }
+}
+
+// Form validation and submission - FIXED VERSION
+function initializeFormValidation() {
+    const form = document.getElementById('accountForm');
+    if (form) {
+        // Use regular form submission instead of fetch
+        form.addEventListener('submit', function(e) {
+            console.log('Form submitted');
+            
+            if (isUploading) {
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!validateForm()) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Log form data for debugging
+            const formData = new FormData(this);
+            console.log('Form submission data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
+            // Check role selection
+            const selectedRole = document.querySelector('input[name="role"]:checked');
+            if (!selectedRole) {
+                e.preventDefault();
+                showError('Please select an account type.');
+                return false;
+            }
+            
+            console.log('Selected role:', selectedRole.value);
+            
+            // Show loading state
+            showLoadingState(true);
+            showSaveStatus('Updating profile...', 'loading');
+            
+            // Allow form to submit normally
+            return true;
+        });
+        
+        // Add real-time validation
+        const inputs = form.querySelectorAll('input[required]');
+        inputs.forEach(input => {
+            input.addEventListener('blur', validateField);
+            input.addEventListener('input', clearFieldError);
+        });
+    }
+}
+
+function validateForm() {
+    const name = document.getElementById('name')?.value.trim();
+    const email = document.getElementById('email')?.value.trim();
+    
+    if (!name) {
+        showError('Full name is required.');
+        document.getElementById('name')?.focus();
+        return false;
+    }
+    
+    if (!email) {
+        showError('Email address is required.');
+        document.getElementById('email')?.focus();
+        return false;
+    }
+    
+    // Email validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+        showError('Please enter a valid email address.');
+        document.getElementById('email')?.focus();
+        return false;
+    }
+    
+    return true;
+}
+
+// Volume slider initialization
+function initializeVolumeSlider() {
+    const volumeSlider = document.getElementById('defaultVolume');
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', function(e) {
+            const display = document.getElementById('volumeDisplay');
+            if (display) {
+                display.textContent = e.target.value + '%';
+            }
+        });
+    }
+}
+
+// Delete confirmation initialization
+function initializeDeleteConfirmation() {
+    const deleteInput = document.getElementById('deleteConfirmation');
+    if (deleteInput) {
+        deleteInput.addEventListener('input', function(e) {
+            const deleteButton = document.getElementById('deleteButton');
+            if (deleteButton) {
+                if (e.target.value === 'DELETE') {
+                    deleteButton.disabled = false;
+                    deleteButton.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+                } else {
+                    deleteButton.disabled = true;
+                    deleteButton.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+                }
+            }
+        });
     }
 }
 
@@ -83,20 +283,17 @@ function handleImageSelect(input) {
 }
 
 function handleFileSelection(file) {
-    // Validate file
     if (!validateFile(file)) {
         return;
     }
 
     selectedFile = file;
     
-    // Show preview
     const reader = new FileReader();
     reader.onload = function(e) {
         updateProfilePreview(e.target.result, true);
         showImagePreview(e.target.result);
         
-        // Clear URL input since we're using file upload
         const urlInput = document.getElementById('profile_image');
         if (urlInput) {
             urlInput.value = '';
@@ -107,7 +304,6 @@ function handleFileSelection(file) {
     reader.readAsDataURL(file);
 }
 
-// Validate uploaded file
 function validateFile(file) {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     const maxSize = 5 * 1024 * 1024; // 5MB
@@ -125,24 +321,20 @@ function validateFile(file) {
     return true;
 }
 
-// Update the main profile preview circle
 function updateProfilePreview(src, isFile = false) {
     const preview = document.getElementById('profilePreview');
     if (preview) {
         const img = document.createElement('img');
         img.src = src;
         img.alt = 'Profile Preview';
-        img.className = 'w-32 h-32 rounded-full object-cover border-4 border-teal-100';
+        img.className = 'w-32 h-32 rounded-full object-cover border-4 border-white/30 shadow-lg';
         
-        // Add loading class temporarily
         preview.classList.add('loading');
         
         img.onload = function() {
             preview.innerHTML = '';
             preview.appendChild(img);
             preview.classList.remove('loading');
-            
-            // Update profile completion percentage
             updateProfileCompletion();
         };
         
@@ -154,7 +346,6 @@ function updateProfilePreview(src, isFile = false) {
     }
 }
 
-// Show image in the preview area below upload zone
 function showImagePreview(src) {
     const previewArea = document.getElementById('imagePreviewArea');
     const imagePreview = document.getElementById('imagePreview');
@@ -165,35 +356,28 @@ function showImagePreview(src) {
     }
 }
 
-// Remove selected image
 function removeImage() {
     selectedFile = null;
     
-    // Hide preview area
     const previewArea = document.getElementById('imagePreviewArea');
     if (previewArea) {
         previewArea.classList.add('hidden');
     }
     
-    // Clear file input
     const fileInput = document.getElementById('profileImageInput');
     if (fileInput) {
         fileInput.value = '';
     }
     
-    // Reset to default or existing image
     loadExistingProfileImage();
-    
     showSaveStatus('Image removed.', 'info');
 }
 
-// Preview image from URL
 function previewImageUrl(url) {
     if (!url || !url.trim()) {
         return;
     }
 
-    // Clear selected file if URL is being used
     if (url.trim()) {
         selectedFile = null;
         const previewArea = document.getElementById('imagePreviewArea');
@@ -205,7 +389,9 @@ function previewImageUrl(url) {
     const img = new Image();
     const preview = document.getElementById('profilePreview');
     
-    preview.classList.add('loading');
+    if (preview) {
+        preview.classList.add('loading');
+    }
     
     img.onload = function() {
         updateProfilePreview(url);
@@ -213,7 +399,9 @@ function previewImageUrl(url) {
     };
     
     img.onerror = function() {
-        preview.classList.remove('loading');
+        if (preview) {
+            preview.classList.remove('loading');
+        }
         showDefaultAvatar();
         showError('Failed to load image from URL. Please check the link.');
     };
@@ -221,139 +409,17 @@ function previewImageUrl(url) {
     img.src = url.trim();
 }
 
-// Show default avatar
 function showDefaultAvatar() {
     const preview = document.getElementById('profilePreview');
     if (preview) {
         preview.innerHTML = `
-            <div class="w-32 h-32 rounded-full bg-teal-100 flex items-center justify-center border-4 border-teal-200">
-                <svg class="w-12 h-12 text-teal-500" fill="currentColor" viewBox="0 0 20 20">
+            <div class="w-32 h-32 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30 shadow-lg">
+                <svg class="w-12 h-12 text-white/70" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
                 </svg>
             </div>
         `;
     }
-}
-
-// Role selection handlers
-function initializeRoleSelection() {
-    const roleInputs = document.querySelectorAll('input[name="role"]');
-    roleInputs.forEach(input => {
-        input.addEventListener('change', updateRoleSelection);
-    });
-}
-
-function updateRoleSelection() {
-    const selectedRole = document.querySelector('input[name="role"]:checked').value;
-    
-    // Update labels
-    const patientLabel = document.getElementById('patientLabel');
-    const therapistLabel = document.getElementById('therapistLabel');
-    const patientBorder = document.getElementById('patient-border');
-    const therapistBorder = document.getElementById('therapist-border');
-    
-    if (selectedRole === 'patient') {
-        patientLabel.className = 'relative flex cursor-pointer rounded-lg border p-4 focus:outline-none border-blue-200 bg-blue-50';
-        therapistLabel.className = 'relative flex cursor-pointer rounded-lg border p-4 focus:outline-none border-gray-200';
-        patientBorder.className = 'absolute -inset-px rounded-lg border-2 pointer-events-none border-blue-500';
-        therapistBorder.className = 'absolute -inset-px rounded-lg border-2 pointer-events-none border-transparent';
-    } else {
-        patientLabel.className = 'relative flex cursor-pointer rounded-lg border p-4 focus:outline-none border-gray-200';
-        therapistLabel.className = 'relative flex cursor-pointer rounded-lg border p-4 focus:outline-none border-purple-200 bg-purple-50';
-        patientBorder.className = 'absolute -inset-px rounded-lg border-2 pointer-events-none border-transparent';
-        therapistBorder.className = 'absolute -inset-px rounded-lg border-2 pointer-events-none border-purple-500';
-    }
-    
-    // Update role badge
-    updateRoleBadge(selectedRole);
-    
-    showSaveStatus('Account type changed. Click "Update Profile" to save.', 'info');
-}
-
-function updateRoleBadge(role) {
-    const roleBadge = document.getElementById('roleBadge');
-    const accountType = document.getElementById('accountType');
-    
-    if (roleBadge) {
-        if (role === 'therapist') {
-            roleBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800';
-            roleBadge.innerHTML = `
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Licensed Therapist
-            `;
-        } else {
-            roleBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
-            roleBadge.innerHTML = `
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                </svg>
-                Patient
-            `;
-        }
-    }
-    
-    if (accountType) {
-        accountType.textContent = role === 'therapist' ? 'Therapist' : 'Patient';
-        accountType.className = role === 'therapist' ? 'font-medium text-purple-600' : 'font-medium text-blue-600';
-    }
-}
-
-// Form validation and submission
-function initializeFormValidation() {
-    const form = document.getElementById('accountForm');
-    if (form) {
-        form.addEventListener('submit', handleFormSubmit);
-        
-        // Add real-time validation
-        const inputs = form.querySelectorAll('input[required]');
-        inputs.forEach(input => {
-            input.addEventListener('blur', validateField);
-            input.addEventListener('input', clearFieldError);
-        });
-    }
-}
-
-function handleFormSubmit(e) {
-    e.preventDefault();
-    
-    if (isUploading) {
-        return false;
-    }
-    
-    if (!validateForm()) {
-        return false;
-    }
-    
-    submitForm();
-}
-
-function validateForm() {
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    
-    if (!name) {
-        showError('Full name is required.');
-        document.getElementById('name').focus();
-        return false;
-    }
-    
-    if (!email) {
-        showError('Email address is required.');
-        document.getElementById('email').focus();
-        return false;
-    }
-    
-    // Email validation
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-        showError('Please enter a valid email address.');
-        document.getElementById('email').focus();
-        return false;
-    }
-    
-    return true;
 }
 
 function validateField(e) {
@@ -387,85 +453,37 @@ function getFieldLabel(field) {
     return label ? label.textContent.replace('*', '').trim() : field.name;
 }
 
-// Submit form with file upload support
-function submitForm() {
-    isUploading = true;
-    
-    const form = document.getElementById('accountForm');
-    const formData = new FormData();
-    
-    // Add form fields
-    const inputs = form.querySelectorAll('input, select, textarea');
-    inputs.forEach(input => {
-        if (input.type !== 'file' && input.name && input.value) {
-            formData.append(input.name, input.value);
-        }
-    });
-    
-    // Add selected file if exists
-    if (selectedFile) {
-        formData.append('profile_image_file', selectedFile);
-    }
-    
-    // Show loading state
-    showLoadingState(true);
-    showSaveStatus('Updating profile...', 'loading');
-    
-    // Submit via fetch API
-    fetch('/account', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (response.redirected) {
-            window.location.href = response.url;
-        } else {
-            return response.json();
-        }
-    })
-    .then(data => {
-        if (data && data.success) {
-            showSuccess('Profile updated successfully!');
-            selectedFile = null;
-        } else if (data && data.error) {
-            showError(data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Upload error:', error);
-        showError('An error occurred while updating your profile. Please try again.');
-    })
-    .finally(() => {
-        isUploading = false;
-        showLoadingState(false);
-    });
-}
-
-// UI state management
 function showLoadingState(loading) {
     const submitBtn = document.querySelector('button[type="submit"]');
     const form = document.getElementById('accountForm');
     
     if (loading) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Updating...
-        `;
-        form.style.opacity = '0.7';
-        form.style.pointerEvents = 'none';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Updating...
+            `;
+        }
+        if (form) {
+            form.style.opacity = '0.7';
+            form.style.pointerEvents = 'none';
+        }
     } else {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Update Profile';
-        form.style.opacity = '1';
-        form.style.pointerEvents = 'auto';
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Update Profile';
+        }
+        if (form) {
+            form.style.opacity = '1';
+            form.style.pointerEvents = 'auto';
+        }
     }
 }
 
-// Status and message functions
 function showSaveStatus(message, type = 'info') {
     const statusDiv = document.getElementById('saveStatus');
     if (statusDiv) {
@@ -486,7 +504,6 @@ function showSaveStatus(message, type = 'info') {
                 statusDiv.className = 'text-sm text-gray-600';
         }
         
-        // Auto-hide after 5 seconds for non-error messages
         if (type !== 'error') {
             setTimeout(() => {
                 statusDiv.classList.add('hidden');
@@ -534,7 +551,6 @@ function showFlashMessage(message, type) {
     container.innerHTML = '';
     container.appendChild(alertDiv);
     
-    // Auto-remove after 5 seconds
     setTimeout(() => {
         if (alertDiv.parentNode) {
             alertDiv.remove();
@@ -542,13 +558,12 @@ function showFlashMessage(message, type) {
     }, 5000);
 }
 
-// Update profile completion percentage
 function updateProfileCompletion() {
     const completionSpan = document.getElementById('profileCompletion');
     if (completionSpan) {
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const hasImage = document.getElementById('profilePreview').querySelector('img') !== null;
+        const name = document.getElementById('name')?.value.trim();
+        const email = document.getElementById('email')?.value.trim();
+        const hasImage = document.getElementById('profilePreview')?.querySelector('img') !== null;
         
         let completion = 0;
         if (name) completion += 40;
@@ -559,41 +574,71 @@ function updateProfileCompletion() {
     }
 }
 
-// Reset form to original state
 function resetForm() {
     const form = document.getElementById('accountForm');
     if (form) {
         form.reset();
         selectedFile = null;
         
-        // Reset file input
         const fileInput = document.getElementById('profileImageInput');
         if (fileInput) {
             fileInput.value = '';
         }
         
-        // Hide preview area
         const previewArea = document.getElementById('imagePreviewArea');
         if (previewArea) {
             previewArea.classList.add('hidden');
         }
         
-        // Reset profile preview to original
         loadExistingProfileImage();
         
-        // Reset role selection
-        updateRoleSelection();
+        // Reset role selection styling
+        const checkedRole = document.querySelector('input[name="role"]:checked');
+        if (checkedRole) {
+            checkedRole.dispatchEvent(new Event('change'));
+        }
         
         showSaveStatus('Form reset to original values.', 'info');
     }
 }
 
-// Confirm account deletion
 function confirmDelete() {
     if (confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently remove all your data, playlists, and preferences.')) {
         if (confirm('This is your final warning. Clicking OK will permanently delete your account. Are you sure?')) {
             window.location.href = '/account/delete';
         }
+    }
+}
+
+function cancelDelete() {
+    const input = document.getElementById('deleteConfirmation');
+    const button = document.getElementById('deleteButton');
+    if (input) input.value = '';
+    if (button) {
+        button.disabled = true;
+        button.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+    }
+}
+
+// Tab navigation functions
+function showTab(tabName) {
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.add('hidden');
+    });
+    
+    document.querySelectorAll('.tab-nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-calm-50', 'text-calm-700', 'border-calm-200');
+        btn.classList.add('text-gray-600', 'hover:bg-gray-50');
+    });
+    
+    const targetPanel = document.getElementById(tabName);
+    if (targetPanel) {
+        targetPanel.classList.remove('hidden');
+    }
+    
+    if (event && event.target) {
+        event.target.classList.add('active', 'bg-calm-50', 'text-calm-700', 'border-calm-200');
+        event.target.classList.remove('text-gray-600', 'hover:bg-gray-50');
     }
 }
 

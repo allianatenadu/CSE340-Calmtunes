@@ -1,3 +1,4 @@
+
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <div class="mb-8">
     <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
@@ -7,19 +8,6 @@
       Welcome, <%= user ? user.name : "Therapist" %>! Manage your profile and practice here.
     </p>
   </div>
-
-  <!-- Flash Messages -->
-  <% if (typeof success !== 'undefined' && success.length > 0) { %>
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-      <%= success[0] %>
-    </div>
-  <% } %>
-
-  <% if (typeof error !== 'undefined' && error.length > 0) { %>
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-      <%= error[0] %>
-    </div>
-  <% } %>
 
   <!-- Application Status Card -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -73,7 +61,10 @@
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span class="font-medium">Resume:</span> 
-                <span class="text-green-600"><i class="fas fa-check mr-1"></i>Uploaded</span>
+                <span class="<%= application.resume_file ? 'text-green-600' : 'text-gray-500' %>">
+                  <i class="fas fa-<%= application.resume_file ? 'check' : 'times' %> mr-1"></i>
+                  <%= application.resume_file ? 'Uploaded' : 'Not uploaded' %>
+                </span>
               </div>
               <div>
                 <span class="font-medium">Certifications:</span> 
@@ -94,7 +85,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-medium text-textMain">Welcome to Our Team!</h3>
-                <p class="text-sm text-gray-600">Approved on <%= new Date(application.updated_at).toLocaleDateString() %></p>
+                <p class="text-sm text-gray-600">Approved on <%= application.updated_at ? new Date(application.updated_at).toLocaleDateString() : 'Recently' %></p>
               </div>
             </div>
             <p class="text-gray-700 mb-4">
@@ -104,7 +95,7 @@
               <a href="/therapist/patients" class="btn-primary">
                 <i class="fas fa-users mr-2"></i>View Patients
               </a>
-              <a href="/therapist/profile" class="btn-secondary">
+              <a href="/account" class="btn-secondary">
                 <i class="fas fa-user-edit mr-2"></i>Edit Profile
               </a>
             </div>
@@ -119,7 +110,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-medium text-textMain">Application Not Approved</h3>
-                <p class="text-sm text-gray-600">Reviewed on <%= new Date(application.updated_at).toLocaleDateString() %></p>
+                <p class="text-sm text-gray-600">Reviewed on <%= application.updated_at ? new Date(application.updated_at).toLocaleDateString() : 'Recently' %></p>
               </div>
             </div>
             <p class="text-gray-700 mb-4">
@@ -138,13 +129,40 @@
       <!-- Profile Card -->
       <div class="card">
         <div class="text-center">
-          <% if (application && application.profile_image) { %>
-            <img src="/uploads/<%= application.profile_image %>" alt="Profile" class="w-20 h-20 rounded-full mx-auto mb-3 object-cover border-4 border-primary">
+          <% 
+          // Determine profile image to show - priority order:
+          // 1. Application profile image
+          // 2. User's main profile image 
+          // 3. Session profile image
+          // 4. Default placeholder
+          let displayProfileImage = null;
+          if (application && application.profile_image) {
+            displayProfileImage = `/uploads/${application.profile_image}`;
+          } else if (application && application.user_profile_image) {
+            displayProfileImage = application.user_profile_image.startsWith('/') 
+              ? application.user_profile_image 
+              : `/uploads/profiles/${application.user_profile_image}`;
+          } else if (user && user.profile_image) {
+            displayProfileImage = user.profile_image.startsWith('/') 
+              ? user.profile_image 
+              : `/uploads/profiles/${user.profile_image}`;
+          } else if (typeof profileImageUrl !== 'undefined' && profileImageUrl) {
+            displayProfileImage = profileImageUrl;
+          }
+          %>
+          
+          <% if (displayProfileImage) { %>
+            <img src="<%= displayProfileImage %>" alt="<%= user.name %>'s Profile" 
+                 class="w-20 h-20 rounded-full mx-auto mb-3 object-cover border-4 border-primary shadow-lg"
+                 onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'w-20 h-20 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center\'><i class=\'fas fa-user text-2xl text-gray-500\'></i></div>';">
           <% } else { %>
-            <div class="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center">
-              <i class="fas fa-user text-2xl text-gray-500"></i>
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg">
+              <span class="text-white font-bold text-xl">
+                <%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %>
+              </span>
             </div>
           <% } %>
+          
           <h3 class="font-semibold text-textMain"><%= user.name %></h3>
           <p class="text-sm text-gray-600 mb-3"><%= user.email %></p>
           <% if (user.role === 'therapist') { %>
@@ -168,7 +186,7 @@
               <i class="fas fa-calendar text-green-600 mr-3"></i>
               <span class="font-medium">Schedule</span>
             </a>
-            <a href="/therapist/profile" class="block w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+            <a href="/account" class="block w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
               <i class="fas fa-user-edit text-purple-600 mr-3"></i>
               <span class="font-medium">Edit Profile</span>
             </a>
@@ -187,37 +205,125 @@
     </div>
   </div>
 
-  <!-- Statistics (for approved therapists) -->
-  <% if (user.role === 'therapist') { %>
+  <!-- Statistics (for approved therapists) - Now pulls from database -->
+  <% if (user.role === 'therapist' && stats) { %>
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <div class="card text-center">
       <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
         <i class="fas fa-users text-xl text-blue-600"></i>
       </div>
-      <h3 class="text-2xl font-bold text-textMain">12</h3>
+      <h3 class="text-2xl font-bold text-textMain"><%= stats.activePatients || 0 %></h3>
       <p class="text-gray-600">Active Patients</p>
     </div>
     <div class="card text-center">
       <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
         <i class="fas fa-calendar-check text-xl text-green-600"></i>
       </div>
-      <h3 class="text-2xl font-bold text-textMain">8</h3>
+      <h3 class="text-2xl font-bold text-textMain"><%= stats.weekSessions || 0 %></h3>
       <p class="text-gray-600">This Week</p>
     </div>
     <div class="card text-center">
       <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
         <i class="fas fa-star text-xl text-purple-600"></i>
       </div>
-      <h3 class="text-2xl font-bold text-textMain">4.8</h3>
+      <h3 class="text-2xl font-bold text-textMain"><%= stats.avgRating || '0.0' %></h3>
       <p class="text-gray-600">Rating</p>
     </div>
     <div class="card text-center">
       <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-3">
         <i class="fas fa-clock text-xl text-yellow-600"></i>
       </div>
-      <h3 class="text-2xl font-bold text-textMain">120</h3>
+      <h3 class="text-2xl font-bold text-textMain"><%= stats.totalHours || 0 %></h3>
       <p class="text-gray-600">Total Hours</p>
     </div>
   </div>
   <% } %>
+
+  <!-- Empty state for statistics if no stats available -->
+  <% if (user.role === 'therapist' && !stats) { %>
+  <div class="card text-center py-8 mb-8">
+    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-chart-line text-2xl text-gray-500"></i>
+    </div>
+    <h3 class="text-lg font-medium text-textMain mb-2">Statistics Coming Soon</h3>
+    <p class="text-gray-600">Your practice statistics will appear here once you start seeing patients.</p>
+  </div>
+  <% } %>
 </div>
+
+<script>
+// Auto-dismiss welcome alert after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+  const welcomeAlert = document.getElementById('welcomeAlert');
+  
+  if (welcomeAlert) {
+    // Auto-dismiss after 5 seconds
+    setTimeout(function() {
+      dismissWelcomeAlert();
+    }, 5000);
+  }
+});
+
+// Function to manually dismiss the welcome alert
+function dismissWelcomeAlert() {
+  const welcomeAlert = document.getElementById('welcomeAlert');
+  
+  if (welcomeAlert) {
+    // Add animation classes for smooth dismissal
+    welcomeAlert.style.opacity = '0';
+    welcomeAlert.style.transform = 'translateY(-10px)';
+    
+    // Remove the element after animation completes
+    setTimeout(function() {
+      welcomeAlert.remove();
+    }, 500);
+  }
+}
+
+// Add some interactive hover effects to cards
+document.addEventListener('DOMContentLoaded', function() {
+  const cards = document.querySelectorAll('.card');
+  
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-2px)';
+      this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+      this.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+    });
+  });
+});
+</script>
+
+<style>
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary, .btn-secondary {
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#welcomeAlert {
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

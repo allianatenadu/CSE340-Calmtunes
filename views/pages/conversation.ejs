@@ -1,0 +1,957 @@
+<!-- Fixed conversation.ejs with optimized polling and better error handling -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+            💬 Messages
+        </h1>
+        <p class="text-xl text-gray-600">
+            Your conversations with <%= user.role === 'therapist' ? 'patients' : 'therapists' %>
+        </p>
+    </div>
+
+    <!-- Conversations List -->
+    <div id="conversations-container" class="bg-white rounded-xl shadow-md">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-textMain">Active Conversations</h2>
+                <% if (user.role === 'patient') { %>
+                    <a href="/find-therapist" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Find Therapist
+                    </a>
+                <% } %>
+            </div>
+        </div>
+        
+        <div id="conversations-list" class="divide-y divide-gray-200">
+            <!-- Conversations will be loaded here -->
+        </div>
+        
+        <div id="no-conversations" class="text-center py-12 hidden">
+            <div class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+                <i class="fas fa-comments text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-medium text-gray-600 mb-2">No Conversations Yet</h3>
+            <p class="text-gray-500 mb-6">
+                <% if (user.role === 'patient') { %>
+                    Start chatting with a therapist to begin your mental health journey.
+                <% } else { %>
+                    You'll see patient conversations here once they reach out to you.
+                <% } %>
+            </p>
+            <% if (user.role === 'patient') { %>
+                <a href="/find-therapist" class="btn-primary">
+                    <i class="fas fa-search mr-2"></i>Find a Therapist
+                </a>
+            <% } %>
+        </div>
+        
+        <div id="loading-conversations" class="text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p class="text-gray-600 mt-2">Loading conversations...</p>
+        </div>
+    </div>
+
+    <!-- Chat View - Hidden by default -->
+    <div id="chat-view" class="hidden bg-white rounded-xl shadow-md">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button onclick="backToConversations()" class="btn-secondary mr-4">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Messages
+                    </button>
+                    <div id="chat-header" class="flex items-center">
+                        <!-- Other user info loaded dynamically -->
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="phone-call-btn" onclick="startPhoneCall()" class="btn-secondary px-4 py-2">
+                        <i class="fas fa-phone mr-2"></i>Phone Call
+                    </button>
+                    <button id="video-call-btn" onclick="startVideoCall()" class="btn-primary px-4 py-2">
+                        <i class="fas fa-video mr-2"></i>Video Call
+                    </button>
+                    <button id="end-call-btn" onclick="endCall()" class="btn-danger px-4 py-2 hidden">
+                        <i class="fas fa-phone-slash mr-2"></i>End Call
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Call Container -->
+        <div id="video-call-container" class="hidden p-4 bg-gray-50">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-black rounded-lg overflow-hidden">
+                    <video id="localVideo" autoplay muted playsinline class="w-full h-48 md:h-64 object-cover"></video>
+                    <p class="text-center text-white text-sm bg-black/50 p-1">You</p>
+                </div>
+                <div class="bg-black rounded-lg overflow-hidden">
+                    <video id="remoteVideo" autoplay playsinline class="w-full h-48 md:h-64 object-cover"></video>
+                    <p class="text-center text-white text-sm bg-black/50 p-1" id="remoteUserLabel">Waiting for connection...</p>
+                </div>
+            </div>
+            <div class="flex justify-center space-x-4">
+                <button onclick="toggleMute()" class="btn-secondary p-2">
+                    <i class="fas fa-microphone" id="mute-icon"></i>
+                </button>
+                <button onclick="toggleVideo()" class="btn-secondary p-2">
+                    <i class="fas fa-video" id="video-icon"></i>
+                </button>
+                <button onclick="endCall()" class="btn-danger p-2">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="messages-container" class="h-96 overflow-y-auto bg-gray-50 p-4 space-y-4" data-call-active="false">
+            <!-- Messages loaded here -->
+            <div class="text-center text-gray-500 py-8" id="chat-loading">
+                <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
+                Loading messages...
+            </div>
+        </div>
+        
+        <form id="message-form" class="p-6 border-t border-gray-200" data-call-active="false">
+            <div class="flex space-x-2">
+                <input
+                    type="text"
+                    id="message-input"
+                    placeholder="Type a message..."
+                    class="flex-1 form-input"
+                    required
+                >
+                <button type="submit" class="btn-primary px-6" id="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Notification for new messages -->
+    <div id="message-notification" class="hidden fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+        <div class="flex items-center">
+            <i class="fas fa-comment mr-2"></i>
+            <span>New message received!</span>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// Global variables
+let conversations = [];
+let currentConversationId = null;
+let messages = [];
+let otherUser = {};
+const userRole = '<%= user.role || "" %>';
+const userId = '<%= user.id || "" %>';
+let messagePollingInterval = null;
+let conversationPollingInterval = null;
+let lastMessageCount = 0;
+let isPageVisible = true;
+let socket = null;
+let typingTimer = null;
+let otherUserOnline = false;
+let otherUserTyping = false;
+
+// Track page visibility to pause polling when not needed
+document.addEventListener('visibilitychange', function() {
+    isPageVisible = !document.hidden;
+    if (isPageVisible && currentConversationId) {
+        // Resume polling when page becomes visible
+        loadMessages(currentConversationId);
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const conversationId = '<%= typeof conversationId !== "undefined" ? conversationId || "" : "" %>';
+    
+    console.log('Page loaded with conversationId:', conversationId);
+    console.log('User role:', userRole, 'User ID:', userId);
+    
+    // Initialize Socket.io
+    socket = io();
+    
+    // Authenticate socket connection
+    socket.emit('authenticate', { userId: userId, role: userRole });
+    
+    socket.on('connect', () => {
+        console.log('Socket connected:', socket.id);
+    });
+    
+    // Handle user online/offline
+    socket.on('user_online', (data) => {
+        if (data.userId !== userId) {
+            otherUserOnline = true;
+            updateOnlineStatus();
+        }
+    });
+    
+    socket.on('user_offline', (data) => {
+        if (data.userId !== userId) {
+            otherUserOnline = false;
+            updateOnlineStatus();
+        }
+    });
+    
+    // Handle typing indicators
+    socket.on('user_typing', (data) => {
+        if (data.userId !== userId) {
+            otherUserTyping = data.typing;
+            updateTypingIndicator();
+        }
+    });
+    
+    // Handle new messages via socket
+    socket.on('new_message', (data) => {
+        if (data.conversationId === currentConversationId) {
+            messages.push(data.message);
+            displayMessages();
+            showNewMessageNotification();
+        }
+    });
+    
+    if (conversationId && conversationId.trim() !== '') {
+        currentConversationId = conversationId;
+        socket.emit('join_conversation', conversationId);
+        document.getElementById('conversations-container').classList.add('hidden');
+        document.getElementById('chat-view').classList.remove('hidden');
+        loadChat(conversationId);
+        startMessagePolling();
+        // Initialize WebRTC
+        initializeWebRTC();
+    } else {
+        loadConversations();
+        startConversationPolling();
+    }
+
+    // Message form submit
+    const messageForm = document.getElementById('message-form');
+    if (messageForm) {
+        messageForm.addEventListener('submit', sendMessage);
+    }
+
+    // Typing indicator on input
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('input', handleTyping);
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(e);
+            }
+        });
+    }
+});
+
+async function loadConversations() {
+    console.log('Loading conversations...');
+    try {
+        const response = await fetch('/appointments/chat/conversations');
+        const data = await response.json();
+        
+        console.log('Conversations response:', data);
+        
+        document.getElementById('loading-conversations').classList.add('hidden');
+        
+        if (data.success) {
+            conversations = data.conversations || [];
+            displayConversations();
+        } else {
+            console.error('Failed to load conversations:', data.error);
+            showNoConversations();
+        }
+    } catch (error) {
+        console.error('Error loading conversations:', error);
+        document.getElementById('loading-conversations').classList.add('hidden');
+        showNoConversations();
+    }
+}
+
+function showNoConversations() {
+    document.getElementById('conversations-list').innerHTML = '';
+    document.getElementById('no-conversations').classList.remove('hidden');
+}
+
+function displayConversations() {
+    const container = document.getElementById('conversations-list');
+    const noConversations = document.getElementById('no-conversations');
+    
+    if (!conversations || conversations.length === 0) {
+        container.innerHTML = '';
+        noConversations.classList.remove('hidden');
+        return;
+    }
+    
+    noConversations.classList.add('hidden');
+    
+    container.innerHTML = conversations.map(conversation => {
+        const isPatient = userRole === 'patient';
+        const otherUser = isPatient ? {
+            name: conversation.therapist_name || 'Therapist',
+            image: conversation.therapist_image,
+            specialty: conversation.specialty || 'General Practice'
+        } : {
+            name: conversation.patient_name || 'Patient',
+            image: conversation.patient_image,
+            specialty: null
+        };
+        
+        const imageUrl = otherUser.image ? 
+            (otherUser.image.startsWith('/') ? otherUser.image : `/uploads/${otherUser.image}`) : 
+            null;
+        
+        const lastMessageTime = conversation.last_message_time ? 
+            formatMessageTime(conversation.last_message_time) : 
+            formatMessageTime(conversation.created_at);
+        
+        const unreadCount = parseInt(conversation.unread_count) || 0;
+        
+        return `
+            <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors" 
+                 onclick="openConversation('${conversation.id}')">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center flex-1">
+                        ${imageUrl ? 
+                            `<img src="${imageUrl}" alt="${otherUser.name}" 
+                                 class="w-12 h-12 rounded-full object-cover mr-4">` :
+                            `<div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full 
+                                      flex items-center justify-center mr-4">
+                                <span class="text-white font-semibold">
+                                    ${otherUser.name.charAt(0).toUpperCase()}
+                                </span>
+                             </div>`
+                        }
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-semibold text-textMain truncate">
+                                    ${otherUser.name}
+                                </h3>
+                                <div class="flex items-center space-x-2 ml-2">
+                                    ${unreadCount > 0 ? 
+                                        `<span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                                            ${unreadCount > 99 ? '99+' : unreadCount}
+                                         </span>` : ''
+                                    }
+                                    <span class="text-sm text-gray-500">${lastMessageTime}</span>
+                                </div>
+                            </div>
+                            ${otherUser.specialty ? 
+                                `<p class="text-sm text-gray-500 mb-1">${otherUser.specialty}</p>` : ''
+                            }
+                            <p class="text-gray-600 truncate">
+                                ${conversation.last_message || 'No messages yet'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function formatMessageTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 24 * 60 * 60 * 1000) {
+        return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    }
+    
+    if (diff < 7 * 24 * 60 * 60 * 1000) {
+        return date.toLocaleDateString([], {weekday: 'short'});
+    }
+    
+    return date.toLocaleDateString([], {month: 'short', day: 'numeric'});
+}
+
+function openConversation(conversationId) {
+    window.location.href = `/appointments/chat/${conversationId}`;
+}
+
+async function loadChat(conversationId) {
+    console.log('Loading chat for conversation:', conversationId);
+    
+    const loadingElement = document.getElementById('chat-loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'block';
+    }
+    
+    try {
+        const response = await fetch(`/appointments/chat/${conversationId}/messages`);
+        const data = await response.json();
+        
+        if (data.success) {
+            messages = data.messages || [];
+            lastMessageCount = messages.length;
+            const conv = data.conversation;
+            
+            if (userRole === 'patient') {
+                otherUser = {
+                    id: conv.therapist_id,
+                    name: conv.therapist_name || 'Therapist',
+                    image: conv.therapist_image ?
+                        (conv.therapist_image.startsWith('/') ? conv.therapist_image : `/uploads/${conv.therapist_image}`) :
+                        null,
+                    specialty: conv.specialty || 'General Practice'
+                };
+            } else {
+                otherUser = {
+                    id: conv.patient_id,
+                    name: conv.patient_name || 'Patient',
+                    image: conv.patient_image ?
+                        (conv.patient_image.startsWith('/') ? conv.patient_image : `/uploads/${conv.patient_image}`) :
+                        null,
+                    specialty: ''
+                };
+            }
+            
+            displayChatHeader();
+            displayMessages();
+            
+            // Ensure chat is visible
+            document.getElementById('messages-container').style.display = 'block';
+            document.getElementById('message-form').style.display = 'block';
+            
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+        } else {
+            console.error('Failed to load chat:', data.error);
+            if (loadingElement) {
+                loadingElement.innerHTML = '<p class="text-red-500">Failed to load messages</p>';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading chat:', error);
+        if (loadingElement) {
+            loadingElement.innerHTML = '<p class="text-red-500">Error loading messages</p>';
+        }
+    }
+}
+
+function displayChatHeader() {
+    const header = document.getElementById('chat-header');
+    if (!header) return;
+    
+    let imageHtml = '';
+    if (otherUser.image) {
+        imageHtml = `<img src="${otherUser.image}" alt="${otherUser.name}" class="w-10 h-10 rounded-full mr-3 object-cover">`;
+    } else {
+        imageHtml = `<div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center mr-3">
+                        <span class="text-white font-semibold text-sm">${otherUser.name.charAt(0).toUpperCase()}</span>
+                     </div>`;
+    }
+
+    header.innerHTML = `
+        ${imageHtml}
+        <div>
+            <h3 class="font-semibold text-textMain">${otherUser.name}</h3>
+            ${otherUser.specialty ? `<p class="text-sm text-gray-500">${otherUser.specialty}</p>` : ''}
+        </div>
+    `;
+}
+
+function displayMessages() {
+    const container = document.getElementById('messages-container');
+    if (!container) return;
+    
+    if (messages.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-500 py-8">No messages yet. Start the conversation!</div>';
+        return;
+    }
+
+    container.innerHTML = messages.map(msg => {
+        const isOwn = msg.sender_id == userId;
+        const time = new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        const alignClass = isOwn ? 'justify-end' : 'justify-start';
+        const bubbleClass = isOwn ? 'bg-primary text-white ml-auto' : 'bg-white border ml-0';
+        
+        return `
+            <div class="flex ${alignClass} mb-4">
+                <div class="${bubbleClass} max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm">
+                    <p class="text-sm">${escapeHtml(msg.content)}</p>
+                    <p class="text-xs ${isOwn ? 'text-primary/70' : 'text-gray-500'} mt-1">${time}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.scrollTop = container.scrollHeight;
+}
+
+function updateOnlineStatus() {
+    const header = document.getElementById('chat-header');
+    if (!header) return;
+    
+    const statusElement = header.querySelector('.online-status');
+    if (statusElement) {
+        if (otherUserOnline) {
+            statusElement.textContent = 'Online';
+            statusElement.className = 'text-green-500 text-sm online-status';
+        } else {
+            statusElement.textContent = 'Offline';
+            statusElement.className = 'text-gray-500 text-sm online-status';
+        }
+    }
+}
+
+function updateTypingIndicator() {
+    const container = document.getElementById('messages-container');
+    if (!container) return;
+    
+    const existingIndicator = container.querySelector('.typing-indicator');
+    if (otherUserTyping) {
+        if (!existingIndicator) {
+            const indicator = document.createElement('div');
+            indicator.className = 'flex justify-start mb-4 typing-indicator';
+            indicator.innerHTML = `
+                <div class="bg-gray-200 px-4 py-2 rounded-lg max-w-xs">
+                    <div class="flex space-x-1">
+                        <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                        <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                        <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">${otherUser.name} is typing...</p>
+                </div>
+            `;
+            container.appendChild(indicator);
+            container.scrollTop = container.scrollHeight;
+        }
+    } else {
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+    }
+}
+
+function handleTyping() {
+    if (currentConversationId && socket) {
+        // Emit typing start
+        socket.emit('typing', { conversationId: currentConversationId });
+        
+        // Clear previous timer
+        if (typingTimer) {
+            clearTimeout(typingTimer);
+        }
+        
+        // Set timer to emit stop typing after 1 second of inactivity
+        typingTimer = setTimeout(() => {
+            socket.emit('stop_typing', { conversationId: currentConversationId });
+        }, 1000);
+    }
+}
+
+async function loadMessages(conversationId) {
+    // Only poll if page is visible to reduce server load
+    if (!isPageVisible) return;
+    
+    try {
+        const response = await fetch(`/appointments/chat/${conversationId}/messages`);
+        const data = await response.json();
+        if (data.success) {
+            const newMessages = data.messages || [];
+            
+            // Only update if there are new messages
+            if (newMessages.length > lastMessageCount) {
+                console.log('New messages detected:', newMessages.length - lastMessageCount);
+                showNewMessageNotification();
+                messages = newMessages;
+                lastMessageCount = messages.length;
+                displayMessages();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+async function sendMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const content = input.value.trim();
+    if (!content) return;
+
+    // Disable send button to prevent double-sending
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    const messageData = {
+        conversationId: currentConversationId,
+        content: content,
+        senderId: userId,
+        createdAt: new Date().toISOString()
+    };
+    
+    try {
+        // Send via HTTP for persistence
+        const response = await fetch(`/appointments/chat/${currentConversationId}/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            // Emit via socket for real-time
+            if (socket) {
+                socket.emit('new_message', {
+                    conversationId: currentConversationId,
+                    message: data.message
+                });
+            }
+            
+            input.value = '';
+            // Stop typing indicator
+            if (typingTimer) {
+                clearTimeout(typingTimer);
+                socket.emit('stop_typing', { conversationId: currentConversationId });
+            }
+        } else {
+            alert(data.error || 'Failed to send message');
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+    } finally {
+        // Re-enable send button
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    }
+}
+
+function backToConversations() {
+    // Clear polling intervals before navigating
+    clearPollingIntervals();
+    window.location.href = '/appointments/chat';
+}
+
+async function startVideoCall() {
+    if (!otherUserOnline) {
+        alert('The other user is not online.');
+        return;
+    }
+
+    if (isCallActive) {
+        alert('A call is already in progress.');
+        return;
+    }
+
+    callType = 'video';
+    await startCall();
+}
+
+async function startPhoneCall() {
+    if (!otherUserOnline) {
+        alert('The other user is not online.');
+        return;
+    }
+
+    if (isCallActive) {
+        alert('A call is already in progress.');
+        return;
+    }
+
+    callType = 'audio';
+    await startCall();
+}
+
+async function startCall() {
+    try {
+        isCallActive = true;
+        callId = Date.now().toString();
+        
+        // Hide messages and show video container
+        document.getElementById('messages-container').style.display = 'none';
+        document.getElementById('message-form').style.display = 'none';
+        document.getElementById('video-call-container').classList.remove('hidden');
+        
+        // Show local video
+        const localVideo = document.getElementById('localVideo');
+        const stream = callType === 'video' ? localStream : new MediaStream(localStream.getAudioTracks());
+        localVideo.srcObject = stream;
+        
+        // Create peer connection
+        const peer = new SimplePeer({
+            initiator: true,
+            trickle: false,
+            stream: stream
+        });
+
+        remotePeer = peer;
+
+        peer.on('signal', (data) => {
+            socket.emit('call_made', {
+                conversationId: currentConversationId,
+                to: otherUser.id,
+                from: userId,
+                signal: data,
+                callType: callType,
+                callId: callId
+            });
+        });
+
+        peer.on('stream', (remoteStream) => {
+            const remoteVideo = document.getElementById('remoteVideo');
+            remoteVideo.srcObject = remoteStream;
+            document.getElementById('remoteUserLabel').textContent = `${otherUser.name} (${callType})`;
+        });
+
+        peer.on('connect', () => {
+            console.log('Peer connected');
+        });
+
+        // Handle incoming answer
+        socket.on('call_answered', (data) => {
+            if (data.callId === callId) {
+                remotePeer.signal(data.answer);
+            }
+        });
+
+        // Handle ICE candidates
+        socket.on('ice_candidate', (data) => {
+            if (data.callId === callId && data.from !== userId) {
+                remotePeer.signal(data.candidate);
+            }
+        });
+
+        // Show end call button
+        document.getElementById('end-call-btn').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error starting call:', error);
+        endCall();
+    }
+}
+
+function showIncomingCall(data) {
+    if (isCallActive) return;
+
+    const callTypeText = data.callType === 'video' ? 'Video Call' : 'Phone Call';
+    const confirmed = confirm(`Incoming ${callTypeText} from ${otherUser.name}. Answer?`);
+
+    if (confirmed) {
+        callType = data.callType;
+        callId = data.callId;
+        isCallActive = true;
+
+        // Hide messages and show video container
+        document.getElementById('messages-container').style.display = 'none';
+        document.getElementById('message-form').style.display = 'none';
+        document.getElementById('video-call-container').classList.remove('hidden');
+
+        // Show local video
+        const localVideo = document.getElementById('localVideo');
+        const stream = callType === 'video' ? localStream : new MediaStream(localStream.getAudioTracks());
+        localVideo.srcObject = stream;
+
+        const peer = new SimplePeer({
+            trickle: false,
+            stream: stream
+        });
+
+        remotePeer = peer;
+
+        peer.on('signal', (answer) => {
+            socket.emit('call_answered', {
+                conversationId: currentConversationId,
+                to: data.from,
+                from: userId,
+                answer: answer,
+                callType: callType,
+                callId: callId
+            });
+        });
+
+        peer.on('stream', (remoteStream) => {
+            const remoteVideo = document.getElementById('remoteVideo');
+            remoteVideo.srcObject = remoteStream;
+            document.getElementById('remoteUserLabel').textContent = `${otherUser.name} (${callType})`;
+        });
+
+        peer.on('connect', () => {
+            console.log('Peer connected');
+        });
+
+        // Show end call button
+        document.getElementById('end-call-btn').classList.remove('hidden');
+    } else {
+        socket.emit('call_ended', {
+            conversationId: currentConversationId,
+            to: data.from,
+            from: userId,
+            callId: data.callId
+        });
+    }
+}
+
+function endCall() {
+    isCallActive = false;
+    callId = null;
+
+    // Stop local stream
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+
+    // Close peer connection
+    if (remotePeer) {
+        remotePeer.destroy();
+        remotePeer = null;
+    }
+
+    // Hide video container and show messages
+    document.getElementById('video-call-container').classList.add('hidden');
+    document.getElementById('messages-container').style.display = 'block';
+    document.getElementById('message-form').style.display = 'block';
+
+    // Reset videos
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    localVideo.srcObject = null;
+    remoteVideo.srcObject = null;
+
+    // Hide end call button
+    document.getElementById('end-call-btn').classList.add('hidden');
+
+    // Emit call ended
+    if (socket && currentConversationId) {
+        socket.emit('call_ended', {
+            conversationId: currentConversationId,
+            to: otherUser.id,
+            from: userId,
+            callId: callId
+        });
+    }
+
+    console.log('Call ended');
+}
+
+function toggleMute() {
+    const localStream = document.getElementById('localVideo').srcObject;
+    if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        audioTrack.enabled = !audioTrack.enabled;
+        document.getElementById('mute-icon').className = audioTrack.enabled ? 'fas fa-microphone' : 'fas fa-microphone-slash';
+    }
+}
+
+function toggleVideo() {
+    const localStream = document.getElementById('localVideo').srcObject;
+    if (localStream) {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+            videoTrack.enabled = !videoTrack.enabled;
+            document.getElementById('video-icon').className = videoTrack.enabled ? 'fas fa-video' : 'fas fa-video-slash';
+        }
+    }
+}
+
+// WebRTC Global Variables
+let localStream = null;
+let remotePeer = null;
+let isCallActive = false;
+let callType = 'video'; // 'video' or 'audio'
+let callId = null;
+
+async function initializeWebRTC() {
+    try {
+        // Get user media for testing
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        console.log('WebRTC initialized with local stream');
+    } catch (error) {
+        console.error('Error accessing media devices:', error);
+        alert('Unable to access camera/microphone. Please check permissions.');
+    }
+}
+
+// Update chat header to include online status
+function displayChatHeader() {
+    const header = document.getElementById('chat-header');
+    if (!header) return;
+    
+    let imageHtml = '';
+    if (otherUser.image) {
+        imageHtml = `<img src="${otherUser.image}" alt="${otherUser.name}" class="w-10 h-10 rounded-full mr-3 object-cover">`;
+    } else {
+        imageHtml = `<div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center mr-3">
+                        <span class="text-white font-semibold text-sm">${otherUser.name.charAt(0).toUpperCase()}</span>
+                     </div>`;
+    }
+
+    header.innerHTML = `
+        ${imageHtml}
+        <div>
+            <h3 class="font-semibold text-textMain">${otherUser.name}</h3>
+            ${otherUser.specialty ? `<p class="text-sm text-gray-500">${otherUser.specialty}</p>` : ''}
+            <p class="text-sm ${otherUserOnline ? 'text-green-500' : 'text-gray-500'} online-status">
+                ${otherUserOnline ? 'Online' : 'Offline'}
+            </p>
+        </div>
+    `;
+}
+
+function showNewMessageNotification() {
+    const notification = document.getElementById('message-notification');
+    if (notification) {
+        notification.classList.remove('hidden');
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 3000);
+    }
+}
+
+function startMessagePolling() {
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+    }
+    
+    // Polling frequency set to 2 seconds for faster updates
+    messagePollingInterval = setInterval(() => {
+        if (currentConversationId) {
+            loadMessages(currentConversationId);
+        }
+    }, 2000);
+}
+
+function startConversationPolling() {
+    if (conversationPollingInterval) {
+        clearInterval(conversationPollingInterval);
+    }
+    
+    // Only poll for conversations every 60 seconds
+    conversationPollingInterval = setInterval(() => {
+        if (!currentConversationId) {
+            loadConversations();
+        }
+    }, 60000);
+}
+
+function clearPollingIntervals() {
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+        messagePollingInterval = null;
+    }
+    if (conversationPollingInterval) {
+        clearInterval(conversationPollingInterval);
+        conversationPollingInterval = null;
+    }
+}
+
+// Clean up intervals when leaving the page
+window.addEventListener('beforeunload', clearPollingIntervals);
+
+// Helper function to escape HTML
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+}
+</script>

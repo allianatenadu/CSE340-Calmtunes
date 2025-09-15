@@ -44,6 +44,23 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
+// Helper function to get profile image URL
+const getProfileImageUrl = (user) => {
+  if (user?.profile_image) {
+    // If it's already a full URL, return as is
+    if (user.profile_image.startsWith('http')) {
+      return user.profile_image;
+    }
+    // If it already starts with /, return as is
+    if (user.profile_image.startsWith('/')) {
+      return user.profile_image;
+    }
+    // Otherwise, prepend the uploads path
+    return `/uploads/profiles/${user.profile_image}`;
+  }
+  return null;
+};
+
 const accountController = {
   // Middleware for handling image upload
   uploadProfileImage: upload.single('profile_image_file'),
@@ -91,13 +108,18 @@ const accountController = {
         await authModel.updateUser(userId, { role: 'patient' });
       }
 
+      // Generate profile image URL
+      const profileImageUrl = getProfileImageUrl(user);
+      console.log("Profile image URL:", profileImageUrl);
+
       console.log("Rendering account page for:", user.name, `(${user.role})`);
 
       res.render("pages/account", {
         title: "My Account - CalmTunes",
         user: user,
         success: req.flash('success'),
-        error: req.flash('error')
+        error: req.flash('error'),
+        profileImageUrl: profileImageUrl
       });
     } catch (err) {
       console.error("Error loading account:", err);
@@ -130,8 +152,18 @@ const accountController = {
         return res.redirect("/account");
       }
 
+      // Handle role - it might come as an array from form submission
+      let validatedRole = role;
+      if (Array.isArray(role)) {
+        // Take the last selected role (most recent selection)
+        validatedRole = role[role.length - 1];
+      }
+      
+      console.log("Original role:", role);
+      console.log("Validated role:", validatedRole);
+      
       // Validate role if provided
-      if (role && !['patient', 'therapist'].includes(role)) {
+      if (validatedRole && !['patient', 'therapist', 'admin'].includes(validatedRole)) {
         req.flash("error", "Invalid account type selected.");
         return res.redirect("/account");
       }
@@ -146,23 +178,29 @@ const accountController = {
       if (req.file) {
         // File was uploaded
         try {
-          // Optional: Optimize image using Sharp
-          const optimizedPath = `public/uploads/profiles/optimized_${req.file.filename}`;
-          await sharp(req.file.path)
-            .resize(300, 300, { 
-              fit: 'cover',
-              position: 'center'
-            })
-            .jpeg({ quality: 90 })
-            .toFile(optimizedPath);
+          // Check if sharp is available for optimization
+          if (sharp) {
+            // Optional: Optimize image using Sharp
+            const optimizedPath = `public/uploads/profiles/optimized_${req.file.filename}`;
+            await sharp(req.file.path)
+              .resize(300, 300, { 
+                fit: 'cover',
+                position: 'center'
+              })
+              .jpeg({ quality: 90 })
+              .toFile(optimizedPath);
 
-          // Use optimized image path
-          updateData.profile_image = `/uploads/profiles/optimized_${req.file.filename}`;
+            // Use optimized image path
+            updateData.profile_image = `/uploads/profiles/optimized_${req.file.filename}`;
 
-          // Delete original unoptimized file
-          fs.unlink(req.file.path, (err) => {
-            if (err) console.log('Error deleting original file:', err);
-          });
+            // Delete original unoptimized file
+            fs.unlink(req.file.path, (err) => {
+              if (err) console.log('Error deleting original file:', err);
+            });
+          } else {
+            // Use original file if Sharp is not available
+            updateData.profile_image = `/uploads/profiles/${req.file.filename}`;
+          }
 
           // Delete old profile image if it exists
           const currentUser = await authModel.findUserById(userId);
@@ -179,12 +217,13 @@ const accountController = {
           updateData.profile_image = `/uploads/profiles/${req.file.filename}`;
         }
       } else if (profile_image && profile_image.trim()) {
-        // URL was provided
-        updateData.profile_image = profile_image.trim();
+        // URL was provided - normalize it
+        updateData.profile_image = normalizeProfileImagePath(profile_image.trim());
       }
 
-      if (role) {
-        updateData.role = role;
+      // Add role to update data if provided
+      if (validatedRole) {
+        updateData.role = validatedRole;
       }
 
       console.log("Updating user with data:", updateData);
@@ -205,17 +244,33 @@ const accountController = {
         throw new Error("User update failed - no user returned");
       }
 
+      console.log("Database update successful:", updatedUser);
+
       // Update session with new info
       req.session.user.name = updatedUser.name;
       req.session.user.email = updatedUser.email;
-      req.session.user.profile_image = updatedUser.profile_image;
+      if (updatedUser.profile_image) {
+        req.session.user.profile_image = updatedUser.profile_image;
+      }
       if (updatedUser.role) {
         req.session.user.role = updatedUser.role;
       }
 
+      // Save the session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+        } else {
+          console.log('Session updated successfully');
+        }
+      });
+
       console.log("User updated successfully:", updatedUser.name);
+      console.log("Updated session user:", req.session.user);
+      
       req.flash("success", "Account updated successfully!");
       res.redirect("/account");
+      
     } catch (err) {
       console.error("Error updating account:", err);
       console.error("Stack trace:", err.stack);
@@ -275,6 +330,24 @@ const accountController = {
       res.redirect("/account");
     }
   }
+};
+
+// Helper function to normalize profile image paths
+const normalizeProfileImagePath = (imagePath) => {
+  if (!imagePath) return null;
+  
+  // If it's already a full URL, return as is
+  if (imagePath.startsWith('http')) return imagePath;
+  
+  // If it already starts with /uploads, return as is
+  if (imagePath.startsWith('/uploads')) return imagePath;
+  
+  // If it's just a filename, prepend the proper path
+  if (!imagePath.startsWith('/')) {
+    return `/uploads/profiles/${imagePath}`;
+  }
+  
+  return imagePath;
 };
 
 module.exports = accountController;

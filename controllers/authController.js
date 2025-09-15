@@ -3,7 +3,7 @@ const db = require('../config/database');
 
 // Show signup form
 exports.getSignup = (req, res) => {
-  res.render('pages/auth/signup', { 
+  res.render('pages/signup', {
     title: 'Sign Up - CalmTunes',
     error: req.flash('error'),
     success: req.flash('success')
@@ -57,7 +57,7 @@ exports.postSignup = async (req, res) => {
     const query = `
       INSERT INTO users (name, email, password_hash, role, created_at, updated_at)
       VALUES ($1, $2, $3, $4, NOW(), NOW())
-      RETURNING id, name, email, role
+      RETURNING id, name, email, role, profile_image
     `;
     
     const result = await db.query(query, [name, email, passwordHash, role]);
@@ -68,7 +68,8 @@ exports.postSignup = async (req, res) => {
       id: newUser.id,
       name: newUser.name,
       email: newUser.email,
-      role: newUser.role
+      role: newUser.role,
+      profile_image: newUser.profile_image
     };
     
     // Success message based on role
@@ -127,7 +128,8 @@ exports.postLogin = async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      profile_image: user.profile_image
     };
     
     // Extend session if remember me is checked

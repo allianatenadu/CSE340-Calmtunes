@@ -1,5 +1,6 @@
-// middleware/auth.js - Complete role-based authentication
+// middleware/auth.js - Complete role-based authentication with API support
 
+// Original middleware for web pages (returns redirects)
 const requireAuth = (req, res, next) => {
   if (!req.session || !req.session.user) {
     req.flash('error', 'Please login to access this page');
@@ -114,12 +115,93 @@ const requireAuthGeneral = (req, res, next) => {
   next();
 };
 
+// NEW: API-compatible auth middleware (returns JSON instead of redirects)
+const requireAuthAPI = (req, res, next) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+      redirect: '/login'
+    });
+  }
+  next();
+};
+
+const requirePatientAPI = (req, res, next) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+      redirect: '/login'
+    });
+  }
+  
+  const userRole = req.session.user.role;
+  
+  if (userRole !== 'patient') {
+    return res.status(403).json({
+      success: false,
+      error: 'Access denied. Patient account required.',
+      redirect: userRole === 'therapist' ? '/therapist' : 
+               userRole === 'admin' ? '/admin' : '/'
+    });
+  }
+  
+  next();
+};
+
+const requireTherapistAPI = (req, res, next) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+      redirect: '/login'
+    });
+  }
+  
+  if (req.session.user.role !== 'therapist') {
+    return res.status(403).json({
+      success: false,
+      error: 'Access denied. Therapist account required.',
+      redirect: req.session.user.role === 'patient' ? '/dashboard' : 
+               req.session.user.role === 'admin' ? '/admin' : '/'
+    });
+  }
+  next();
+};
+
+const requireAdminAPI = (req, res, next) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+      redirect: '/login'
+    });
+  }
+  
+  if (req.session.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      error: 'Access denied. Admin privileges required.',
+      redirect: req.session.user.role === 'therapist' ? '/therapist' : 
+               req.session.user.role === 'patient' ? '/dashboard' : '/'
+    });
+  }
+  next();
+};
+
 module.exports = {
+  // Original web middleware (redirects)
   requireAuth,
   requirePatient,
   requireTherapist,
   requirePotentialTherapist,
   requireAdmin,
   redirectIfAuthenticated,
-  requireAuthGeneral
+  requireAuthGeneral,
+  // New API middleware (JSON responses)
+  requireAuthAPI,
+  requirePatientAPI,
+  requireTherapistAPI,
+  requireAdminAPI
 };

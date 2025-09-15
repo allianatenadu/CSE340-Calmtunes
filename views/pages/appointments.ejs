@@ -1,0 +1,517 @@
+<!-- views/pages/appointments/index.ejs -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+            📅 My Appointments
+        </h1>
+        <p class="text-xl text-gray-600">
+            Manage your therapy sessions and consultations
+        </p>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8">
+            <button onclick="switchTab('upcoming')" id="upcoming-tab" class="tab-button active">
+                <i class="fas fa-calendar-plus mr-2"></i>Upcoming
+                <span id="upcoming-count" class="bg-primary text-white text-xs rounded-full px-2 py-1 ml-2">0</span>
+            </button>
+            <button onclick="switchTab('past')" id="past-tab" class="tab-button">
+                <i class="fas fa-history mr-2"></i>Past Sessions
+                <span id="past-count" class="bg-gray-500 text-white text-xs rounded-full px-2 py-1 ml-2">0</span>
+            </button>
+            <button onclick="switchTab('pending')" id="pending-tab" class="tab-button">
+                <i class="fas fa-clock mr-2"></i>Pending Approval
+                <span id="pending-count" class="bg-yellow-500 text-white text-xs rounded-full px-2 py-1 ml-2">0</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-spinner" class="text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p class="text-gray-600 mt-2">Loading appointments...</p>
+    </div>
+
+    <!-- Appointments Content -->
+    <div id="appointments-content">
+        <!-- Content will be loaded dynamically -->
+    </div>
+
+    <!-- No Appointments State -->
+    <div id="no-appointments" class="text-center py-12 hidden">
+        <div class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+            <i class="fas fa-calendar text-3xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-medium text-gray-600 mb-2">No Appointments Found</h3>
+        <p class="text-gray-500 mb-6">
+            You don't have any appointments yet. Start by finding a therapist.
+        </p>
+        <a href="/find-therapist" class="btn-primary">
+            <i class="fas fa-search mr-2"></i>Find a Therapist
+        </a>
+    </div>
+</div>
+
+<!-- Location Sharing Modal -->
+<div id="location-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold">Share Location</h3>
+            <button onclick="closeLocationModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-600 mb-4">Share your location to help coordinate your in-person appointment.</p>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div>
+                    <p class="font-medium text-blue-900">Meeting with <span id="modal-therapist-name"></span></p>
+                    <p class="text-sm text-blue-700">Today at <span id="modal-appointment-time"></span></p>
+                </div>
+            </div>
+            <button onclick="shareLocation()" class="w-full btn-primary">
+                <i class="fas fa-map-marker-alt mr-2"></i>Share My Location
+            </button>
+            <div id="location-status" class="text-center text-sm text-gray-500"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Appointment Modal -->
+<div id="cancel-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-red-800">Cancel Appointment</h3>
+            <button onclick="closeCancelModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-600 mb-4">Are you sure you want to cancel this appointment?</p>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">Reason (Optional)</label>
+                <textarea id="cancel-reason" class="form-input" rows="3" 
+                         placeholder="Let your therapist know why you need to cancel..."></textarea>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeCancelModal()" class="btn-secondary flex-1">Keep Appointment</button>
+                <button onclick="confirmCancel()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex-1">
+                    Cancel Appointment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tab-button {
+    @apply py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors duration-200 flex items-center;
+}
+
+.tab-button.active {
+    @apply border-primary text-primary;
+}
+
+.appointment-card {
+    @apply bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow duration-200;
+}
+
+.status-badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.status-pending { @apply bg-yellow-100 text-yellow-800; }
+.status-confirmed { @apply bg-green-100 text-green-800; }
+.status-completed { @apply bg-blue-100 text-blue-800; }
+.status-cancelled { @apply bg-red-100 text-red-800; }
+.status-no-show { @apply bg-gray-100 text-gray-800; }
+</style>
+
+<script>
+let currentTab = 'upcoming';
+let appointments = [];
+let currentAppointmentToCancel = null;
+let locationWatchId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadAppointments();
+});
+
+// Switch between tabs
+function switchTab(tabName) {
+    currentTab = tabName;
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    
+    renderAppointments();
+}
+
+// Load appointments from API
+async function loadAppointments() {
+    document.getElementById('loading-spinner').classList.remove('hidden');
+    
+    try {
+        const response = await fetch('/api/appointments/my-appointments');
+        const data = await response.json();
+        
+        if (data.success) {
+            appointments = data.appointments;
+            updateTabCounts();
+            renderAppointments();
+        } else {
+            console.error('Failed to load appointments:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading appointments:', error);
+    } finally {
+        document.getElementById('loading-spinner').classList.add('hidden');
+    }
+}
+
+// Update tab counts
+function updateTabCounts() {
+    const now = new Date();
+    const today = new Date().toDateString();
+    
+    const upcoming = appointments.filter(apt => 
+        new Date(apt.appointment_date) >= now && apt.status === 'confirmed'
+    ).length;
+    
+    const past = appointments.filter(apt => 
+        new Date(apt.appointment_date) < now || apt.status === 'completed'
+    ).length;
+    
+    const pending = appointments.filter(apt => apt.status === 'pending').length;
+    
+    document.getElementById('upcoming-count').textContent = upcoming;
+    document.getElementById('past-count').textContent = past;
+    document.getElementById('pending-count').textContent = pending;
+}
+
+// Render appointments based on current tab
+function renderAppointments() {
+    const container = document.getElementById('appointments-content');
+    const noAppointments = document.getElementById('no-appointments');
+    
+    let filteredAppointments = [];
+    const now = new Date();
+    
+    switch (currentTab) {
+        case 'upcoming':
+            filteredAppointments = appointments.filter(apt => 
+                new Date(apt.appointment_date) >= now && apt.status === 'confirmed'
+            );
+            break;
+        case 'past':
+            filteredAppointments = appointments.filter(apt => 
+                new Date(apt.appointment_date) < now || apt.status === 'completed'
+            );
+            break;
+        case 'pending':
+            filteredAppointments = appointments.filter(apt => apt.status === 'pending');
+            break;
+    }
+    
+    if (filteredAppointments.length === 0) {
+        container.innerHTML = '';
+        noAppointments.classList.remove('hidden');
+        return;
+    }
+    
+    noAppointments.classList.add('hidden');
+    container.innerHTML = filteredAppointments.map(appointment => createAppointmentCard(appointment)).join('');
+}
+
+// Create appointment card HTML
+function createAppointmentCard(appointment) {
+    const isPatient = '<%= user.role %>' !== 'therapist';
+    const otherPersonName = isPatient ? appointment.therapist_name : appointment.patient_name;
+    const otherPersonImage = isPatient ? (appointment.therapist_image || appointment.therapist_app_image) : appointment.patient_image;
+    
+    const appointmentDate = new Date(appointment.appointment_date);
+    const appointmentDateTime = new Date(`${appointment.appointment_date} ${appointment.appointment_time}`);
+    const isToday = appointmentDate.toDateString() === new Date().toDateString();
+    const isTomorrow = appointmentDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+    
+    let dateLabel = appointmentDate.toLocaleDateString();
+    if (isToday) dateLabel = 'Today';
+    else if (isTomorrow) dateLabel = 'Tomorrow';
+    
+    const imageUrl = otherPersonImage ? 
+        (otherPersonImage.startsWith('/') ? otherPersonImage : `/uploads/${otherPersonImage}`) : null;
+    
+    const canCancel = appointment.status === 'pending' || 
+        (appointment.status === 'confirmed' && appointmentDateTime > new Date(Date.now() + 2 * 60 * 60 * 1000)); // 2 hours notice
+    
+    return `
+        <div class="appointment-card">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center">
+                    ${imageUrl ? 
+                        `<img src="${imageUrl}" alt="${otherPersonName}" class="w-12 h-12 rounded-full mr-4 object-cover">` :
+                        `<div class="w-12 h-12 bg-gray-200 rounded-full mr-4 flex items-center justify-center">
+                            <i class="fas fa-user text-gray-500"></i>
+                        </div>`
+                    }
+                    <div>
+                        <h3 class="font-semibold text-lg text-textMain">${otherPersonName}</h3>
+                        ${appointment.specialty ? `<p class="text-sm text-gray-600">${appointment.specialty}</p>` : ''}
+                        <div class="flex items-center mt-1">
+                            <span class="status-badge status-${appointment.status}">${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}</span>
+                            ${appointment.session_type === 'in-person' && isToday ? 
+                                `<button onclick="showLocationModal(${appointment.id}, '${otherPersonName}', '${appointment.appointment_time}')" 
+                                         class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>Share Location
+                                </button>` : ''
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-lg font-semibold text-textMain">${dateLabel}</p>
+                    <p class="text-sm text-gray-600">${formatTime(appointment.appointment_time)}</p>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                        <i class="fas fa-${getSessionIcon(appointment.session_type)} mr-1"></i>
+                        ${appointment.session_type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </div>
+                </div>
+            </div>
+            
+            ${appointment.notes ? 
+                `<div class="bg-gray-50 rounded-lg p-3 mb-4">
+                    <p class="text-sm text-gray-700"><strong>Notes:</strong> ${appointment.notes}</p>
+                </div>` : ''
+            }
+            
+            <div class="flex space-x-3">
+                ${appointment.session_type === 'video' && appointment.meeting_link ? 
+                    `<button onclick="joinVideoCall('${appointment.meeting_link}')" class="btn-primary flex-1">
+                        <i class="fas fa-video mr-2"></i>Join Video Call
+                    </button>` : ''
+                }
+                
+                ${currentTab === 'upcoming' || currentTab === 'pending' ? 
+                    `<button onclick="openChat(${isPatient ? appointment.therapist_id : appointment.patient_id})" class="btn-secondary flex-1">
+                        <i class="fas fa-comments mr-2"></i>Chat
+                    </button>` : ''
+                }
+                
+                ${canCancel ? 
+                    `<button onclick="showCancelModal(${appointment.id})" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>` : ''
+                }
+                
+                ${isPatient && appointment.status === 'pending' ? 
+                    `<button onclick="rescheduleAppointment(${appointment.id})" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-4 py-2 rounded-lg">
+                        <i class="fas fa-calendar-alt mr-2"></i>Reschedule
+                    </button>` : ''
+                }
+            </div>
+        </div>
+    `;
+}
+
+// Utility functions
+function formatTime(timeString) {
+    return new Date(`2000-01-01 ${timeString}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function getSessionIcon(sessionType) {
+    const icons = {
+        'video': 'video',
+        'phone': 'phone',
+        'in-person': 'map-marker-alt'
+    };
+    return icons[sessionType] || 'calendar';
+}
+
+// Location sharing functions
+function showLocationModal(appointmentId, therapistName, appointmentTime) {
+    document.getElementById('modal-therapist-name').textContent = therapistName;
+    document.getElementById('modal-appointment-time').textContent = formatTime(appointmentTime);
+    const modal = document.getElementById('location-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    currentAppointmentToCancel = appointmentId;
+}
+
+function closeLocationModal() {
+    const modal = document.getElementById('location-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.getElementById('location-status').textContent = '';
+    document.getElementById('location-status').className = 'text-center text-sm text-gray-500';
+}
+
+async function shareLocation() {
+    const statusEl = document.getElementById('location-status');
+    
+    if (!navigator.geolocation) {
+        statusEl.textContent = 'Geolocation not supported';
+        statusEl.className = 'text-center text-sm text-red-600';
+        return;
+    }
+    
+    statusEl.textContent = 'Getting location...';
+    statusEl.className = 'text-center text-sm text-blue-600';
+    
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            try {
+                const response = await fetch(`/api/appointments/${currentAppointmentToCancel}/location`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusEl.textContent = 'Location shared successfully!';
+                    statusEl.className = 'text-center text-sm text-green-600';
+                    
+                    startLocationTracking(currentAppointmentToCancel);
+                    
+                    setTimeout(() => {
+                        closeLocationModal();
+                    }, 2000);
+                } else {
+                    statusEl.textContent = 'Failed to share location';
+                    statusEl.className = 'text-center text-sm text-red-600';
+                }
+            } catch (error) {
+                console.error('Error sharing location:', error);
+                statusEl.textContent = 'Error sharing location';
+                statusEl.className = 'text-center text-sm text-red-600';
+            }
+        },
+        (error) => {
+            console.error('Geolocation error:', error);
+            statusEl.textContent = 'Unable to get location';
+            statusEl.className = 'text-center text-sm text-red-600';
+        }
+    );
+}
+
+function startLocationTracking(appointmentId) {
+    if (locationWatchId) {
+        navigator.geolocation.clearWatch(locationWatchId);
+    }
+    
+    locationWatchId = navigator.geolocation.watchPosition(
+        async (position) => {
+            try {
+                await fetch(`/api/appointments/${appointmentId}/location`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    })
+                });
+            } catch (error) {
+                console.error('Error updating location:', error);
+            }
+        },
+        (error) => {
+            console.error('Location tracking error:', error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 30000
+        }
+    );
+}
+
+// Cancel appointment functions
+function showCancelModal(appointmentId) {
+    currentAppointmentToCancel = appointmentId;
+    document.getElementById('cancel-modal').classList.remove('hidden');
+    document.getElementById('cancel-reason').value = '';
+}
+
+function closeCancelModal() {
+    document.getElementById('cancel-modal').classList.add('hidden');
+    currentAppointmentToCancel = null;
+}
+
+async function confirmCancel() {
+    if (!currentAppointmentToCancel) return;
+    
+    const reason = document.getElementById('cancel-reason').value;
+    
+    try {
+        const response = await fetch(`/api/appointments/${currentAppointmentToCancel}/cancel`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Appointment cancelled successfully');
+            closeCancelModal();
+            loadAppointments(); // Reload appointments
+        } else {
+            alert(data.error || 'Failed to cancel appointment');
+        }
+    } catch (error) {
+        console.error('Error cancelling appointment:', error);
+        alert('Failed to cancel appointment. Please try again.');
+    }
+}
+
+// Other action functions
+function joinVideoCall(meetingLink) {
+    window.open(meetingLink, '_blank');
+}
+
+async function openChat(otherUserId) {
+    try {
+        const response = await fetch('/api/appointments/chat/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ therapistId: otherUserId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.href = `/api/appointments/chat/${data.conversationId}`;
+        } else {
+            alert(data.error || 'Failed to start chat');
+        }
+    } catch (error) {
+        console.error('Error starting chat:', error);
+        alert('Failed to start chat');
+    }
+}
+
+function rescheduleAppointment(appointmentId) {
+    // This could open a modal similar to booking
+    alert('Reschedule functionality coming soon. Please contact your therapist directly for now.');
+}
+
+// Auto-refresh appointments every 5 minutes
+setInterval(() => {
+    loadAppointments();
+}, 5 * 60 * 1000);
+</script>

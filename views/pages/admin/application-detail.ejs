@@ -1,0 +1,264 @@
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-textMain">Application Details</h1>
+      <p class="text-gray-600 mt-2">Review therapist application for <%= application.name %></p>
+    </div>
+    <a href="/admin/applications" class="btn-secondary">
+      <i class="fas fa-arrow-left mr-2"></i>Back to Applications
+    </a>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <!-- Header with Status -->
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-start justify-between">
+        <div class="flex items-start space-x-4">
+          <!-- Profile Image -->
+          <div class="flex-shrink-0">
+            <% if (application.profile_image) { %>
+              <img src="/uploads/<%= application.profile_image %>" 
+                   alt="<%= application.name %>'s Profile" 
+                   class="w-20 h-20 rounded-full object-cover border-4 border-gray-200">
+            <% } else { %>
+              <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center border-4 border-gray-200">
+                <i class="fas fa-user text-gray-400 text-2xl"></i>
+              </div>
+            <% } %>
+          </div>
+          
+          <!-- Basic Info -->
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2"><%= application.name %></h2>
+            <p class="text-gray-600 mb-1">
+              <i class="fas fa-envelope mr-2"></i><%= application.email %>
+            </p>
+            <p class="text-gray-600 mb-3">
+              <i class="fas fa-calendar mr-2"></i>User since <%= new Date(application.user_created_at).toLocaleDateString() %>
+            </p>
+            <span class="status-badge status-<%= application.status %> text-lg px-4 py-2">
+              <% if (application.status === 'pending') { %>
+                <i class="fas fa-clock mr-2"></i>Pending Review
+              <% } else if (application.status === 'approved') { %>
+                <i class="fas fa-check-circle mr-2"></i>Approved
+              <% } else if (application.status === 'rejected') { %>
+                <i class="fas fa-times-circle mr-2"></i>Rejected
+              <% } %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Details -->
+    <div class="p-6 space-y-6">
+      <!-- Professional Information -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Professional Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <% if (application.specialty) { %>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+              <p class="text-gray-900 bg-gray-50 p-3 rounded-md"><%= application.specialty %></p>
+            </div>
+          <% } %>
+          
+          <% if (application.experience) { %>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Experience</label>
+              <p class="text-gray-900 bg-gray-50 p-3 rounded-md"><%= application.experience %></p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Bio -->
+      <% if (application.bio) { %>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+          <div class="bg-gray-50 p-4 rounded-md">
+            <p class="text-gray-900 leading-relaxed"><%= application.bio %></p>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Documents -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Uploaded Documents</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <% if (application.resume_file) { %>
+            <div class="border border-gray-200 rounded-lg p-4">
+              <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                  <i class="fas fa-file-pdf text-red-500 text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-medium text-gray-900">Resume</h4>
+                  <p class="text-sm text-gray-500">PDF Document</p>
+                </div>
+              </div>
+              <div class="mt-3">
+                <a href="/uploads/<%= application.resume_file %>" 
+                   target="_blank" 
+                   class="btn-primary text-sm w-full text-center">
+                  <i class="fas fa-external-link-alt mr-2"></i>View Document
+                </a>
+              </div>
+            </div>
+          <% } else { %>
+            <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <div class="text-center text-gray-500">
+                <i class="fas fa-file-pdf text-3xl mb-2"></i>
+                <p class="text-sm">No resume uploaded</p>
+              </div>
+            </div>
+          <% } %>
+
+          <% if (application.certification_file) { %>
+            <div class="border border-gray-200 rounded-lg p-4">
+              <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                  <i class="fas fa-certificate text-green-500 text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-medium text-gray-900">Certification</h4>
+                  <p class="text-sm text-gray-500">PDF Document</p>
+                </div>
+              </div>
+              <div class="mt-3">
+                <a href="/uploads/<%= application.certification_file %>" 
+                   target="_blank" 
+                   class="btn-primary text-sm w-full text-center">
+                  <i class="fas fa-external-link-alt mr-2"></i>View Document
+                </a>
+              </div>
+            </div>
+          <% } else { %>
+            <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <div class="text-center text-gray-500">
+                <i class="fas fa-certificate text-3xl mb-2"></i>
+                <p class="text-sm">No certification uploaded</p>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Application Timeline -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Application Timeline</h3>
+        <div class="space-y-4">
+          <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+            <div>
+              <p class="font-medium text-gray-900">Application Submitted</p>
+              <p class="text-sm text-gray-500"><%= new Date(application.created_at).toLocaleString() %></p>
+            </div>
+          </div>
+          <% if (application.updated_at && application.updated_at !== application.created_at) { %>
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 w-2 h-2 bg-<%= application.status === 'approved' ? 'green' : application.status === 'rejected' ? 'red' : 'yellow' %>-500 rounded-full mt-2"></div>
+              <div>
+                <p class="font-medium text-gray-900">Status Updated to <%= application.status.charAt(0).toUpperCase() + application.status.slice(1) %></p>
+                <p class="text-sm text-gray-500"><%= new Date(application.updated_at).toLocaleString() %></p>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Admin Feedback -->
+      <% if (application.admin_feedback) { %>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Admin Feedback</label>
+          <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+            <p class="text-blue-800"><%= application.admin_feedback %></p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Action Buttons -->
+    <% if (application.status === 'pending') { %>
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <!-- Approve Form -->
+          <form method="POST" action="/admin/applications/<%= application.id %>/approve" class="flex-1">
+            <div class="mb-4">
+              <label for="feedback" class="block text-sm font-medium text-gray-700 mb-2">Approval Message (Optional)</label>
+              <textarea 
+                name="feedback" 
+                id="feedback" 
+                rows="3" 
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Welcome message for the new therapist..."></textarea>
+            </div>
+            <button type="submit" class="btn-success w-full sm:w-auto px-6 py-3">
+              <i class="fas fa-check mr-2"></i>Approve Application
+            </button>
+          </form>
+
+          <!-- Reject Form -->
+          <form method="POST" action="/admin/applications/<%= application.id %>/reject" class="flex-1">
+            <div class="mb-4">
+              <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason</label>
+              <textarea 
+                name="reason" 
+                id="reason" 
+                rows="3" 
+                required
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Please provide a reason for rejection..."></textarea>
+            </div>
+            <button type="submit" class="btn-danger w-full sm:w-auto px-6 py-3">
+              <i class="fas fa-times mr-2"></i>Reject Application
+            </button>
+          </form>
+        </div>
+      </div>
+    <% } else { %>
+      <!-- Application Already Processed -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+        <div class="text-center">
+          <p class="text-gray-600 mb-4">
+            This application has been <strong><%= application.status %></strong>
+            <% if (application.updated_at) { %>
+              on <%= new Date(application.updated_at).toLocaleDateString() %>
+            <% } %>
+          </p>
+          <% if (application.status === 'approved') { %>
+            <a href="/admin/therapists" class="btn-primary">
+              <i class="fas fa-user-md mr-2"></i>View in Therapists List
+            </a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<style>
+.status-badge {
+  @apply inline-flex items-center rounded-full font-medium;
+}
+
+.status-pending {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-approved {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-rejected {
+  @apply bg-red-100 text-red-800;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 rounded-md font-medium transition-colors;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 rounded-md font-medium transition-colors;
+}
+</style>

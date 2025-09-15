@@ -89,3 +89,51 @@
         });
       });
    
+      //<!-- Flash Message JavaScript -->
+    
+      document.addEventListener('DOMContentLoaded', function() {
+        // Handle flash message auto-dismiss and close buttons
+        const flashMessages = document.querySelectorAll('.flash-message');
+        
+        flashMessages.forEach(function(message) {
+          // Auto-dismiss after 5 seconds
+          setTimeout(function() {
+            dismissFlashMessage(message);
+          }, 5000);
+          
+          // Handle manual close button
+          const closeButton = message.querySelector('.flash-close');
+          if (closeButton) {
+            closeButton.addEventListener('click', function() {
+              dismissFlashMessage(message);
+            });
+          }
+        });
+        
+        function dismissFlashMessage(message) {
+          message.style.transition = 'all 0.3s ease-out';
+          message.style.transform = 'translateY(-10px)';
+          message.style.opacity = '0';
+          
+          setTimeout(function() {
+            message.remove();
+            
+            // Check if container is empty and hide it
+            const container = document.getElementById('flash-container');
+            if (container && container.children.length === 0) {
+              container.style.display = 'none';
+            }
+          }, 300);
+        }
+        
+        // Handle mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuButton && mobileMenu) {
+          mobileMenuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+          });
+        }
+      });
+    

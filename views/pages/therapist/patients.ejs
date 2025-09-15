@@ -1,0 +1,428 @@
+<!-- Updated patients page section with proper chat functionality -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header Section -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+        👥 My Patients
+      </h1>
+      <p class="text-lg text-gray-600">
+        Manage your patient relationships and communications
+      </p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="hidden md:block">
+      <div class="flex space-x-3">
+        <a href="/appointments/chat" 
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+          <i class="fas fa-comments mr-2"></i>All Messages
+        </a>
+        <a href="/therapist/schedule" 
+           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+          <i class="fas fa-calendar-plus mr-2"></i>Schedule
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-users text-blue-600"></i>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Total Patients</p>
+          <p class="text-2xl font-bold text-gray-900" id="totalPatients">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-comments text-green-600"></i>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Active Chats</p>
+          <p class="text-2xl font-bold text-gray-900" id="activeChats">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-calendar text-orange-600"></i>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Upcoming</p>
+          <p class="text-2xl font-bold text-gray-900" id="upcomingAppointments">0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div class="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
+        <!-- Search Input -->
+        <div class="flex-1">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-search text-gray-400"></i>
+            </div>
+            <input
+              type="text"
+              id="searchPatients"
+              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Search patients by name or email..."
+            />
+          </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex space-x-2">
+          <button class="filter-btn active" data-filter="all">
+            <i class="fas fa-users mr-2"></i>All
+          </button>
+          <button class="filter-btn" data-filter="recent">
+            <i class="fas fa-clock mr-2"></i>Recent
+          </button>
+          <button class="filter-btn" data-filter="unread">
+            <i class="fas fa-envelope mr-2"></i>Unread
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patients List -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" id="patientsContainer">
+    <!-- Loading State -->
+    <div class="col-span-full" id="loadingState">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading patients...</p>
+      </div>
+    </div>
+
+    <!-- Empty State (hidden by default) -->
+    <div class="col-span-full hidden" id="emptyState">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-user-friends text-2xl text-gray-400"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Patients Yet</h3>
+        <p class="text-gray-600 mb-4">
+          You haven't seen any patients yet. Patients will appear here once they book appointments with you.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Card Template (hidden) -->
+  <template id="patientCardTemplate">
+    <div class="patient-card bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+      <div class="p-6">
+        <!-- Patient Header -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center">
+            <div class="patient-avatar w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mr-4 overflow-hidden">
+              <i class="fas fa-user text-gray-500"></i>
+            </div>
+            <div>
+              <h3 class="patient-name font-semibold text-gray-900 text-lg"></h3>
+              <p class="patient-email text-sm text-gray-600"></p>
+            </div>
+          </div>
+
+          <!-- Unread Badge -->
+          <div class="unread-badge hidden">
+            <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              <span class="unread-count">0</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Patient Stats -->
+        <div class="grid grid-cols-2 gap-4 mb-4 text-center">
+          <div class="bg-blue-50 rounded-lg p-3">
+            <div class="total-appointments text-lg font-bold text-blue-600">0</div>
+            <div class="text-xs text-blue-700">Sessions</div>
+          </div>
+          <div class="bg-green-50 rounded-lg p-3">
+            <div class="upcoming-appointments text-lg font-bold text-green-600">0</div>
+            <div class="text-xs text-green-700">Upcoming</div>
+          </div>
+        </div>
+
+        <!-- Last Session Info -->
+        <div class="text-center mb-4">
+          <div class="text-sm text-gray-600">Last session:</div>
+          <div class="last-appointment text-sm font-medium text-gray-900">Never</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-2">
+          <button class="flex-1 chat-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+            <i class="fas fa-comments mr-2"></i>Chat
+          </button>
+          <button class="flex-1 schedule-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+            <i class="fas fa-calendar-plus mr-2"></i>Schedule
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+// Updated JavaScript for patient page with proper chat functionality
+let currentPatients = [];
+
+document.addEventListener("DOMContentLoaded", function () {
+    loadPatients();
+    initializeEventListeners();
+});
+
+async function loadPatients() {
+    try {
+        showLoadingState();
+        
+        const response = await fetch('/therapist/api/patients');
+        if (!response.ok) {
+            throw new Error('Failed to load patients');
+        }
+        
+        const data = await response.json();
+        if (data.success) {
+            currentPatients = data.patients || [];
+            renderPatients(currentPatients);
+            updateStats();
+        } else {
+            throw new Error(data.error || 'Failed to load patients');
+        }
+        
+        hideLoadingState();
+    } catch (error) {
+        console.error("Error loading patients:", error);
+        showError("Failed to load patients. Please refresh the page.");
+        hideLoadingState();
+    }
+}
+
+function renderPatients(patients) {
+    const container = document.getElementById("patientsContainer");
+    const template = document.getElementById("patientCardTemplate");
+    const loadingState = document.getElementById("loadingState");
+    const emptyState = document.getElementById("emptyState");
+
+    // Clear existing cards
+    const existingCards = container.querySelectorAll(".patient-card");
+    existingCards.forEach((card) => card.remove());
+
+    if (patients.length === 0) {
+        loadingState.classList.add("hidden");
+        emptyState.classList.remove("hidden");
+        return;
+    }
+
+    loadingState.classList.add("hidden");
+    emptyState.classList.add("hidden");
+
+    patients.forEach((patient) => {
+        const card = template.content.cloneNode(true);
+
+        // Patient avatar
+        const avatar = card.querySelector(".patient-avatar");
+        if (patient.profile_image) {
+            const img = document.createElement("img");
+            img.src = patient.profile_image.startsWith("/")
+                ? patient.profile_image
+                : `/uploads/profiles/${patient.profile_image}`;
+            img.alt = `${patient.name}'s Profile`;
+            img.className = "w-12 h-12 rounded-full object-cover";
+            img.onerror = function () {
+                this.style.display = "none";
+                avatar.innerHTML = '<i class="fas fa-user text-gray-500"></i>';
+            };
+            avatar.innerHTML = "";
+            avatar.appendChild(img);
+        }
+
+        // Patient info
+        card.querySelector(".patient-name").textContent = patient.name;
+        card.querySelector(".patient-email").textContent = patient.email;
+
+        // Stats
+        card.querySelector(".total-appointments").textContent = patient.total_appointments || 0;
+        card.querySelector(".upcoming-appointments").textContent = patient.upcoming_appointments || 0;
+
+        // Last appointment
+        const lastAppointment = card.querySelector(".last-appointment");
+        if (patient.last_appointment) {
+            const date = new Date(patient.last_appointment);
+            lastAppointment.textContent = date.toLocaleDateString();
+        } else {
+            lastAppointment.textContent = "Never";
+        }
+
+        // Unread messages
+        const unreadBadge = card.querySelector(".unread-badge");
+        const unreadCount = card.querySelector(".unread-count");
+        if (patient.unread_messages && patient.unread_messages > 0) {
+            unreadBadge.classList.remove("hidden");
+            unreadCount.textContent = patient.unread_messages;
+        }
+
+        // Event listeners
+        const chatBtn = card.querySelector(".chat-btn");
+        const scheduleBtn = card.querySelector(".schedule-btn");
+
+        chatBtn.addEventListener("click", () => openChat(patient));
+        scheduleBtn.addEventListener("click", () => scheduleAppointment(patient));
+
+        // Set data attributes for filtering
+        const cardElement = card.querySelector(".patient-card");
+        cardElement.dataset.patientId = patient.id;
+        cardElement.dataset.patientName = patient.name.toLowerCase();
+        cardElement.dataset.patientEmail = patient.email.toLowerCase();
+        cardElement.dataset.hasUnread = patient.unread_messages > 0;
+        cardElement.dataset.lastAppointment = patient.last_appointment || "";
+
+        container.appendChild(card);
+    });
+}
+
+function openChat(patient) {
+    // If patient has an existing conversation, go directly to it
+    if (patient.conversation_id) {
+        window.location.href = `/appointments/chat/${patient.conversation_id}`;
+    } else {
+        // Start new conversation with this patient
+        window.location.href = `/appointments/chat/new?patientId=${patient.id}`;
+    }
+}
+
+function scheduleAppointment(patient) {
+    window.location.href = `/therapist/schedule?patient=${patient.id}`;
+}
+
+function updateStats() {
+    const totalPatients = currentPatients.length;
+    const activeChats = currentPatients.filter(p => p.unread_messages > 0).length;
+    const upcomingAppointments = currentPatients.reduce((sum, p) => sum + (p.upcoming_appointments || 0), 0);
+
+    document.getElementById("totalPatients").textContent = totalPatients;
+    document.getElementById("activeChats").textContent = activeChats;
+    document.getElementById("upcomingAppointments").textContent = upcomingAppointments;
+}
+
+function initializeEventListeners() {
+    const searchInput = document.getElementById("searchPatients");
+    searchInput.addEventListener("input", handleSearch);
+
+    const filterButtons = document.querySelectorAll(".filter-btn");
+    filterButtons.forEach((btn) => {
+        btn.addEventListener("click", handleFilter);
+    });
+}
+
+function handleSearch(e) {
+    const query = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll(".patient-card");
+
+    cards.forEach((card) => {
+        const name = card.dataset.patientName;
+        const email = card.dataset.patientEmail;
+
+        if (name.includes(query) || email.includes(query)) {
+            card.style.display = "block";
+        } else {
+            card.style.display = "none";
+        }
+    });
+}
+
+function handleFilter(e) {
+    const filterButtons = document.querySelectorAll(".filter-btn");
+    filterButtons.forEach((btn) => btn.classList.remove("active"));
+    e.target.classList.add("active");
+
+    const filter = e.target.dataset.filter;
+    const cards = document.querySelectorAll(".patient-card");
+
+    cards.forEach((card) => {
+        let show = true;
+
+        switch (filter) {
+            case "all":
+                show = true;
+                break;
+            case "recent":
+                const lastAppointment = card.dataset.lastAppointment;
+                if (lastAppointment) {
+                    const date = new Date(lastAppointment);
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    show = date > weekAgo;
+                } else {
+                    show = false;
+                }
+                break;
+            case "unread":
+                show = card.dataset.hasUnread === "true";
+                break;
+        }
+
+        card.style.display = show ? "block" : "none";
+    });
+}
+
+function showLoadingState() {
+    document.getElementById("loadingState").classList.remove("hidden");
+}
+
+function hideLoadingState() {
+    document.getElementById("loadingState").classList.add("hidden");
+}
+
+function showError(message) {
+    const toast = document.createElement("div");
+    toast.className = "fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+</script>
+
+<style>
+.filter-btn {
+    @apply px-3 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200;
+}
+
+.filter-btn.active {
+    @apply bg-blue-600 text-white border-blue-600;
+}
+
+.patient-card {
+    @apply transform transition-transform duration-200;
+}
+
+.patient-card:hover {
+    @apply -translate-y-1;
+}
+</style>
