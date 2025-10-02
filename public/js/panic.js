@@ -947,78 +947,86 @@ function detectPanicIndicators() {
   let lastVisitTime = 0;
   let inactivityStart = Date.now();
 
-  // Track rapid clicking (anxiety indicator)
-  document.addEventListener('click', () => {
-    const now = Date.now();
-    if (now - lastClickTime < 1000) {
-      rapidClicks++;
-      if (rapidClicks > 5 && !sessionData.sessionId) {
-        showTempMessage('Detected rapid activity. Would you like panic support?', 'warning');
-        setTimeout(() => {
-          if (confirm('It looks like you might be feeling distressed. Start a panic support session with automatic recording?')) {
-            initializePanicSession('auto_detected_rapid_clicks');
-          }
-        }, 2000);
-      }
-    } else {
-      rapidClicks = 0;
-    }
-    lastClickTime = now;
-  });
-
-  // Track multiple visits to panic-related pages
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
+  // Track rapid clicking (anxiety indicator) - ONLY for authenticated users
+  if (isAuthenticated) {
+    document.addEventListener('click', () => {
       const now = Date.now();
-      pageVisits++;
-
-      // If user visits panic page multiple times quickly
-      if (pageVisits > 2 && (now - lastVisitTime) < 300000 && !sessionData.sessionId) { // 5 minutes
-        showTempMessage('Multiple visits detected. Need panic support?', 'warning');
-        // Removed automatic prompt - users can start sessions manually if needed
-      }
-
-      lastVisitTime = now;
-    } else {
-      // Track when user switches away (might be feeling overwhelmed)
-      inactivityStart = Date.now();
-    }
-  });
-
-  // Track long periods of inactivity followed by sudden activity
-  document.addEventListener('focus', () => {
-    const now = Date.now();
-    const inactiveTime = now - inactivityStart;
-
-    // If inactive for more than 10 minutes then suddenly active
-    if (inactiveTime > 600000 && !sessionData.sessionId) { // 10 minutes
-      showTempMessage('Welcome back! Everything okay?', 'info');
-      setTimeout(() => {
-        if (confirm('You were away for a while. Would you like panic support?')) {
-          initializePanicSession('auto_detected_after_inactivity');
+      if (now - lastClickTime < 1000) {
+        rapidClicks++;
+        if (rapidClicks > 5 && !sessionData.sessionId) {
+          showTempMessage('Detected rapid activity. Would you like panic support?', 'warning');
+          setTimeout(() => {
+            if (confirm('It looks like you might be feeling distressed. Start a panic support session with automatic recording?')) {
+              initializePanicSession('auto_detected_rapid_clicks');
+            }
+          }, 2000);
         }
-      }, 5000);
-    }
-  });
-
-  // Track navigation patterns
-  let navigationCount = 0;
-  let lastNavigationTime = 0;
-
-  window.addEventListener('beforeunload', () => {
-    const now = Date.now();
-    if (now - lastNavigationTime < 5000) {
-      navigationCount++;
-      if (navigationCount > 3 && !sessionData.sessionId) {
-        // Save indication of rapid navigation for next session
-        localStorage.setItem('panic_navigation_detected', 'true');
+      } else {
+        rapidClicks = 0;
       }
-    }
-    lastNavigationTime = now;
-  });
+      lastClickTime = now;
+    });
+  }
 
-  // Check for previous rapid navigation on page load
-  if (localStorage.getItem('panic_navigation_detected') === 'true') {
+  // Track multiple visits to panic-related pages - ONLY for authenticated users
+  if (isAuthenticated) {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        pageVisits++;
+
+        // If user visits panic page multiple times quickly
+        if (pageVisits > 2 && (now - lastVisitTime) < 300000 && !sessionData.sessionId) { // 5 minutes
+          showTempMessage('Multiple visits detected. Need panic support?', 'warning');
+          // Removed automatic prompt - users can start sessions manually if needed
+        }
+
+        lastVisitTime = now;
+      } else {
+        // Track when user switches away (might be feeling overwhelmed)
+        inactivityStart = Date.now();
+      }
+    });
+  }
+
+  // Track long periods of inactivity followed by sudden activity - ONLY for authenticated users
+  if (isAuthenticated) {
+    document.addEventListener('focus', () => {
+      const now = Date.now();
+      const inactiveTime = now - inactivityStart;
+
+      // If inactive for more than 10 minutes then suddenly active
+      if (inactiveTime > 600000 && !sessionData.sessionId) { // 10 minutes
+        showTempMessage('Welcome back! Everything okay?', 'info');
+        setTimeout(() => {
+          if (confirm('You were away for a while. Would you like panic support?')) {
+            initializePanicSession('auto_detected_after_inactivity');
+          }
+        }, 5000);
+      }
+    });
+  }
+
+  // Track navigation patterns - ONLY for authenticated users
+  if (isAuthenticated) {
+    let navigationCount = 0;
+    let lastNavigationTime = 0;
+
+    window.addEventListener('beforeunload', () => {
+      const now = Date.now();
+      if (now - lastNavigationTime < 5000) {
+        navigationCount++;
+        if (navigationCount > 3 && !sessionData.sessionId) {
+          // Save indication of rapid navigation for next session
+          localStorage.setItem('panic_navigation_detected', 'true');
+        }
+      }
+      lastNavigationTime = now;
+    });
+  }
+
+  // Check for previous rapid navigation on page load - ONLY for authenticated users
+  if (isAuthenticated && localStorage.getItem('panic_navigation_detected') === 'true') {
     localStorage.removeItem('panic_navigation_detected');
     if (!sessionData.sessionId) {
       setTimeout(() => {
@@ -1029,48 +1037,55 @@ function detectPanicIndicators() {
     }
   }
 
-  // Track keyboard patterns that might indicate distress
+  // Track keyboard patterns that might indicate distress (ONLY for authenticated users)
   let keyPressCount = 0;
   let lastKeyTime = 0;
   let repeatedKeys = 0;
   let lastKey = '';
 
-  document.addEventListener('keydown', (event) => {
-    const now = Date.now();
+  // Check if user is authenticated before enabling panic detection
+  const isAuthenticated = document.querySelector('meta[name="user-authenticated"]')?.getAttribute('content') === 'true' ||
+                         document.querySelector('.user-nav') !== null ||
+                         document.querySelector('[data-user]') !== null;
 
-    // Check for repeated key presses (like mashing keys in distress)
-    if (event.key === lastKey && (now - lastKeyTime) < 200) {
-      repeatedKeys++;
-      if (repeatedKeys > 10 && !sessionData.sessionId) {
-        showTempMessage('Multiple key repeats detected. Need help?', 'warning');
-        setTimeout(() => {
-          if (confirm('It looks like you might be distressed. Start panic support?')) {
-            initializePanicSession('auto_detected_key_mashing');
-          }
-        }, 3000);
+  if (isAuthenticated) {
+    document.addEventListener('keydown', (event) => {
+      const now = Date.now();
+
+      // Check for repeated key presses (like mashing keys in distress)
+      if (event.key === lastKey && (now - lastKeyTime) < 200) {
+        repeatedKeys++;
+        if (repeatedKeys > 10 && !sessionData.sessionId) {
+          showTempMessage('Multiple key repeats detected. Need help?', 'warning');
+          setTimeout(() => {
+            if (confirm('It looks like you might be distressed. Start panic support?')) {
+              initializePanicSession('auto_detected_key_mashing');
+            }
+          }, 3000);
+        }
+      } else {
+        repeatedKeys = 0;
       }
-    } else {
-      repeatedKeys = 0;
-    }
 
-    // Check for rapid typing
-    if (now - lastKeyTime < 100) {
-      keyPressCount++;
-      if (keyPressCount > 20 && !sessionData.sessionId) {
-        showTempMessage('Rapid typing detected. Everything okay?', 'info');
-        setTimeout(() => {
-          if (confirm('You seem to be typing very quickly. Would you like panic support?')) {
-            initializePanicSession('auto_detected_rapid_typing');
-          }
-        }, 5000);
+      // Check for rapid typing
+      if (now - lastKeyTime < 100) {
+        keyPressCount++;
+        if (keyPressCount > 20 && !sessionData.sessionId) {
+          showTempMessage('Rapid typing detected. Everything okay?', 'info');
+          setTimeout(() => {
+            if (confirm('You seem to be typing very quickly. Would you like panic support?')) {
+              initializePanicSession('auto_detected_rapid_typing');
+            }
+          }, 5000);
+        }
+      } else {
+        keyPressCount = 0;
       }
-    } else {
-      keyPressCount = 0;
-    }
 
-    lastKey = event.key;
-    lastKeyTime = now;
-  });
+      lastKey = event.key;
+      lastKeyTime = now;
+    });
+  }
 
   // Ensure sessions are saved even if page is closed unexpectedly
   window.addEventListener('beforeunload', () => {
