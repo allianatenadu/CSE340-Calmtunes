@@ -5,366 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title %></title>
     <link href="/css/output.css" rel="stylesheet" />
-    
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       rel="stylesheet"
     />
-  
+
+    <!-- Custom styles for animations and effects -->
+    <style>
+      .group:hover .group-hover-animate {
+        transform: translateY(-4px);
+      }
+
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-fade-in-down {
+        animation: fadeInDown 0.8s ease-out;
+      }
+
+      .animate-fade-in-up {
+        animation: fadeInUp 0.8s ease-out;
+      }
+
+      .animate-fade-in {
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      /* Timeline styles */
+      .timeline-decorator::before {
+        content: "";
+        position: absolute;
+        top: 1.75rem;
+        left: 1.125rem;
+        bottom: 0;
+        width: 2px;
+        background-color: #e3e8e5;
+      }
+
+      .dark .timeline-decorator::before {
+        background-color: #233729;
+      }
+
+      .timeline-item:last-child .timeline-decorator::before {
+        display: none;
+      }
+
+      .icon-circle {
+        width: 2.25rem;
+        height: 2.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        z-index: 10;
+      }
+
+      /* Custom color variables for light/dark mode */
+      :root {
+        --primary: #38e07b;
+        --background-light: #f6f8f7;
+        --background-dark: #122017;
+        --foreground-light: #111714;
+        --foreground-dark: #e3e8e5;
+        --card-light: #ffffff;
+        --card-dark: #1a2c21;
+        --subtle-light: #f0f4f2;
+        --subtle-dark: #233729;
+        --subtle-foreground-light: #648772;
+        --subtle-foreground-dark: #92bda4;
+      }
+    </style>
   </head>
-  <body class="bg-background min-h-screen flex flex-col">
-   <!-- Navigation with proper z-index -->
-<nav class="bg-white shadow-sm border-b border-gray-200 fixed top-0 w-full z-50">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center h-16">
-      <!-- Logo -->
-      <div class="flex-shrink-0">
-        <a href="/" class="text-2xl font-bold text-primary">
-          🎵 CalmTunes
-        </a>
-      </div>
-
-      <!-- Navigation Links (Desktop) -->
-      <div class="hidden md:block">
-        <div class="flex items-center space-x-6">
-          <% if (user) { %>
-            <!-- Dashboard -->
-            <a href="/dashboard" class="nav-link">
-              <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-            </a>
-
-            <!-- Features Dropdown -->
-            <div class="relative group">
-              <button class="nav-link flex items-center">
-                <i class="fas fa-star mr-2"></i>Features
-                <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
-              </button>
-              
-              <!-- Dropdown Menu -->
-              <div class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
-                <div class="py-2">
-                  <a href="/music" class="dropdown-item">
-                      <div class="font-medium">Music Therapy</div>
-                  </a>
-                  
-                  <a href="/drawing" class="dropdown-item">
-                      <div class="font-medium">Art Therapy</div>
-                  </a>
-                  
-                  <a href="/panic" class="dropdown-item">
-                      <div class="font-medium">Panic Support</div>
-                  </a>
-                  
-                  <a href="/mood-tracker" class="dropdown-item">
-                      <div class="font-medium">Mood Tracker</div>
-                  </a>
-                  
-                  <div class="border-t border-gray-100 my-2"></div>
-                  
-                  <a href="/therapist" class="dropdown-item">
-                    <i class="fas fa-user-md text-purple-500 mr-3"></i>
-                    <div>
-                      <div class="font-medium">Find Therapists</div>
-                      <div class="text-xs text-gray-500">Professional support</div>
-                    </div>
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <!-- Account Dropdown - FIXED ALIGNMENT -->
-            <div class="relative group">
-              <button class="nav-link flex items-center">
-                <!-- Profile Image with proper alignment -->
-                <% if (typeof profileImageUrl !== 'undefined' && profileImageUrl) { %>
-                  <img
-                    src="<%= profileImageUrl %>"
-                    alt="<%= user.name %>'s Profile"
-                    class="w-8 h-8 rounded-full mr-2 object-cover border-2 border-primary/20"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                  >
-                  <!-- Fallback avatar (hidden by default, shown on error) -->
-                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2" style="display: none;">
-                    <i class="fas fa-user text-primary text-sm"></i>
-                  </div>
-                <% } else if (user && user.profile_image) { %>
-                  <img
-                    src="<%= user.profile_image.startsWith('http') ? user.profile_image : (user.profile_image.startsWith('/') ? user.profile_image : '/uploads/profiles/' + user.profile_image) %>"
-                    alt="<%= user.name %>'s Profile"
-                    class="w-8 h-8 rounded-full mr-2 object-cover border-2 border-primary/20"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                  >
-                  <!-- Fallback avatar -->
-                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2" style="display: none;">
-                    <i class="fas fa-user text-primary text-sm"></i>
-                  </div>
-                <% } else { %>
-                  <!-- Default avatar when no profile image -->
-                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2">
-                    <i class="fas fa-user text-primary text-sm"></i>
-                  </div>
-                <% } %>
-                
-                <%= user.name.split(' ')[0] %>
-                
-                <!-- Role Badge -->
-                <% if (user.role === 'admin') { %>
-                  <span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Admin</span>
-                <% } else if (user.role === 'therapist') { %>
-                  <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Therapist</span>
-                <% } else if (user.role === 'patient') { %>
-                  <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Patient</span>
-                <% } %>
-                
-                <i class="fas fa-chevron-down ml-2 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
-              </button>
-              
-              <!-- Account Dropdown Menu with proper z-index -->
-              <div class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
-                <div class="py-2">
-                  <!-- User Info -->
-                  <div class="px-4 py-3 border-b border-gray-100">
-                    <div class="flex items-center">
-                      <!-- Profile image in dropdown -->
-                      <% if (typeof profileImageUrl !== 'undefined' && profileImageUrl) { %>
-                        <img 
-                          src="<%= profileImageUrl %>" 
-                          alt="<%= user.name %>'s Profile" 
-                          class="w-12 h-12 rounded-full mr-3 object-cover border-2 border-primary/20"
-                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                        >
-                        <!-- Fallback avatar -->
-                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-3" style="display: none;">
-                          <i class="fas fa-user text-primary"></i>
-                        </div>
-                      <% } else if (user.profile_image) { %>
-                        <img 
-                          src="<%= user.profile_image.startsWith('http') ? user.profile_image : (user.profile_image.startsWith('/') ? user.profile_image : '/uploads/profiles/' + user.profile_image) %>" 
-                          alt="<%= user.name %>'s Profile" 
-                          class="w-12 h-12 rounded-full mr-3 object-cover border-2 border-primary/20"
-                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                        >
-                        <!-- Fallback avatar -->
-                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-3" style="display: none;">
-                          <i class="fas fa-user text-primary"></i>
-                        </div>
-                      <% } else { %>
-                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                          <i class="fas fa-user text-primary"></i>
-                        </div>
-                      <% } %>
-                      
-                      <div class="flex-1">
-                        <div class="font-medium text-gray-900"><%= user.name %></div>
-                        <div class="text-sm text-gray-500"><%= user.email %></div>
-                        <div class="text-xs text-gray-400 capitalize"><%= user.role %> Account</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Role-specific Links -->
-                  <% if (user.role === 'admin') { %>
-                    <a href="/admin" class="dropdown-item">
-                      <div>Admin Panel</div>
-                    </a>
-                    <div class="border-t border-gray-100 my-2"></div>
-                  <% } else if (user.role === 'therapist') { %>
-                    <a href="/therapist" class="dropdown-item">
-                      <div>Therapist Dashboard</div>
-                    </a>
-                    <a href="/therapist/patients" class="dropdown-item">
-                      <div>My Patients</div>
-                    </a>
-                    <div class="border-t border-gray-100 my-2"></div>
-                  <% } else if (user.role === 'patient') { %>
-                    <a href="/dashboard" class="dropdown-item">
-                      <div>My Dashboard</div>
-                    </a>
-                    <div class="border-t border-gray-100 my-2"></div>
-                  <% } %>
-                  
-                  <!-- Common Account Links -->
-                  <a href="/account" class="dropdown-item">
-                    <div>Account Settings</div>
-                  </a>
-                  
-                  <a href="/account/preferences" class="dropdown-item">
-                    <div>Preferences</div>
-                  </a>
-                  
-                  <a href="/account/privacy" class="dropdown-item">
-                    <div>Privacy & Security</div>
-                  </div>
-                  
-                  <div class="border-t border-gray-100 my-2"></div>
-                  
-                  <!-- Help & Support -->
-                  <a href="/help" class="dropdown-item">
-
-                    <div>Help & Support</div>
-                  </a>
-                  
-                  <div class="border-t border-gray-100 my-2"></div>
-                  
-                  <!-- Logout -->
-                  <a href="/logout" class="dropdown-item text-red-600 hover:bg-red-50">
-                    <div>Sign Out</div>
-                  </a>
-                </div>
-              </div>
-            </div>
-
-          <% } else { %>
-            <!-- Non-authenticated Navigation -->
-            <a href="/" class="nav-link">Home</a>
-            <a href="/about" class="nav-link">About</a>
-            <a href="/login" class="btn-primary">Login</a>
-            <a href="/signup" class="btn-secondary">Sign Up</a>
-          <% } %>
-        </div>
-      </div>
-
-      <!-- Mobile menu button -->
-      <div class="md:hidden">
-        <button
-          id="mobile-menu-button"
-          class="text-textMain hover:text-primary p-2"
-        >
-          <i class="fas fa-bars text-xl"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Mobile menu -->
-  <div
-    id="mobile-menu"
-    class="hidden md:hidden bg-white border-t border-gray-200"
+  <body
+    class="bg-background-light dark:bg-background-dark font-display text-foreground-light dark:text-foreground-dark min-h-screen flex flex-col"
   >
-    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-      <% if (user) { %>
-        <!-- User Info (Mobile) -->
-        <div class="px-3 py-4 border-b border-gray-200 mb-2">
-          <div class="flex items-center">
-            <!-- Mobile profile image -->
-            <% if (typeof profileImageUrl !== 'undefined' && profileImageUrl) { %>
-              <img 
-                src="<%= profileImageUrl %>" 
-                alt="<%= user.name %>'s Profile" 
-                class="w-12 h-12 rounded-full mr-3 object-cover border-2 border-primary/20"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-              >
-              <!-- Fallback avatar -->
-              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-3" style="display: none;">
-                <i class="fas fa-user text-primary"></i>
-              </div>
-            <% } else if (user.profile_image) { %>
-              <img 
-                src="<%= user.profile_image.startsWith('http') ? user.profile_image : (user.profile_image.startsWith('/') ? user.profile_image : '/uploads/profiles/' + user.profile_image) %>" 
-                alt="<%= user.name %>'s Profile" 
-                class="w-12 h-12 rounded-full mr-3 object-cover border-2 border-primary/20"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-              >
-              <!-- Fallback avatar -->
-              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-3" style="display: none;">
-                <i class="fas fa-user text-primary"></i>
-              </div>
-            <% } else { %>
-              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                <i class="fas fa-user text-primary"></i>
-              </div>
-            <% } %>
-            
-            <div>
-              <div class="font-medium text-gray-900"><%= user.name %></div>
-              <div class="text-sm text-gray-500"><%= user.email %></div>
-              <div class="text-xs text-gray-400 capitalize"><%= user.role %> Account</div>
-            </div>
-          </div>
-        </div>
+    <!-- Navigation -->
+    <%- include('../partials/navbar') %>
 
-        <!-- Role-specific Mobile Links -->
-        <% if (user.role === 'admin') { %>
-          <a href="/admin" class="mobile-nav-item">
-            <i class="fas fa-shield-alt text-red-600 mr-3"></i>Admin Panel
-          </a>
-        <% } else if (user.role === 'therapist') { %>
-          <a href="/therapist" class="mobile-nav-item">
-            <i class="fas fa-user-md text-purple-600 mr-3"></i>Therapist Dashboard
-          </a>
-          <a href="/therapist/patients" class="mobile-nav-item">
-            <i class="fas fa-users text-purple-600 mr-3"></i>My Patients
-          </a>
-        <% } else { %>
-          <!-- Dashboard -->
-          <a href="/dashboard" class="mobile-nav-item">
-            <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
-          </a>
-        <% } %>
-
-        <!-- Features Section -->
-        <div class="px-3 py-2">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Features</div>
-        </div>
-        
-        <a href="/music" class="mobile-nav-item pl-6">
-          <i class="fas fa-music text-primary mr-3"></i>Music Therapy
-        </a>
-        
-        <a href="/drawing" class="mobile-nav-item pl-6">
-          <i class="fas fa-palette text-secondary mr-3"></i>Art Therapy
-        </a>
-        
-        <a href="/panic" class="mobile-nav-item pl-6">
-          <i class="fas fa-heart text-red-500 mr-3"></i>Panic Support
-        </a>
-        
-        <a href="/mood-tracker" class="mobile-nav-item pl-6">
-          <i class="fas fa-chart-line text-accent mr-3"></i>Mood Tracker
-        </a>
-        
-        <a href="/therapists" class="mobile-nav-item pl-6">
-          <i class="fas fa-user-md text-purple-500 mr-3"></i>Find Therapists
-        </a>
-
-        <!-- Account Section -->
-        <div class="px-3 py-2 mt-4">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Account</div>
-        </div>
-        
-        <a href="/account" class="mobile-nav-item pl-6">
-          <i class="fas fa-user-cog mr-3"></i>Account Settings
-        </a>
-        
-        <a href="/help" class="mobile-nav-item pl-6">
-          <i class="fas fa-question-circle mr-3"></i>Help & Support
-        </a>
-        
-        <a href="/logout" class="mobile-nav-item pl-6 text-red-600">
-          <i class="fas fa-sign-out-alt mr-3"></i>Sign Out
-        </a>
-
-      <% } else { %>
-        <!-- Non-authenticated Mobile Navigation -->
-        <a href="/" class="mobile-nav-item">
-          <i class="fas fa-home mr-3"></i>Home
-        </a>
-        <a href="/about" class="mobile-nav-item">
-          <i class="fas fa-info-circle mr-3"></i>About
-        </a>
-        <a href="/login" class="mobile-nav-item">
-          <i class="fas fa-sign-in-alt mr-3"></i>Login
-        </a>
-        <a href="/signup" class="mobile-nav-item">
-          <i class="fas fa-user-plus mr-3"></i>Sign Up
-        </a>
-      <% } %>
-    </div>
-  </div>
-</nav>
-
-    <!-- Flash Messages Container - FIXED POSITIONING -->
-    <div id="flash-container" class="fixed top-16 left-0 right-0 z-40 px-4">
+    <!-- Flash Messages Container -->
+    <div id="flash-container" class="relative z-40 px-4">
       <% if (success && success.length > 0) { %>
       <div
         class="flash-message bg-green-100 border border-green-400 text-green-700 px-4 py-3 mx-auto max-w-4xl rounded relative mb-2 shadow-sm"
@@ -380,9 +127,7 @@
           </button>
         </div>
       </div>
-      <% } %> 
-      
-      <% if (error && error.length > 0) { %>
+      <% } %> <% if (error && error.length > 0) { %>
       <div
         class="flash-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 mx-auto max-w-4xl rounded relative mb-2 shadow-sm"
         data-type="error"
@@ -400,67 +145,106 @@
       <% } %>
     </div>
 
-    <!-- Main Content with proper top padding to account for fixed navbar -->
-    <main class="flex-grow relative pt-16"><%- body -%></main>
+    <!-- Main Content -->
+    <main class="flex-1"><%- body -%></main>
 
     <!-- Footer -->
-    <footer class="bg-gray-50 border-t border-gray-200 mt-auto relative z-10">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <h3 class="text-lg font-semibold text-primary mb-4">CalmTunes</h3>
-            <p class="text-gray-600 text-sm">
-              Your mental health companion, providing tools and resources for
-              emotional well-being.
-            </p>
-          </div>
-          <div>
-            <h4 class="text-md font-semibold text-textMain mb-4">
-              Quick Links
-            </h4>
-            <ul class="space-y-2 text-sm">
-              <li>
-                <a href="/about" class="text-gray-600 hover:text-primary"
-                  >About Us</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-gray-600 hover:text-primary"
-                  >Privacy Policy</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-gray-600 hover:text-primary"
-                  >Terms of Service</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-gray-600 hover:text-primary">Contact</a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4 class="text-md font-semibold text-textMain mb-4">Support</h4>
-            <p class="text-gray-600 text-sm mb-2">Crisis Support: 988</p>
-            <p class="text-gray-600 text-sm">help@calmtunes.com</p>
-          </div>
-        </div>
-        <div class="border-t border-gray-200 mt-8 pt-4 text-center">
-          <p class="text-gray-500 text-sm">
-            &copy; 2024 CalmTunes. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </footer>
+    <%- include('../partials/footer') %>
 
-    
     <!-- Global scripts -->
-    <script src="https://sdk.scdn.co/spotify-player.js" defer></script>
+
+    <!-- Mobile menu toggle script -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const mobileMenuButton = document.getElementById("mobile-menu-button");
+        const mobileMenu = document.getElementById("mobile-menu");
+
+        if (mobileMenuButton && mobileMenu) {
+          mobileMenuButton.addEventListener("click", function () {
+            mobileMenu.classList.toggle("hidden");
+          });
+        }
+      });
+    </script>
     <script src="/js/main.js" defer></script>
     <script src="/js/music.js" defer></script>
     <script src="/js/drawing.js" defer></script>
     <script src="/js/account.js" defer></script>
-    
-    
+    <script src="/js/panic.js" defer></script>
+    <script src="/js/quotes.js" defer></script>
+
+    <!-- Global session management -->
+    <script>
+      // Global session validation function
+      async function validateSession() {
+        try {
+          const response = await fetch("/api/session/validate", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            return data.success;
+          } else {
+            return false;
+          }
+        } catch (error) {
+          console.error("Error validating session:", error);
+          return false;
+        }
+      }
+
+      // Global function to handle session expiry
+      async function handleSessionExpiry() {
+        // Clear any existing user data
+        localStorage.removeItem("user");
+        sessionStorage.clear();
+
+        // Show user-friendly message
+        const message =
+          "Your session has expired. Please login again to continue.";
+
+        // Check if we're on a page that needs authentication
+        if (
+          document.querySelector("[data-user-authenticated]")?.dataset
+            .userAuthenticated === "true"
+        ) {
+          alert(message);
+          window.location.href = "/login";
+        } else {
+          // Show a subtle notification for non-critical pages
+          console.warn("Session expired:", message);
+        }
+      }
+
+      // Global error handler for fetch requests
+      window.addEventListener("unhandledrejection", async function (event) {
+        if (
+          event.reason &&
+          event.reason.message &&
+          event.reason.message.includes("401")
+        ) {
+          console.error("Authentication error detected:", event.reason);
+          await handleSessionExpiry();
+        }
+      });
+
+      // Periodic session check (every 5 minutes)
+      setInterval(async function () {
+        if (
+          document.querySelector("[data-user-authenticated]")?.dataset
+            .userAuthenticated === "true"
+        ) {
+          const isValid = await validateSession();
+          if (!isValid) {
+            console.warn("Session validation failed during periodic check");
+            await handleSessionExpiry();
+          }
+        }
+      }, 5 * 60 * 1000); // 5 minutes
+    </script>
   </body>
 </html>

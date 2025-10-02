@@ -2,24 +2,36 @@ const db = require("../config/database"); // postgresql connection
 
 // render drawing page
 exports.renderDrawingPage = (req, res) => {
-  const query = "SELECT * FROM artworks ORDER BY created_at DESC";
+  // Get user ID from session consistently with other controllers
+  const userId = req.session?.user?.id;
+  
+  if (!userId) {
+    return res.render("pages/drawing", { 
+      title: "Drawing Studio", 
+      artworks: [] 
+    });
+  }
 
-  db.query(query, (err, results) => {
+  // Only show artworks for the current user
+  const query = "SELECT * FROM artworks WHERE user_id = $1 ORDER BY created_at DESC";
+
+  db.query(query, [userId], (err, results) => {
     if (err) {
       console.error("DB fetch error:", err);
-      return res.render("pages/drawing", { title: "Drawing Studio", artworks: [] });
+      return res.render("pages/drawing", { 
+        title: "Drawing Studio", 
+        artworks: [] 
+      });
     }
 
     // In Postgres, results are inside results.rows
-   res.render("pages/drawing", {
-  title: "Drawing Studio",
-  artworks: results.rows
-});
-
+    res.render("pages/drawing", {
+      title: "Drawing Studio",
+      artworks: results.rows || []
+    });
   });
 };
 
-// save drawing
 // save drawing
 exports.saveDrawing = (req, res) => {
   try {
@@ -31,7 +43,14 @@ exports.saveDrawing = (req, res) => {
     // strip the prefix if present
     imageData = imageData.replace(/^data:image\/png;base64,/, "");
 
-    const userId = req.user?.id || req.session?.userId || 1;
+    // Use consistent session structure
+    const userId = req.session?.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "User not authenticated" });
+    }
+
+    console.log('Saving drawing for user ID:', userId); // Debug log
 
     const query = "INSERT INTO artworks (image_data, user_id) VALUES ($1, $2) RETURNING id";
     db.query(query, [imageData, userId], (err, result) => {
@@ -51,13 +70,25 @@ exports.saveDrawing = (req, res) => {
 // delete drawing
 exports.deleteDrawing = (req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM artworks WHERE id = $1";
+  const userId = req.session?.user?.id;
+  
+  if (!userId) {
+    return res.status(401).json({ success: false, message: "User not authenticated" });
+  }
 
-  db.query(query, [id], (err) => {
+  // Only allow users to delete their own artworks
+  const query = "DELETE FROM artworks WHERE id = $1 AND user_id = $2";
+
+  db.query(query, [id, userId], (err, result) => {
     if (err) {
       console.error("DB delete error:", err);
       return res.status(500).json({ success: false, message: "DB error" });
     }
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Artwork not found" });
+    }
+    
     return res.json({ success: true, message: "Artwork deleted!" });
   });
 };

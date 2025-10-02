@@ -1,0 +1,284 @@
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-textMain">💬 Admin Chat</h1>
+    <div class="flex space-x-3">
+      <a href="/appointments/chat" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
+        <i class="fas fa-comments mr-2"></i>Go to Main Chat
+      </a>
+      <button onclick="showTherapistsModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+        <i class="fas fa-user-md mr-2"></i>Chat with Therapist
+      </button>
+      <button onclick="showPatientsModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+        <i class="fas fa-users mr-2"></i>Chat with Patient
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <div class="flex items-center">
+      <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+      <div>
+        <h3 class="font-semibold text-blue-800">Therapist Messages Available</h3>
+        <p class="text-blue-700 text-sm">You can now view and respond to messages from therapists in the "Therapist Messages" section below. Click "Go to Main Chat" for regular conversations.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Therapist Messages Section -->
+  <div class="mb-8">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="p-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold">💬 Therapist Messages</h2>
+            <p class="text-sm text-gray-600">Messages from therapists requiring admin attention</p>
+          </div>
+          <button onclick="loadTherapistMessages()"
+                  class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+            <i class="fas fa-sync-alt mr-1"></i>Refresh
+          </button>
+        </div>
+      </div>
+      <div id="therapistMessagesContainer" class="p-4">
+        <div class="text-center text-gray-500 py-8">
+          <i class="fas fa-spinner fa-spin mb-2"></i>
+          <p>Loading therapist messages...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversations List -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Conversations Sidebar -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold">Conversations</h2>
+          <p class="text-sm text-gray-600">Manage your admin chats</p>
+        </div>
+        <div id="conversationsList" class="max-h-96 overflow-y-auto">
+          <!-- Conversations will be loaded here -->
+          <div class="p-4 text-center text-gray-500">
+            <i class="fas fa-spinner fa-spin mb-2"></i>
+            <p>Loading conversations...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="lg:col-span-2">
+      <div id="chatContainer" class="bg-white rounded-lg shadow-sm border border-gray-200 hidden">
+        <!-- Chat header will be populated by JavaScript -->
+        <div id="chatHeader" class="p-4 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div id="participantAvatar" class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                <i class="fas fa-user text-gray-600"></i>
+              </div>
+              <div>
+                <h3 id="participantName" class="font-semibold">Select a conversation</h3>
+                <p id="participantInfo" class="text-sm text-gray-600">Choose someone to chat with</p>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button id="closeChatBtn" onclick="closeChat()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="messagesContainer" class="p-4 h-96 overflow-y-auto">
+          <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-comments text-4xl mb-2"></i>
+            <p>Select a conversation to start chatting</p>
+          </div>
+        </div>
+
+        <!-- Message Input -->
+        <div id="messageInputContainer" class="p-4 border-t border-gray-200 hidden">
+          <form id="messageForm" onsubmit="sendMessage(event)">
+            <div class="flex space-x-3">
+              <input
+                type="text"
+                id="messageInput"
+                placeholder="Type your message..."
+                class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled
+              >
+              <button
+                type="submit"
+                id="sendButton"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
+                disabled
+              >
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Therapists Modal -->
+<div id="therapistsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-semibold">Select Therapist to Chat With</h3>
+        <button onclick="closeTherapistsModal()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <div id="therapistsList" class="p-6">
+      <div class="text-center text-gray-500">
+        <i class="fas fa-spinner fa-spin mb-2"></i>
+        <p>Loading therapists...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Socket.IO Client -->
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Admin Chat JavaScript -->
+<script src="/js/admin-chat.js" defer></script>
+
+<!-- Set current user for JavaScript -->
+<script>
+  window.currentUserId = '<%= user ? user.id : null %>';
+  window.currentUser = {
+    id: '<%= user ? user.id : null %>',
+    name: '<%= user ? user.name : null %>',
+    role: '<%= user ? user.role : null %>'
+  };
+</script>
+
+<!-- Patients Modal -->
+<div id="patientsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-semibold">Select Patient to Chat With</h3>
+        <button onclick="closePatientsModal()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <div id="patientsList" class="p-6">
+      <div class="text-center text-gray-500">
+        <i class="fas fa-spinner fa-spin mb-2"></i>
+        <p>Loading patients...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Concern Modal -->
+<div id="concernModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-semibold">Submit Patient Concern</h3>
+        <button onclick="closeConcernModal()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <form id="concernForm" onsubmit="submitConcern(event)" class="p-6">
+      <input type="hidden" id="concernPatientId" name="patientId">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Concern Type</label>
+        <select id="concernType" name="concernType" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <option value="">Select concern type</option>
+          <option value="technical">Technical Issue</option>
+          <option value="therapist">Therapist Related</option>
+          <option value="platform">Platform Issue</option>
+          <option value="billing">Billing Issue</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Severity</label>
+        <select id="concernSeverity" name="severity" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <option value="">Select severity</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+        <input type="text" id="concernTitle" name="title" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Brief title for the concern" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <textarea id="concernDescription" name="description" rows="4" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Detailed description of the concern" required></textarea>
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button type="button" onclick="closeConcernModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Submit Concern</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Contract Modal -->
+<div id="contractModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-semibold">Send Contract to Therapist</h3>
+        <button onclick="closeContractModal()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <form id="contractForm" onsubmit="sendContract(event)" class="p-6">
+      <input type="hidden" id="contractTherapistId" name="therapistId">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Contract Type</label>
+        <select id="contractType" name="contractType" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <option value="">Select contract type</option>
+          <option value="terms_update">Terms Update</option>
+          <option value="policy_change">Policy Change</option>
+          <option value="guidelines">Guidelines</option>
+          <option value="requirements">Requirements</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+        <input type="text" id="contractTitle" name="title" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Contract title" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Content</label>
+        <textarea id="contractContent" name="content" rows="6" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Contract content and details" required></textarea>
+      </div>
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input type="checkbox" id="requiresAcknowledgment" name="requiresAcknowledgment" class="mr-2" checked>
+          <span class="text-sm font-medium text-gray-700">Requires acknowledgment</span>
+        </label>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Acknowledgment Deadline (Optional)</label>
+        <input type="datetime-local" id="acknowledgmentDeadline" name="acknowledgmentDeadline" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button type="button" onclick="closeContractModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Send Contract</button>
+      </div>
+    </form>
+  </div>
+</div>
+

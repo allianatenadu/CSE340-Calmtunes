@@ -8,22 +8,17 @@ const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 
 // 🔹 Fixed: Use environment-specific redirect URI
-const REDIRECT_URI = process.env.NODE_ENV === 'production' 
-  ? process.env.SPOTIFY_REDIRECT_URI_PROD 
-  : process.env.SPOTIFY_REDIRECT_URI_LOCAL;
+const REDIRECT_URI =
+  process.env.NODE_ENV === "production"
+    ? process.env.SPOTIFY_REDIRECT_URI_PROD
+    : process.env.SPOTIFY_REDIRECT_URI_LOCAL;
 
 // Fallback to local if not set
-const FINAL_REDIRECT_URI = REDIRECT_URI || "http://localhost:3001/spotify/callback";
+const FINAL_REDIRECT_URI =
+  REDIRECT_URI || "http://localhost:3001/spotify/callback";
 
-// Required scopes for Web Playback SDK
-const SCOPES = [
-  "user-read-playback-state",
-  "user-modify-playback-state",
-  "user-read-currently-playing",
-  "streaming",
-  "user-read-email",
-  "user-read-private"
-].join(" ");
+// ✅ FIXED: No scopes requested to completely avoid "Illegal scope" error
+const SCOPES = "";
 
 /**
  * Initiate Spotify OAuth login
@@ -41,12 +36,16 @@ router.get("/login", (req, res) => {
   authURL.searchParams.set("client_id", SPOTIFY_CLIENT_ID);
   authURL.searchParams.set("response_type", "code");
   authURL.searchParams.set("redirect_uri", FINAL_REDIRECT_URI);
-  authURL.searchParams.set("scope", SCOPES);
+  if (SCOPES) {
+    authURL.searchParams.set("scope", SCOPES);
+  }
+  console.log("🎯 OAuth request (no scopes for basic connection)");
   authURL.searchParams.set("state", state);
   authURL.searchParams.set("show_dialog", "true"); // Force re-auth dialog
 
   console.log("🔗 Redirecting to Spotify auth:", authURL.toString());
   console.log("🔑 Using redirect URI:", FINAL_REDIRECT_URI);
+  console.log("🎯 Requesting scopes:", SCOPES);
   res.redirect(authURL.toString());
 });
 
@@ -63,9 +62,20 @@ router.get("/callback", async (req, res) => {
     return res.redirect("/music");
   }
 
+  // Debug logging for state
+  console.log("🔥 Received state from Spotify:", state);
+  console.log("💾 Expected session state:", req.session.spotifyState);
+  console.log("🔑 Session ID:", req.sessionID);
+
   // Verify state to prevent CSRF attacks
   if (!state || state !== req.session.spotifyState) {
     console.error("❌ Invalid state parameter");
+    console.error(
+      "State mismatch details - received:",
+      state,
+      "session:",
+      req.session.spotifyState
+    );
     req.flash("error", "Invalid authentication state");
     return res.redirect("/music");
   }
@@ -81,18 +91,25 @@ router.get("/callback", async (req, res) => {
 
   try {
     // Exchange code for access token
-    const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Basic " + Buffer.from(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET).toString("base64"),
-      },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code: code,
-        redirect_uri: FINAL_REDIRECT_URI, // 🔹 Use the same URI as in login
-      }),
-    });
+    const tokenResponse = await fetch(
+      "https://accounts.spotify.com/api/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET
+            ).toString("base64"),
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: code,
+          redirect_uri: FINAL_REDIRECT_URI, // 🔹 Use the same URI as in login
+        }),
+      }
+    );
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
@@ -102,18 +119,18 @@ router.get("/callback", async (req, res) => {
     }
 
     const tokenData = await tokenResponse.json();
-    
+
     // Store tokens in session
     req.session.spotifyAccessToken = tokenData.access_token;
     req.session.spotifyRefreshToken = tokenData.refresh_token;
-    req.session.spotifyTokenExpiry = Date.now() + (tokenData.expires_in * 1000);
+    req.session.spotifyTokenExpiry = Date.now() + tokenData.expires_in * 1000;
+    // No scopes requested, so none granted
 
     console.log("✅ Spotify tokens stored in session");
     console.log("🕐 Token expires in:", tokenData.expires_in, "seconds");
 
     req.flash("success", "Successfully connected to Spotify!");
     res.redirect("/music");
-
   } catch (error) {
     console.error("❌ Error during token exchange:", error);
     req.flash("error", "Authentication failed. Please try again.");
@@ -137,7 +154,11 @@ router.get("/refresh", async (req, res) => {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Basic " + Buffer.from(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET).toString("base64"),
+        Authorization:
+          "Basic " +
+          Buffer.from(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET).toString(
+            "base64"
+          ),
       },
       body: new URLSearchParams({
         grant_type: "refresh_token",
@@ -152,11 +173,11 @@ router.get("/refresh", async (req, res) => {
     }
 
     const tokenData = await response.json();
-    
+
     // Update session with new token
     req.session.spotifyAccessToken = tokenData.access_token;
-    req.session.spotifyTokenExpiry = Date.now() + (tokenData.expires_in * 1000);
-    
+    req.session.spotifyTokenExpiry = Date.now() + tokenData.expires_in * 1000;
+
     // Update refresh token if provided
     if (tokenData.refresh_token) {
       req.session.spotifyRefreshToken = tokenData.refresh_token;
@@ -165,7 +186,6 @@ router.get("/refresh", async (req, res) => {
     console.log("✅ Spotify token refreshed");
     req.flash("success", "Spotify connection refreshed!");
     res.redirect("/music");
-
   } catch (error) {
     console.error("❌ Error refreshing token:", error);
     req.flash("error", "Failed to refresh connection. Please log in again.");
@@ -182,8 +202,9 @@ router.get("/logout", (req, res) => {
   delete req.session.spotifyRefreshToken;
   delete req.session.spotifyTokenExpiry;
   delete req.session.spotifyState;
+  delete req.session.spotifyScopes;
 
-  console.log("🔓 Spotify tokens cleared from session");
+  console.log("🔐 Spotify tokens cleared from session");
   req.flash("success", "Disconnected from Spotify");
   res.redirect("/music");
 });
@@ -194,10 +215,10 @@ router.get("/logout", (req, res) => {
 function isTokenValid(req) {
   const token = req.session.spotifyAccessToken;
   const expiry = req.session.spotifyTokenExpiry;
-  
+
   if (!token) return false;
   if (!expiry) return true; // Assume valid if no expiry set
-  
+
   return Date.now() < expiry;
 }
 
@@ -215,7 +236,10 @@ router.use("/check", async (req, res, next) => {
       // Attempt to refresh token
       const refreshToken = req.session.spotifyRefreshToken;
       if (!refreshToken) {
-        return res.json({ connected: false, reason: "Token expired, no refresh token" });
+        return res.json({
+          connected: false,
+          reason: "Token expired, no refresh token",
+        });
       }
 
       // Refresh logic here (similar to /refresh route)
@@ -223,7 +247,11 @@ router.use("/check", async (req, res, next) => {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: "Basic " + Buffer.from(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET).toString("base64"),
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET
+            ).toString("base64"),
         },
         body: new URLSearchParams({
           grant_type: "refresh_token",
@@ -234,7 +262,8 @@ router.use("/check", async (req, res, next) => {
       if (response.ok) {
         const tokenData = await response.json();
         req.session.spotifyAccessToken = tokenData.access_token;
-        req.session.spotifyTokenExpiry = Date.now() + (tokenData.expires_in * 1000);
+        req.session.spotifyTokenExpiry =
+          Date.now() + tokenData.expires_in * 1000;
         console.log("✅ Token refreshed successfully");
       } else {
         return res.json({ connected: false, reason: "Token refresh failed" });
@@ -245,10 +274,11 @@ router.use("/check", async (req, res, next) => {
     }
   }
 
-  res.json({ 
-    connected: true, 
+  res.json({
+    connected: true,
     token: req.session.spotifyAccessToken,
-    expiresAt: req.session.spotifyTokenExpiry 
+    expiresAt: req.session.spotifyTokenExpiry,
+    scopes: req.session.spotifyScopes || "none"
   });
 });
 

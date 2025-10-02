@@ -1,0 +1,342 @@
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+      👩‍⚕️ My Therapist
+    </h1>
+    <p class="text-xl text-gray-600">
+      Your dedicated mental health professional and wellness partner
+    </p>
+  </div>
+
+  <% if (!hasTherapist) { %>
+  <!-- No Therapist State -->
+  <div class="card text-center py-12">
+    <div class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+      <i class="fas fa-user-md text-3xl text-gray-400"></i>
+    </div>
+    <h3 class="text-xl font-medium text-gray-600 mb-2">
+      No Active Therapist
+    </h3>
+    <p class="text-gray-500 mb-6">
+      <%= error || "You haven't connected with a therapist yet. Browse our directory to find the right professional for your needs." %>
+    </p>
+    <a href="/find-therapist" class="btn-primary">
+      <i class="fas fa-search mr-2"></i>Find a Therapist
+    </a>
+  </div>
+  <% } else { %>
+
+  <!-- Therapist Information -->
+  <div class="card mb-8">
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+      <!-- Therapist Profile Image -->
+      <div class="flex-shrink-0">
+        <% let therapistImageUrl = null;
+        if (therapist.therapist_image) {
+          therapistImageUrl = therapist.therapist_image.startsWith('/')
+            ? therapist.therapist_image
+            : `/uploads/${therapist.therapist_image}`;
+        } %>
+        <% if (therapistImageUrl) { %>
+        <img
+          src="<%= therapistImageUrl %>"
+          alt="<%= therapist.therapist_name %>"
+          class="w-32 h-32 rounded-full object-cover shadow-lg border-4 border-primary/20"
+        />
+        <% } else { %>
+        <div class="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center shadow-lg">
+          <i class="fas fa-user-md text-4xl text-primary"></i>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Therapist Details -->
+      <div class="flex-grow">
+        <h2 class="text-2xl font-bold text-textMain mb-2">
+          <%= therapist.therapist_name %>
+        </h2>
+        <p class="text-primary font-medium mb-3 capitalize">
+          <%= therapist.specialty ? therapist.specialty.replace('-', ' & ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Practice' %>
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-envelope text-primary mr-2"></i>
+            <span><%= therapist.therapist_email %></span>
+          </div>
+          <% if (therapist.therapist_phone) { %>
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-phone text-primary mr-2"></i>
+            <span><%= therapist.therapist_phone %></span>
+          </div>
+          <% } %>
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-calendar-check text-primary mr-2"></i>
+            <span>Connected since <%= new Date(therapist.relationship_date).toLocaleDateString() %></span>
+          </div>
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-graduation-cap text-primary mr-2"></i>
+            <span><%= therapist.experience || 'Professional Experience' %></span>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <% if (therapist.bio) { %>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h4 class="font-semibold text-textMain mb-2">About</h4>
+          <p class="text-gray-700 text-sm leading-relaxed">
+            <%= therapist.bio %>
+          </p>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Schedule Appointment -->
+    <div class="card text-center">
+      <div class="bg-secondary text-white p-4 rounded-lg mb-4">
+        <i class="fas fa-calendar-plus text-2xl"></i>
+      </div>
+      <h3 class="text-lg font-semibold text-textMain mb-2">Schedule Session</h3>
+      <p class="text-gray-600 text-sm mb-4">
+        Book a new appointment with your therapist
+      </p>
+      <button onclick="scheduleAppointment()" class="btn-secondary w-full">
+        <i class="fas fa-calendar mr-2"></i>Book Appointment
+      </button>
+    </div>
+
+    <!-- Start Chat -->
+    <div class="card text-center">
+      <div class="bg-primary text-white p-4 rounded-lg mb-4">
+        <i class="fas fa-comments text-2xl"></i>
+      </div>
+      <h3 class="text-lg font-semibold text-textMain mb-2">Message</h3>
+      <p class="text-gray-600 text-sm mb-4">
+        Send a message to your therapist
+      </p>
+      <% if (conversation) { %>
+      <a href="/appointments/chat/<%= conversation.conversation_id %>" class="btn-primary w-full">
+        <i class="fas fa-comments mr-2"></i>Start Chat
+      </a>
+      <% } else { %>
+      <button onclick="startChat()" class="btn-primary w-full">
+        <i class="fas fa-comments mr-2"></i>Start Chat
+      </button>
+      <% } %>
+    </div>
+
+    <!-- View History -->
+    <div class="card text-center">
+      <div class="bg-accent text-white p-4 rounded-lg mb-4">
+        <i class="fas fa-history text-2xl"></i>
+      </div>
+      <h3 class="text-lg font-semibold text-textMain mb-2">Session History</h3>
+      <p class="text-gray-600 text-sm mb-4">
+        View your past appointments and notes
+      </p>
+      <a href="/appointments" class="btn-outline w-full">
+        <i class="fas fa-list mr-2"></i>View History
+      </a>
+    </div>
+  </div>
+
+  <!-- Upcoming Appointments -->
+  <% if (upcomingAppointments && upcomingAppointments.length > 0) { %>
+  <div class="card">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-bold text-textMain">Upcoming Sessions</h3>
+      <a href="/appointments" class="text-primary hover:text-primary/80 text-sm font-medium">
+        View All <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+
+    <div class="space-y-4">
+      <% upcomingAppointments.forEach(appointment => { %>
+      <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <div class="flex items-center">
+          <div class="bg-primary text-white p-2 rounded-full mr-4">
+            <i class="fas fa-calendar text-sm"></i>
+          </div>
+          <div>
+            <p class="font-medium text-textMain">
+              <%= new Date(appointment.appointment_date).toLocaleDateString() %>
+              at <%= appointment.appointment_time %>
+            </p>
+            <p class="text-sm text-gray-600 capitalize">
+              <%= appointment.session_type || 'Video' %> Session
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+            Confirmed
+          </span>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+  <% } %>
+
+  <% } %>
+</div>
+
+<!-- Appointment Modal -->
+<div id="appointment-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-xl max-w-md w-full p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-semibold">Book Appointment</h3>
+      <button onclick="closeAppointmentModal()" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form id="appointment-form">
+      <input type="hidden" id="therapist-id" value="<%= therapist ? therapist.therapist_id : '' %>" />
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">Preferred Date</label>
+          <input type="date" id="appointment-date" class="form-input" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Preferred Time</label>
+          <select id="appointment-time" class="form-input" required>
+            <option value="">Select time</option>
+            <option value="09:00">9:00 AM</option>
+            <option value="10:00">10:00 AM</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="14:00">2:00 PM</option>
+            <option value="15:00">3:00 PM</option>
+            <option value="16:00">4:00 PM</option>
+            <option value="17:00">5:00 PM</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Session Type</label>
+          <select id="session-type" class="form-input" required>
+            <option value="">Select session type</option>
+            <option value="video">Video Call</option>
+            <option value="phone">Phone Call</option>
+            <option value="in-person">In-Person</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Notes (Optional)</label>
+          <textarea id="appointment-notes" class="form-input" rows="3" placeholder="Any specific concerns or preferences..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex space-x-3 mt-6">
+        <button type="button" onclick="closeAppointmentModal()" class="btn-secondary flex-1">
+          Cancel
+        </button>
+        <button type="submit" class="btn-primary flex-1">
+          Book Appointment
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Set minimum date to today
+  const dateInput = document.getElementById("appointment-date");
+  if (dateInput) {
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.min = today;
+  }
+
+  // Handle appointment booking
+  document.getElementById("appointment-form").addEventListener("submit", bookAppointment);
+});
+
+function scheduleAppointment() {
+  const modal = document.getElementById("appointment-modal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+function closeAppointmentModal() {
+  const modal = document.getElementById("appointment-modal");
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+}
+
+async function bookAppointment(e) {
+  e.preventDefault();
+
+  const formData = {
+    therapistId: document.getElementById("therapist-id").value,
+    preferredDate: document.getElementById("appointment-date").value,
+    preferredTime: document.getElementById("appointment-time").value,
+    sessionType: document.getElementById("session-type").value,
+    notes: document.getElementById("appointment-notes").value,
+  };
+
+  try {
+    const response = await fetch("/appointments/book", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Appointment request sent successfully! You'll be notified when your therapist confirms.");
+      closeAppointmentModal();
+      document.getElementById("appointment-form").reset();
+      // Refresh page to show new appointment
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      alert(data.error || "Failed to book appointment");
+    }
+  } catch (error) {
+    console.error("Error booking appointment:", error);
+    alert("Failed to book appointment. Please try again.");
+  }
+}
+
+async function startChat() {
+  try {
+    const response = await fetch("/appointments/chat/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        therapistId: "<%= therapist ? therapist.therapist_id : '' %>"
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      window.location.href = `/appointments/chat/${data.conversationId}`;
+    } else {
+      alert(data.error || "Failed to start chat");
+    }
+  } catch (error) {
+    console.error("Error starting chat:", error);
+    alert("Failed to start chat. Please try again.");
+  }
+}
+</script>

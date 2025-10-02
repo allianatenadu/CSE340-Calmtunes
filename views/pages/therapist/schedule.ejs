@@ -1,771 +1,1003 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header Section -->
-        <div class="flex justify-between items-center mb-8">
+  <!-- Header Section -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-2">
+        📅 My Schedule
+      </h1>
+      <p class="text-lg text-gray-600">
+        Manage your appointments and availability
+      </p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="flex space-x-3">
+      <button id="setAvailabilityBtn" class="btn-secondary">
+        <i class="fas fa-clock mr-2"></i>Set Availability
+      </button>
+      <button id="newAppointmentBtn" class="btn-primary">
+        <i class="fas fa-plus mr-2"></i>New Appointment
+      </button>
+    </div>
+  </div>
+
+  <!-- Schedule Overview Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"
+        >
+          <i class="fas fa-clock text-yellow-600 text-xl"></i>
+        </div>
+        <div class="ml-4">
+          <h3 class="text-2xl font-bold text-textMain" id="pendingCount">2</h3>
+          <p class="text-gray-600">Pending Requests</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"
+        >
+          <i class="fas fa-calendar-day text-blue-600 text-xl"></i>
+        </div>
+        <div class="ml-4">
+          <h3 class="text-2xl font-bold text-textMain" id="todayCount">1</h3>
+          <p class="text-gray-600">Today's Sessions</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"
+        >
+          <i class="fas fa-calendar-week text-green-600 text-xl"></i>
+        </div>
+        <div class="ml-4">
+          <h3 class="text-2xl font-bold text-textMain" id="weekCount">3</h3>
+          <p class="text-gray-600">This Week</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center"
+        >
+          <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
+        </div>
+        <div class="ml-4">
+          <h3 class="text-2xl font-bold text-textMain" id="upcomingCount">5</h3>
+          <p class="text-gray-600">Upcoming</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column - Pending Requests -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-textMain flex items-center">
+            <i class="fas fa-bell text-yellow-500 mr-3"></i>
+            Appointment Requests
+          </h2>
+        </div>
+        <div class="p-6">
+          <div id="pendingRequestsList" class="space-y-4">
+            <% if (pendingAppointments && pendingAppointments.length > 0) { %>
+            <% pendingAppointments.forEach(function(request) { %>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <h4 class="font-medium text-textMain">
+                    <%= request.patient_name %>
+                  </h4>
+                  <p class="text-sm text-gray-600">
+                    <%= new Date(request.appointment_date).toLocaleDateString()
+                    %> at <%= new Date('2000-01-01 ' +
+                    request.appointment_time).toLocaleTimeString([], {hour:
+                    '2-digit', minute:'2-digit'}) %>
+                  </p>
+                  <p class="text-sm text-gray-600">
+                    <%= request.session_type %>
+                  </p>
+                </div>
+                <span
+                  class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full"
+                  >Pending</span
+                >
+              </div>
+              <% if (request.notes) { %>
+              <p class="text-sm text-gray-700 mb-3"><%= request.notes %></p>
+              <% } %>
+              <div class="flex space-x-2">
+                <button
+                  onclick="approveAppointment('<%= request.id %>')"
+                  class="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-3 rounded font-medium"
+                >
+                  Approve
+                </button>
+                <button
+                  onclick="rejectAppointment('<%= request.id %>')"
+                  class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded font-medium"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+            <% }); %> <% } %>
+          </div>
+
+          <!-- Empty State (hidden by default) -->
+          <div id="noPendingRequests" class="text-center py-8 hidden">
+            <div
+              class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+            >
+              <i class="fas fa-check-circle text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-textMain mb-2">
+              All Caught Up!
+            </h3>
+            <p class="text-gray-600">No pending appointment requests.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Completed Sessions -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-textMain flex items-center">
+            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+            Recent Completed Sessions
+          </h2>
+        </div>
+        <div class="p-6">
+          <div id="completedSessionsList" class="space-y-4">
+            <% if (completedAppointments && completedAppointments.length > 0) {
+            %> <% completedAppointments.forEach(function(session) { %>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <h4 class="font-medium text-textMain">
+                    <%= session.patient_name %>
+                  </h4>
+                  <p class="text-sm text-gray-600">
+                    <%= new Date(session.appointment_date).toLocaleDateString()
+                    %> at <%= new Date('2000-01-01 ' +
+                    session.appointment_time).toLocaleTimeString([], {hour:
+                    '2-digit', minute:'2-digit'}) %>
+                  </p>
+                  <p class="text-sm text-gray-600">
+                    <%= session.session_type %>
+                  </p>
+                </div>
+                <span
+                  class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
+                  >Completed</span
+                >
+              </div>
+              <% if (session.notes) { %>
+              <p class="text-sm text-gray-700 mb-3"><%= session.notes %></p>
+              <% } %>
+              <div class="flex space-x-2">
+                <a
+                  href="/chat?patient=<%= session.patient_id %>"
+                  class="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-3 rounded font-medium text-center"
+                >
+                  Message Patient
+                </a>
+              </div>
+            </div>
+            <% }); %> <% } else { %>
+            <div class="text-center py-8">
+              <div
+                class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+              >
+                <i class="fas fa-calendar-check text-gray-400 text-2xl"></i>
+              </div>
+              <h3 class="text-lg font-medium text-textMain mb-2">
+                No Completed Sessions Yet
+              </h3>
+              <p class="text-gray-600">Completed sessions will appear here.</p>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Calendar View -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-textMain flex items-center">
+              <i class="fas fa-calendar text-blue-500 mr-3"></i>
+              Calendar View
+            </h2>
+            <div class="flex space-x-2">
+              <button
+                id="prevWeek"
+                class="p-2 text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button
+                id="todayBtn"
+                class="px-3 py-1 bg-primary text-white rounded text-sm"
+              >
+                Today
+              </button>
+              <button
+                id="nextWeek"
+                class="p-2 text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          <div id="currentWeekRange" class="text-sm text-gray-600 mt-2"></div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="p-6">
+          <div class="grid grid-cols-8 gap-2">
+            <!-- Time column header -->
+            <div class="text-center font-medium text-gray-700 py-2">Time</div>
+
+            <!-- Day headers -->
+            <div id="dayHeaders" class="col-span-7 grid grid-cols-7 gap-2">
+              <!-- Day headers will be generated here -->
+            </div>
+
+            <!-- Time slots -->
+            <div id="timeSlots" class="col-span-8 grid grid-cols-8 gap-2">
+              <!-- Time slots will be generated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Appointment Details Modal -->
+<div
+  id="appointmentModal"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden"
+>
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-textMain">
+            Appointment Details
+          </h3>
+          <button
+            id="closeAppointmentModal"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div id="appointmentDetails" class="space-y-4">
+          <!-- Appointment details will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Appointment Modal -->
+<div
+  id="newAppointmentModal"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden"
+>
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-textMain">
+            Schedule New Appointment
+          </h3>
+          <button
+            id="closeNewAppointmentModal"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form id="newAppointmentForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Patient</label
+            >
+            <select
+              id="patientSelect"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+            >
+              <option value="">Select a patient...</option>
+              <!-- Options will be populated by JavaScript -->
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
             <div>
-                <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-2">
-                    📅 My Schedule
-                </h1>
-                <p class="text-lg text-gray-600">
-                    Manage your appointments and availability
-                </p>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Date</label
+              >
+              <input
+                type="date"
+                id="appointmentDate"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              />
             </div>
-            
-            <!-- Quick Actions -->
-            <div class="flex space-x-3">
-                <button id="setAvailabilityBtn" class="btn-secondary">
-                    <i class="fas fa-clock mr-2"></i>Set Availability
-                </button>
-                <button id="newAppointmentBtn" class="btn-primary">
-                    <i class="fas fa-plus mr-2"></i>New Appointment
-                </button>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Time</label
+              >
+              <select
+                id="appointmentTime"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              >
+                <option value="09:00">9:00 AM</option>
+                <option value="10:00">10:00 AM</option>
+                <option value="11:00">11:00 AM</option>
+                <option value="14:00">2:00 PM</option>
+                <option value="15:00">3:00 PM</option>
+                <option value="16:00">4:00 PM</option>
+                <option value="17:00">5:00 PM</option>
+              </select>
             </div>
-        </div>
+          </div>
 
-        <!-- Schedule Overview Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-2xl font-bold text-textMain" id="pendingCount">2</h3>
-                        <p class="text-gray-600">Pending Requests</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-calendar-day text-blue-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-2xl font-bold text-textMain" id="todayCount">1</h3>
-                        <p class="text-gray-600">Today's Sessions</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-calendar-week text-green-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-2xl font-bold text-textMain" id="weekCount">3</h3>
-                        <p class="text-gray-600">This Week</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-2xl font-bold text-textMain" id="upcomingCount">5</h3>
-                        <p class="text-gray-600">Upcoming</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Session Type</label
+            >
+            <select
+              id="sessionType"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+            >
+              <option value="video">Video Session</option>
+              <option value="in-person">In-Person</option>
+            </select>
+          </div>
 
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column - Pending Requests -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-textMain flex items-center">
-                            <i class="fas fa-bell text-yellow-500 mr-3"></i>
-                            Appointment Requests
-                        </h2>
-                    </div>
-                    <div class="p-6">
-                        <div id="pendingRequestsList" class="space-y-4">
-                            <% if (pendingAppointments && pendingAppointments.length > 0) { %>
-                                <% pendingAppointments.forEach(function(request) { %>
-                                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                        <div class="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h4 class="font-medium text-textMain"><%= request.patient_name %></h4>
-                                                <p class="text-sm text-gray-600"><%= new Date(request.appointment_date).toLocaleDateString() %> at <%= new Date('2000-01-01 ' + request.appointment_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></p>
-                                                <p class="text-sm text-gray-600"><%= request.session_type %></p>
-                                            </div>
-                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Pending</span>
-                                        </div>
-                                        <% if (request.notes) { %>
-                                            <p class="text-sm text-gray-700 mb-3"><%= request.notes %></p>
-                                        <% } %>
-                                        <div class="flex space-x-2">
-                                            <button onclick="approveAppointment('<%= request.id %>')" class="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-3 rounded font-medium">
-                                                Approve
-                                            </button>
-                                            <button onclick="rejectAppointment('<%= request.id %>')" class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded font-medium">
-                                                Reject
-                                            </button>
-                                        </div>
-                                    </div>
-                                <% }); %>
-                            <% } %>
-                        </div>
-                        
-                        <!-- Empty State (hidden by default) -->
-                        <div id="noPendingRequests" class="text-center py-8 hidden">
-                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-check-circle text-gray-400 text-2xl"></i>
-                            </div>
-                            <h3 class="text-lg font-medium text-textMain mb-2">All Caught Up!</h3>
-                            <p class="text-gray-600">No pending appointment requests.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Notes (Optional)</label
+            >
+            <textarea
+              id="appointmentNotes"
+              rows="3"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              placeholder="Any additional notes..."
+            ></textarea>
+          </div>
 
-            <!-- Right Column - Calendar View -->
-            <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <div class="p-6 border-b border-gray-200">
-                        <div class="flex justify-between items-center">
-                            <h2 class="text-xl font-semibold text-textMain flex items-center">
-                                <i class="fas fa-calendar text-blue-500 mr-3"></i>
-                                Calendar View
-                            </h2>
-                            <div class="flex space-x-2">
-                                <button id="prevWeek" class="p-2 text-gray-500 hover:text-gray-700">
-                                    <i class="fas fa-chevron-left"></i>
-                                </button>
-                                <button id="todayBtn" class="px-3 py-1 bg-primary text-white rounded text-sm">Today</button>
-                                <button id="nextWeek" class="p-2 text-gray-500 hover:text-gray-700">
-                                    <i class="fas fa-chevron-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="currentWeekRange" class="text-sm text-gray-600 mt-2"></div>
-                    </div>
-                    
-                    <!-- Calendar Grid -->
-                    <div class="p-6">
-                        <div class="grid grid-cols-8 gap-2">
-                            <!-- Time column header -->
-                            <div class="text-center font-medium text-gray-700 py-2">Time</div>
-                            
-                            <!-- Day headers -->
-                            <div id="dayHeaders" class="col-span-7 grid grid-cols-7 gap-2">
-                                <!-- Day headers will be generated here -->
-                            </div>
-                            
-                            <!-- Time slots -->
-                            <div id="timeSlots" class="col-span-8 grid grid-cols-8 gap-2">
-                                <!-- Time slots will be generated here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+          <div class="flex space-x-3 pt-4">
+            <button
+              type="submit"
+              class="flex-1 bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
+            >
+              Schedule Appointment
+            </button>
+            <button
+              type="button"
+              id="cancelNewAppointment"
+              class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors duration-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
+</div>
 
-    <!-- Appointment Details Modal -->
-    <div id="appointmentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-textMain">Appointment Details</h3>
-                        <button id="closeAppointmentModal" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    
-                    <div id="appointmentDetails" class="space-y-4">
-                        <!-- Appointment details will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<script>
+  // Global variables - using real data from database
+  let currentWeekStart = new Date();
+  let pendingAppointments = JSON.parse(
+    "<%- JSON.stringify(pendingAppointments || []) %>"
+  );
+  let confirmedAppointments = JSON.parse(
+    "<%- JSON.stringify(appointments || []) %>"
+  );
+  let patients = [];
 
-    <!-- New Appointment Modal -->
-    <div id="newAppointmentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-textMain">Schedule New Appointment</h3>
-                        <button id="closeNewAppointmentModal" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    
-                    <form id="newAppointmentForm" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Patient</label>
-                            <select id="patientSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
-                                <option value="">Select a patient...</option>
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                                <input type="date" id="appointmentDate" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
-                                <select id="appointmentTime" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
-                                    <option value="09:00">9:00 AM</option>
-                                    <option value="10:00">10:00 AM</option>
-                                    <option value="11:00">11:00 AM</option>
-                                    <option value="14:00">2:00 PM</option>
-                                    <option value="15:00">3:00 PM</option>
-                                    <option value="16:00">4:00 PM</option>
-                                    <option value="17:00">5:00 PM</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Session Type</label>
-                            <select id="sessionType" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
-                                <option value="video">Video Session</option>
-                                <option value="in-person">In-Person</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
-                            <textarea id="appointmentNotes" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Any additional notes..."></textarea>
-                        </div>
-                        
-                        <div class="flex space-x-3 pt-4">
-                            <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
-                                Schedule Appointment
-                            </button>
-                            <button type="button" id="cancelNewAppointment" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+  // Initialize page
+  document.addEventListener("DOMContentLoaded", function () {
+    initializeWeek();
+    loadAppointments();
+    initializeEventListeners();
+    updateCounts();
+  });
 
-    <script>
-        // Global variables - using real data from database
-        let currentWeekStart = new Date();
-        let pendingAppointments = JSON.parse('<%- JSON.stringify(pendingAppointments || []) %>');
-        let confirmedAppointments = JSON.parse('<%- JSON.stringify(appointments || []) %>');
-        let patients = [];
+  // Initialize current week
+  function initializeWeek() {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    currentWeekStart = new Date(today.setDate(diff));
+    currentWeekStart.setHours(0, 0, 0, 0);
 
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeWeek();
-            loadAppointments();
-            initializeEventListeners();
-            updateCounts();
-        });
+    updateCalendarView();
+  }
 
-        // Initialize current week
-        function initializeWeek() {
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-            currentWeekStart = new Date(today.setDate(diff));
-            currentWeekStart.setHours(0, 0, 0, 0);
-            
-            updateCalendarView();
-        }
+  // Update calendar view
+  function updateCalendarView() {
+    updateWeekRange();
+    generateDayHeaders();
+    generateTimeSlots();
+    loadWeeklyAppointments();
+  }
 
-        // Update calendar view
-        function updateCalendarView() {
-            updateWeekRange();
-            generateDayHeaders();
-            generateTimeSlots();
-            loadWeeklyAppointments();
-        }
+  // Update week range display
+  function updateWeekRange() {
+    const weekEnd = new Date(currentWeekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
 
-        // Update week range display
-        function updateWeekRange() {
-            const weekEnd = new Date(currentWeekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-            
-            const options = { month: 'short', day: 'numeric', year: 'numeric' };
-            const startStr = currentWeekStart.toLocaleDateString('en-US', options);
-            const endStr = weekEnd.toLocaleDateString('en-US', options);
-            
-            document.getElementById('currentWeekRange').textContent = `${startStr} - ${endStr}`;
-        }
+    const options = { month: "short", day: "numeric", year: "numeric" };
+    const startStr = currentWeekStart.toLocaleDateString("en-US", options);
+    const endStr = weekEnd.toLocaleDateString("en-US", options);
 
-        // Generate day headers
-        function generateDayHeaders() {
-            const container = document.getElementById('dayHeaders');
-            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            
-            container.innerHTML = '';
-            
-            days.forEach((day, index) => {
-                const date = new Date(currentWeekStart);
-                date.setDate(date.getDate() + index);
-                
-                const isToday = date.toDateString() === new Date().toDateString();
-                
-                const dayDiv = document.createElement('div');
-                dayDiv.className = `text-center py-2 rounded-lg ${isToday ? 'bg-primary text-white' : 'text-gray-700'}`;
-                dayDiv.innerHTML = `
+    document.getElementById(
+      "currentWeekRange"
+    ).textContent = `${startStr} - ${endStr}`;
+  }
+
+  // Generate day headers
+  function generateDayHeaders() {
+    const container = document.getElementById("dayHeaders");
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    container.innerHTML = "";
+
+    days.forEach((day, index) => {
+      const date = new Date(currentWeekStart);
+      date.setDate(date.getDate() + index);
+
+      const isToday = date.toDateString() === new Date().toDateString();
+
+      const dayDiv = document.createElement("div");
+      dayDiv.className = `text-center py-2 rounded-lg ${
+        isToday ? "bg-primary text-white" : "text-gray-700"
+      }`;
+      dayDiv.innerHTML = `
                     <div class="font-medium">${day}</div>
                     <div class="text-sm">${date.getDate()}</div>
                 `;
-                
-                container.appendChild(dayDiv);
-            });
-        }
 
-        // Generate time slots
-        function generateTimeSlots() {
-            const container = document.getElementById('timeSlots');
-            const hours = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-            
-            container.innerHTML = '';
-            
-            hours.forEach(hour => {
-                // Time label
-                const timeDiv = document.createElement('div');
-                timeDiv.className = 'text-sm text-gray-600 py-3 text-center border-r border-gray-200';
-                timeDiv.textContent = formatTime(hour);
-                container.appendChild(timeDiv);
-                
-                // Day slots for this hour
-                for (let day = 0; day < 7; day++) {
-                    const slotDiv = document.createElement('div');
-                    slotDiv.className = 'calendar-cell p-1 cursor-pointer';
-                    slotDiv.dataset.day = day;
-                    slotDiv.dataset.time = hour;
-                    
-                    slotDiv.addEventListener('click', function() {
-                        const date = new Date(currentWeekStart);
-                        date.setDate(date.getDate() + day);
-                        openNewAppointmentModal(date, hour);
-                    });
-                    
-                    container.appendChild(slotDiv);
-                }
-            });
-        }
+      container.appendChild(dayDiv);
+    });
+  }
 
-        // Load weekly appointments
-        function loadWeeklyAppointments() {
-            // Clear existing appointments
-            document.querySelectorAll('.appointment-block').forEach(el => el.remove());
-            
-            // Add confirmed appointments
-            confirmedAppointments.forEach(appointment => {
-                const appointmentDate = new Date(appointment.appointment_date);
-                const dayIndex = (appointmentDate.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
-                const timeSlot = document.querySelector(`[data-day="${dayIndex}"][data-time="${appointment.appointment_time}"]`);
-                
-                if (timeSlot) {
-                    const appointmentDiv = document.createElement('div');
-                    appointmentDiv.className = 'appointment-block appointment-confirmed cursor-pointer';
-                    appointmentDiv.innerHTML = `
+  // Generate time slots
+  function generateTimeSlots() {
+    const container = document.getElementById("timeSlots");
+    const hours = [
+      "09:00",
+      "10:00",
+      "11:00",
+      "12:00",
+      "13:00",
+      "14:00",
+      "15:00",
+      "16:00",
+      "17:00",
+    ];
+
+    container.innerHTML = "";
+
+    hours.forEach((hour) => {
+      // Time label
+      const timeDiv = document.createElement("div");
+      timeDiv.className =
+        "text-sm text-gray-600 py-3 text-center border-r border-gray-200";
+      timeDiv.textContent = formatTime(hour);
+      container.appendChild(timeDiv);
+
+      // Day slots for this hour
+      for (let day = 0; day < 7; day++) {
+        const slotDiv = document.createElement("div");
+        slotDiv.className = "calendar-cell p-1 cursor-pointer";
+        slotDiv.dataset.day = day;
+        slotDiv.dataset.time = hour;
+
+        slotDiv.addEventListener("click", function () {
+          const date = new Date(currentWeekStart);
+          date.setDate(date.getDate() + day);
+          openNewAppointmentModal(date, hour);
+        });
+
+        container.appendChild(slotDiv);
+      }
+    });
+  }
+
+  // Load weekly appointments
+  function loadWeeklyAppointments() {
+    // Clear existing appointments
+    document
+      .querySelectorAll(".appointment-block")
+      .forEach((el) => el.remove());
+
+    // Add confirmed appointments
+    confirmedAppointments.forEach((appointment) => {
+      const appointmentDate = new Date(appointment.appointment_date);
+      const dayIndex = (appointmentDate.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
+      const timeSlot = document.querySelector(
+        `[data-day="${dayIndex}"][data-time="${appointment.appointment_time}"]`
+      );
+
+      if (timeSlot) {
+        const appointmentDiv = document.createElement("div");
+        appointmentDiv.className =
+          "appointment-block appointment-confirmed cursor-pointer";
+        appointmentDiv.innerHTML = `
                         <div class="font-medium">${appointment.patient_name}</div>
                         <div class="text-xs">${appointment.session_type}</div>
                     `;
-                    appointmentDiv.addEventListener('click', () => showAppointmentDetails(appointment));
-                    timeSlot.appendChild(appointmentDiv);
-                }
-            });
-        }
+        appointmentDiv.addEventListener("click", () =>
+          showAppointmentDetails(appointment)
+        );
+        timeSlot.appendChild(appointmentDiv);
+      }
+    });
+  }
 
-        // Load appointments
-        function loadAppointments() {
-            updateCounts();
-        }
+  // Load appointments
+  function loadAppointments() {
+    updateCounts();
+  }
 
-        // Initialize event listeners
-        function initializeEventListeners() {
-            // Week navigation
-            document.getElementById('prevWeek').addEventListener('click', function() {
-                currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-                updateCalendarView();
-            });
-            
-            document.getElementById('nextWeek').addEventListener('click', function() {
-                currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-                updateCalendarView();
-            });
-            
-            document.getElementById('todayBtn').addEventListener('click', function() {
-                initializeWeek();
-            });
-            
-            // Modal controls
-            document.getElementById('newAppointmentBtn').addEventListener('click', function() {
-                openNewAppointmentModal();
-            });
-            
-            document.getElementById('closeNewAppointmentModal').addEventListener('click', function() {
-                closeNewAppointmentModal();
-            });
-            
-            document.getElementById('cancelNewAppointment').addEventListener('click', function() {
-                closeNewAppointmentModal();
-            });
-            
-            document.getElementById('closeAppointmentModal').addEventListener('click', function() {
-                closeAppointmentModal();
-            });
-        }
+  // Initialize event listeners
+  function initializeEventListeners() {
+    // Week navigation
+    document.getElementById("prevWeek").addEventListener("click", function () {
+      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      updateCalendarView();
+    });
 
-        // Open new appointment modal
-        function openNewAppointmentModal(date = null, time = null) {
-            if (date) {
-                document.getElementById('appointmentDate').value = date.toISOString().split('T')[0];
-            }
-            if (time) {
-                document.getElementById('appointmentTime').value = time;
-            }
-            document.getElementById('newAppointmentModal').classList.remove('hidden');
-        }
+    document.getElementById("nextWeek").addEventListener("click", function () {
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      updateCalendarView();
+    });
 
-        // Close new appointment modal
-        function closeNewAppointmentModal() {
-            document.getElementById('newAppointmentModal').classList.add('hidden');
-            document.getElementById('newAppointmentForm').reset();
-        }
+    document.getElementById("todayBtn").addEventListener("click", function () {
+      initializeWeek();
+    });
 
-        // Close appointment modal
-        function closeAppointmentModal() {
-            document.getElementById('appointmentModal').classList.add('hidden');
-        }
+    // Modal controls
+    document
+      .getElementById("newAppointmentBtn")
+      .addEventListener("click", function () {
+        openNewAppointmentModal();
+      });
 
-        // Update counts
-        function updateCounts() {
-            const today = new Date();
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay() + 1);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            
-            // Count pending
-            document.getElementById('pendingCount').textContent = pendingAppointments.length;
-            
-            // Count today's appointments
-            const todayAppointments = confirmedAppointments.filter(apt => {
-                const aptDate = new Date(apt.appointment_date);
-                return aptDate.toDateString() === today.toDateString();
-            });
-            document.getElementById('todayCount').textContent = todayAppointments.length;
-            
-            // Count this week's appointments
-            const weekAppointments = confirmedAppointments.filter(apt => {
-                const aptDate = new Date(apt.appointment_date);
-                return aptDate >= startOfWeek && aptDate <= endOfWeek;
-            });
-            document.getElementById('weekCount').textContent = weekAppointments.length;
-            
-            // Count upcoming appointments
-            const upcomingAppointments = confirmedAppointments.filter(apt => {
-                const aptDate = new Date(apt.appointment_date);
-                return aptDate > today;
-            });
-            document.getElementById('upcomingCount').textContent = upcomingAppointments.length;
-        }
+    document
+      .getElementById("closeNewAppointmentModal")
+      .addEventListener("click", function () {
+        closeNewAppointmentModal();
+      });
 
-        // Approve appointment
-        async function approveAppointment(appointmentId) {
-            try {
-                const response = await fetch(`/appointments/${appointmentId}/confirm`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Server returned HTML instead of JSON');
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showSuccess('Appointment approved successfully!');
-                    // Remove from pending list
-                    const pendingIndex = pendingAppointments.findIndex(apt => apt.id == appointmentId);
-                    if (pendingIndex > -1) {
-                        const approved = pendingAppointments.splice(pendingIndex, 1)[0];
-                        approved.status = 'confirmed';
-                        confirmedAppointments.push(approved);
-                        updatePendingRequestsDisplay();
-                        updateCounts();
-                    }
-                } else {
-                    showError(data.error || 'Failed to approve appointment');
-                }
-            } catch (error) {
-                console.error('Error approving appointment:', error);
-                showError('Failed to approve appointment. Please try again.');
-            }
-        }
+    document
+      .getElementById("cancelNewAppointment")
+      .addEventListener("click", function () {
+        closeNewAppointmentModal();
+      });
 
-        // Reject appointment
-        async function rejectAppointment(appointmentId) {
-            if (!confirm('Are you sure you want to reject this appointment request?')) {
-                return;
-            }
-            
-            const reason = prompt('Optional reason for rejection:') || '';
-            
-            try {
-                const response = await fetch(`/appointments/${appointmentId}/reject`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ reason })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Server returned HTML instead of JSON');
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showSuccess('Appointment rejected successfully!');
-                    // Remove from pending list
-                    const pendingIndex = pendingAppointments.findIndex(apt => apt.id == appointmentId);
-                    if (pendingIndex > -1) {
-                        pendingAppointments.splice(pendingIndex, 1);
-                        updatePendingRequestsDisplay();
-                        updateCounts();
-                    }
-                } else {
-                    showError(data.error || 'Failed to reject appointment');
-                }
-            } catch (error) {
-                console.error('Error rejecting appointment:', error);
-                showError('Failed to reject appointment. Please try again.');
-            }
-        }
+    document
+      .getElementById("closeAppointmentModal")
+      .addEventListener("click", function () {
+        closeAppointmentModal();
+      });
+  }
 
-        // Update pending requests display
-        function updatePendingRequestsDisplay() {
-            const container = document.getElementById('pendingRequestsList');
-            
-            if (pendingAppointments.length === 0) {
-                container.innerHTML = '';
-                document.getElementById('noPendingRequests').classList.remove('hidden');
-                return;
-            }
-            
-            document.getElementById('noPendingRequests').classList.add('hidden');
-            
-            container.innerHTML = pendingAppointments.map(request => `
+  // Open new appointment modal
+  function openNewAppointmentModal(date = null, time = null) {
+    if (date) {
+      document.getElementById("appointmentDate").value = date
+        .toISOString()
+        .split("T")[0];
+    }
+    if (time) {
+      document.getElementById("appointmentTime").value = time;
+    }
+    document.getElementById("newAppointmentModal").classList.remove("hidden");
+  }
+
+  // Close new appointment modal
+  function closeNewAppointmentModal() {
+    document.getElementById("newAppointmentModal").classList.add("hidden");
+    document.getElementById("newAppointmentForm").reset();
+  }
+
+  // Close appointment modal
+  function closeAppointmentModal() {
+    document.getElementById("appointmentModal").classList.add("hidden");
+  }
+
+  // Update counts
+  function updateCounts() {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay() + 1);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    // Count pending
+    document.getElementById("pendingCount").textContent =
+      pendingAppointments.length;
+
+    // Count today's appointments
+    const todayAppointments = confirmedAppointments.filter((apt) => {
+      const aptDate = new Date(apt.appointment_date);
+      return aptDate.toDateString() === today.toDateString();
+    });
+    document.getElementById("todayCount").textContent =
+      todayAppointments.length;
+
+    // Count this week's appointments
+    const weekAppointments = confirmedAppointments.filter((apt) => {
+      const aptDate = new Date(apt.appointment_date);
+      return aptDate >= startOfWeek && aptDate <= endOfWeek;
+    });
+    document.getElementById("weekCount").textContent = weekAppointments.length;
+
+    // Count upcoming appointments
+    const upcomingAppointments = confirmedAppointments.filter((apt) => {
+      const aptDate = new Date(apt.appointment_date);
+      return aptDate > today;
+    });
+    document.getElementById("upcomingCount").textContent =
+      upcomingAppointments.length;
+  }
+
+  // Approve appointment
+  async function approveAppointment(appointmentId) {
+    try {
+      const response = await fetch(`/appointments/${appointmentId}/confirm`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned HTML instead of JSON");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccess("Appointment approved successfully!");
+        // Remove from pending list
+        const pendingIndex = pendingAppointments.findIndex(
+          (apt) => apt.id == appointmentId
+        );
+        if (pendingIndex > -1) {
+          const approved = pendingAppointments.splice(pendingIndex, 1)[0];
+          approved.status = "confirmed";
+          confirmedAppointments.push(approved);
+          updatePendingRequestsDisplay();
+          updateCounts();
+        }
+      } else {
+        showError(data.error || "Failed to approve appointment");
+      }
+    } catch (error) {
+      console.error("Error approving appointment:", error);
+      showError("Failed to approve appointment. Please try again.");
+    }
+  }
+
+  // Reject appointment
+  async function rejectAppointment(appointmentId) {
+    if (!confirm("Are you sure you want to reject this appointment request?")) {
+      return;
+    }
+
+    const reason = prompt("Optional reason for rejection:") || "";
+
+    try {
+      const response = await fetch(`/appointments/${appointmentId}/reject`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned HTML instead of JSON");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccess("Appointment rejected successfully!");
+        // Remove from pending list
+        const pendingIndex = pendingAppointments.findIndex(
+          (apt) => apt.id == appointmentId
+        );
+        if (pendingIndex > -1) {
+          pendingAppointments.splice(pendingIndex, 1);
+          updatePendingRequestsDisplay();
+          updateCounts();
+        }
+      } else {
+        showError(data.error || "Failed to reject appointment");
+      }
+    } catch (error) {
+      console.error("Error rejecting appointment:", error);
+      showError("Failed to reject appointment. Please try again.");
+    }
+  }
+
+  // Update pending requests display
+  function updatePendingRequestsDisplay() {
+    const container = document.getElementById("pendingRequestsList");
+
+    if (pendingAppointments.length === 0) {
+      container.innerHTML = "";
+      document.getElementById("noPendingRequests").classList.remove("hidden");
+      return;
+    }
+
+    document.getElementById("noPendingRequests").classList.add("hidden");
+
+    container.innerHTML = pendingAppointments
+      .map(
+        (request) => `
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <div class="flex justify-between items-start mb-3">
                         <div>
-                            <h4 class="font-medium text-textMain">${request.patient_name}</h4>
-                            <p class="text-sm text-gray-600">${new Date(request.appointment_date).toLocaleDateString()} at ${formatTime(request.appointment_time)}</p>
-                            <p class="text-sm text-gray-600">${request.session_type}</p>
+                            <h4 class="font-medium text-textMain">${
+                              request.patient_name
+                            }</h4>
+                            <p class="text-sm text-gray-600">${new Date(
+                              request.appointment_date
+                            ).toLocaleDateString()} at ${formatTime(
+          request.appointment_time
+        )}</p>
+                            <p class="text-sm text-gray-600">${
+                              request.session_type
+                            }</p>
                         </div>
                         <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Pending</span>
                     </div>
-                    ${request.notes ? `<p class="text-sm text-gray-700 mb-3">${request.notes}</p>` : ''}
+                    ${
+                      request.notes
+                        ? `<p class="text-sm text-gray-700 mb-3">${request.notes}</p>`
+                        : ""
+                    }
                     <div class="flex space-x-2">
-                        <button onclick="approveAppointment('${request.id}')" class="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-3 rounded font-medium">
+                        <button onclick="approveAppointment('${
+                          request.id
+                        }')" class="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-3 rounded font-medium">
                             Approve
                         </button>
-                        <button onclick="rejectAppointment('${request.id}')" class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded font-medium">
+                        <button onclick="rejectAppointment('${
+                          request.id
+                        }')" class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded font-medium">
                             Reject
                         </button>
                     </div>
                 </div>
-            `).join('');
-        }
+            `
+      )
+      .join("");
+  }
 
-        // Handle new appointment form submission
-        document.getElementById('newAppointmentForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                patientId: document.getElementById('patientSelect').value,
-                appointmentDate: document.getElementById('appointmentDate').value,
-                appointmentTime: document.getElementById('appointmentTime').value,
-                sessionType: document.getElementById('sessionType').value,
-                notes: document.getElementById('appointmentNotes').value
-            };
-            
-            if (!formData.patientId || !formData.appointmentDate || !formData.appointmentTime || !formData.sessionType) {
-                showError('Please fill in all required fields');
-                return;
-            }
-            
-            showSuccess('Appointment created successfully!');
-            closeNewAppointmentModal();
-            
-            // Add to confirmed appointments
-            const patient = patients.find(p => p.id == formData.patientId);
-            const newAppointment = {
-                id: Date.now(),
-                patient_name: `${patient.first_name} ${patient.last_name}`,
-                appointment_date: formData.appointmentDate,
-                appointment_time: formData.appointmentTime,
-                session_type: formData.sessionType,
-                notes: formData.notes,
-                status: 'confirmed'
-            };
-            
-            confirmedAppointments.push(newAppointment);
-            updateCalendarView();
-            updateCounts();
-        });
+  // Handle new appointment form submission
+  document
+    .getElementById("newAppointmentForm")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-        // Utility functions
-        function formatTime(time) {
-            return new Date(`2000-01-01 ${time}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
+      const formData = {
+        patientId: document.getElementById("patientSelect").value,
+        appointmentDate: document.getElementById("appointmentDate").value,
+        appointmentTime: document.getElementById("appointmentTime").value,
+        sessionType: document.getElementById("sessionType").value,
+        notes: document.getElementById("appointmentNotes").value,
+      };
 
-        function showAppointmentDetails(appointment) {
-            alert(`Appointment Details:\nPatient: ${appointment.patient_name}\nDate: ${appointment.appointment_date}\nTime: ${appointment.appointment_time}\nType: ${appointment.session_type}`);
-        }
+      if (
+        !formData.patientId ||
+        !formData.appointmentDate ||
+        !formData.appointmentTime ||
+        !formData.sessionType
+      ) {
+        showError("Please fill in all required fields");
+        return;
+      }
 
-        function showSuccess(message) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 5000);
-        }
+      showSuccess("Appointment created successfully!");
+      closeNewAppointmentModal();
 
-        function showError(message) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 5000);
-        }
-    </script>
+      // Add to confirmed appointments
+      const patient = patients.find((p) => p.id == formData.patientId);
+      const newAppointment = {
+        id: Date.now(),
+        patient_name: `${patient.first_name} ${patient.last_name}`,
+        appointment_date: formData.appointmentDate,
+        appointment_time: formData.appointmentTime,
+        session_type: formData.sessionType,
+        notes: formData.notes,
+        status: "confirmed",
+      };
 
-    <style>
-    .btn-primary {
-        @apply bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center;
+      confirmedAppointments.push(newAppointment);
+      updateCalendarView();
+      updateCounts();
+    });
+
+  // Utility functions
+  function formatTime(time) {
+    return new Date(`2000-01-01 ${time}`).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function showAppointmentDetails(appointment) {
+    alert(
+      `Appointment Details:\nPatient: ${appointment.patient_name}\nDate: ${appointment.appointment_date}\nTime: ${appointment.appointment_time}\nType: ${appointment.session_type}`
+    );
+  }
+
+  function showSuccess(message) {
+    const toast = document.createElement("div");
+    toast.className =
+      "fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 5000);
+  }
+
+  function showError(message) {
+    const toast = document.createElement("div");
+    toast.className =
+      "fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 5000);
+  }
+</script>
+
+<style>
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center;
+  }
+
+  /* Calendar specific styles */
+  .calendar-cell {
+    min-height: 60px;
+    border: 1px solid #e5e7eb;
+    transition: background-color 0.2s ease;
+  }
+
+  .calendar-cell:hover {
+    background-color: #f9fafb;
+  }
+
+  .appointment-block {
+    font-size: 0.75rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    margin: 0.125rem 0;
+    transition: all 0.2s ease;
+  }
+
+  .appointment-block:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .appointment-confirmed {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+
+  .appointment-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+
+  /* Modal animations */
+  #newAppointmentModal,
+  #appointmentModal {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
     }
-
-    .btn-secondary {
-        @apply bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center;
+    to {
+      opacity: 1;
     }
+  }
 
-    /* Calendar specific styles */
+  /* Button hover effects */
+  .btn-primary:hover,
+  .btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Card hover effects */
+  .bg-white {
+    transition: all 0.2s ease;
+  }
+
+  .bg-white:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Toast notification styles */
+  .fixed.top-20.right-4 {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
     .calendar-cell {
-        min-height: 60px;
-        border: 1px solid #e5e7eb;
-        transition: background-color 0.2s ease;
-    }
-
-    .calendar-cell:hover {
-        background-color: #f9fafb;
+      min-height: 40px;
     }
 
     .appointment-block {
-        font-size: 0.75rem;
-        padding: 0.25rem;
-        border-radius: 0.25rem;
-        margin: 0.125rem 0;
-        transition: all 0.2s ease;
+      font-size: 0.625rem;
+      padding: 0.125rem;
     }
-
-    .appointment-block:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .appointment-confirmed {
-        background-color: #dcfce7;
-        color: #166534;
-        border: 1px solid #bbf7d0;
-    }
-
-    .appointment-pending {
-        background-color: #fef3c7;
-        color: #92400e;
-        border: 1px solid #fde68a;
-    }
-
-    /* Modal animations */
-    #newAppointmentModal, #appointmentModal {
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-
-    /* Button hover effects */
-    .btn-primary:hover, .btn-secondary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-
-    /* Card hover effects */
-    .bg-white {
-        transition: all 0.2s ease;
-    }
-
-    .bg-white:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    /* Toast notification styles */
-    .fixed.top-20.right-4 {
-        animation: slideInRight 0.3s ease-out;
-    }
-
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .calendar-cell {
-            min-height: 40px;
-        }
-        
-        .appointment-block {
-            font-size: 0.625rem;
-            padding: 0.125rem;
-        }
-    }
-    </style>
+  }
+</style>

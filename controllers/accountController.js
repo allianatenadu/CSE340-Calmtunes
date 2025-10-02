@@ -144,11 +144,17 @@ const accountController = {
       }
 
       const userId = req.session.user.id;
-      const { name, email, profile_image, role } = req.body;
+      const { name, email, profile_image, role, bio } = req.body;
 
       // Validate required fields
       if (!name || !email) {
         req.flash("error", "Name and email are required.");
+        return res.redirect("/account");
+      }
+
+      // Validate bio for therapists
+      if (validatedRole === 'therapist' && (!bio || bio.trim().length < 50)) {
+        req.flash("error", "A professional bio of at least 50 characters is required for therapists.");
         return res.redirect("/account");
       }
 
@@ -169,10 +175,15 @@ const accountController = {
       }
 
       // Prepare update data
-      const updateData = { 
-        name: name.trim(), 
+      const updateData = {
+        name: name.trim(),
         email: email.trim().toLowerCase()
       };
+
+      // Add bio if provided (for therapists)
+      if (bio !== undefined) {
+        updateData.bio = bio.trim() || null;
+      }
 
       // Handle profile image
       if (req.file) {
@@ -254,6 +265,9 @@ const accountController = {
       }
       if (updatedUser.role) {
         req.session.user.role = updatedUser.role;
+      }
+      if (updatedUser.bio !== undefined) {
+        req.session.user.bio = updatedUser.bio;
       }
 
       // Save the session explicitly

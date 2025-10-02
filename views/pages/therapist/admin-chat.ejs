@@ -1,0 +1,395 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-textMain">💬 Chat with Admin</h1>
+    <div class="flex space-x-3">
+      <a
+        href="/therapist/chat"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center"
+      >
+        <i class="fas fa-comments mr-2"></i>Chat with Patients
+      </a>
+      <a
+        href="/admin/chat?action=chat"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center"
+      >
+        <i class="fas fa-user-shield mr-2"></i>Go to Admin Chat
+      </a>
+    </div>
+  </div>
+
+  <!-- Admin Conversations List -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Conversations Sidebar -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold">Admin Conversations</h2>
+          <p class="text-sm text-gray-600">Chat with administrators</p>
+        </div>
+        <div id="adminConversationsList" class="max-h-96 overflow-y-auto">
+          <!-- Conversations will be loaded here -->
+          <div class="p-4 text-center text-gray-500">
+            <i class="fas fa-spinner fa-spin mb-2"></i>
+            <p>Loading admin conversations...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="lg:col-span-2">
+      <div
+        id="adminChatContainer"
+        class="bg-white rounded-lg shadow-sm border border-gray-200 hidden"
+      >
+        <!-- Chat header will be populated by JavaScript -->
+        <div id="adminChatHeader" class="p-4 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div
+                id="adminAvatar"
+                class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3"
+              >
+                <i class="fas fa-user-shield text-gray-600"></i>
+              </div>
+              <div>
+                <h3 id="adminName" class="font-semibold">
+                  Select Admin Conversation
+                </h3>
+                <p id="adminInfo" class="text-sm text-gray-600">
+                  Choose an admin to chat with
+                </p>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                id="closeAdminChatBtn"
+                onclick="closeAdminChat()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="adminMessagesContainer" class="p-4 h-96 overflow-y-auto">
+          <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-comments text-4xl mb-2"></i>
+            <p>Select an admin conversation to start chatting</p>
+          </div>
+        </div>
+
+        <!-- Message Input -->
+        <div
+          id="adminMessageInputContainer"
+          class="p-4 border-t border-gray-200 hidden"
+        >
+          <form id="adminMessageForm" onsubmit="sendAdminMessage(event)">
+            <div class="flex space-x-3">
+              <input
+                type="text"
+                id="adminMessageInput"
+                placeholder="Type your message to admin..."
+                class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled
+              />
+              <button
+                type="submit"
+                id="adminSendButton"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
+                disabled
+              >
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Socket.IO Client -->
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Therapist Admin Chat JavaScript -->
+<script>
+  let currentAdminConversationId = null;
+  let socket = null;
+
+  // Initialize socket connection
+  function initializeSocket() {
+    socket = io();
+
+    socket.on("connect", function () {
+      console.log("Socket connected:", socket.id);
+      socket.emit("authenticate", {
+        userId: window.currentUserId,
+        role: window.currentUser.role,
+      });
+    });
+
+    socket.on("new_message", function (data) {
+      if (data.conversationId === currentAdminConversationId) {
+        displayAdminMessage(data);
+      }
+    });
+  }
+
+  // Load admin conversations
+  async function loadAdminConversations() {
+    try {
+      const response = await fetch("/therapist/api/admin-conversations", {
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        displayAdminConversations(data.conversations);
+      } else {
+        console.error("Failed to load admin conversations:", data.error);
+      }
+    } catch (error) {
+      console.error("Error loading admin conversations:", error);
+    }
+  }
+
+  // Display admin conversations
+  function displayAdminConversations(conversations) {
+    const container = document.getElementById("adminConversationsList");
+
+    if (conversations.length === 0) {
+      container.innerHTML = `
+        <div class="p-4 text-center text-gray-500">
+          <i class="fas fa-inbox text-3xl mb-2"></i>
+          <p>No admin conversations yet</p>
+          <p class="text-sm">Start a conversation with an admin</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = conversations
+      .map(
+        (conv) => `
+      <div class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+           onclick="openAdminConversation('${conv.id}', '${
+          conv.admin_name
+        }', '${conv.admin_email}')">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+              <i class="fas fa-user-shield text-blue-600"></i>
+            </div>
+            <div>
+              <h4 class="font-medium text-gray-900">${conv.admin_name}</h4>
+              <p class="text-sm text-gray-600">${conv.admin_email}</p>
+            </div>
+          </div>
+          ${
+            conv.unread_count > 0
+              ? `<span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">${conv.unread_count}</span>`
+              : ""
+          }
+        </div>
+        ${
+          conv.last_message
+            ? `
+          <p class="text-sm text-gray-500 mt-2 truncate">${conv.last_message}</p>
+        `
+            : ""
+        }
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  // Open admin conversation
+  async function openAdminConversation(conversationId, adminName, adminEmail) {
+    currentAdminConversationId = conversationId;
+
+    // Update chat header
+    document.getElementById("adminName").textContent = adminName;
+    document.getElementById("adminInfo").textContent = adminEmail;
+
+    // Show chat container
+    document.getElementById("adminChatContainer").classList.remove("hidden");
+
+    // Load messages
+    await loadAdminMessages(conversationId);
+
+    // Enable message input
+    document.getElementById("adminMessageInput").disabled = false;
+    document.getElementById("adminSendButton").disabled = false;
+
+    // Join socket room
+    if (socket) {
+      socket.emit("join_conversation", conversationId);
+    }
+  }
+
+  // Load admin messages
+  async function loadAdminMessages(conversationId) {
+    try {
+      const response = await fetch(
+        `/therapist/api/admin-conversations/${conversationId}/messages`,
+        {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        displayAdminMessages(data.messages);
+      } else {
+        console.error("Failed to load admin messages:", data.error);
+      }
+    } catch (error) {
+      console.error("Error loading admin messages:", error);
+    }
+  }
+
+  // Display admin messages
+  function displayAdminMessages(messages) {
+    const container = document.getElementById("adminMessagesContainer");
+
+    if (messages.length === 0) {
+      container.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+          <i class="fas fa-comments text-4xl mb-2"></i>
+          <p>No messages yet</p>
+          <p class="text-sm">Start the conversation!</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = messages
+      .map(
+        (message) => `
+      <div class="mb-4 ${
+        message.sender_id == window.currentUserId ? "text-right" : "text-left"
+      }">
+        <div class="inline-block max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+          message.sender_id == window.currentUserId
+            ? "bg-blue-600 text-white"
+            : "bg-gray-200 text-gray-800"
+        }">
+          <p>${message.content}</p>
+          <p class="text-xs mt-1 opacity-70">
+            ${new Date(message.created_at).toLocaleTimeString()}
+          </p>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
+  }
+
+  // Send admin message
+  async function sendAdminMessage(event) {
+    event.preventDefault();
+
+    const input = document.getElementById("adminMessageInput");
+    const content = input.value.trim();
+
+    if (!content || !currentAdminConversationId) return;
+
+    try {
+      const response = await fetch(
+        `/therapist/api/admin-conversations/${currentAdminConversationId}/messages`,
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ content }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        input.value = "";
+        displayAdminMessage(data.message);
+      } else {
+        console.error("Failed to send admin message:", data.error);
+      }
+    } catch (error) {
+      console.error("Error sending admin message:", error);
+    }
+  }
+
+  // Display a single admin message
+  function displayAdminMessage(message) {
+    const container = document.getElementById("adminMessagesContainer");
+
+    // Remove "no messages" placeholder if it exists
+    const noMessages = container.querySelector(".text-center");
+    if (noMessages) {
+      noMessages.remove();
+    }
+
+    const messageElement = document.createElement("div");
+    messageElement.className = `mb-4 ${
+      message.sender_id == window.currentUserId ? "text-right" : "text-left"
+    }`;
+    messageElement.innerHTML = `
+      <div class="inline-block max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+        message.sender_id == window.currentUserId
+          ? "bg-blue-600 text-white"
+          : "bg-gray-200 text-gray-800"
+      }">
+        <p>${message.content}</p>
+        <p class="text-xs mt-1 opacity-70">
+          ${new Date(message.created_at).toLocaleTimeString()}
+        </p>
+      </div>
+    `;
+
+    container.appendChild(messageElement);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  // Close admin chat
+  function closeAdminChat() {
+    currentAdminConversationId = null;
+    document.getElementById("adminChatContainer").classList.add("hidden");
+    document.getElementById("adminMessageInput").disabled = true;
+    document.getElementById("adminSendButton").disabled = true;
+
+    if (socket) {
+      socket.emit("leave_conversation", currentAdminConversationId);
+    }
+  }
+
+  // Initialize when page loads
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("Therapist admin chat page loaded");
+    initializeSocket();
+    loadAdminConversations();
+  });
+</script>
+
+<!-- Set current user for JavaScript -->
+<script>
+  window.currentUserId = "<%= user ? user.id : null %>";
+  window.currentUser = {
+    id: "<%= user ? user.id : null %>",
+    name: "<%= user ? user.name : null %>",
+    role: "<%= user ? user.role : null %>",
+  };
+</script>

@@ -1,2 +1,301 @@
-<!-- This partial is integrated into the main layout -->
-<!-- Individual navbar partial is not needed as it's part of main.ejs -->
+<header class="sticky top-0 z-50 w-full bg-white backdrop-blur-sm border-b border-primary/20 shadow-sm">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex h-20 items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <svg class="h-8 w-8 text-primary" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 42.4379C4 42.4379 14.0962 36.0744 24 41.1692C35.0664 46.8624 44 42.2078 44 42.2078L44 7.01134C44 7.01134 35.068 11.6577 24.0031 5.96913C14.0971 0.876274 4 7.27094 4 7.27094L4 42.4379Z" fill="currentColor"></path>
+        </svg>
+        <h2 class="text-2xl font-bold text-gray-900">CalmTunes</h2>
+      </div>
+
+      <!-- Desktop Navigation -->
+      <nav class="hidden md:flex items-center gap-6">
+        <% if (typeof user !== 'undefined' && user) { %>
+          <!-- ADMIN NAVIGATION -->
+          <% if (user.role === 'admin') { %>
+            <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/admin">
+              <i class="fas fa-tachometer-alt text-red-600"></i>
+              Admin Dashboard
+            </a>
+            <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/admin/chat">
+              <i class="fas fa-comments text-red-600"></i>
+              Admin Chat
+            </a>
+            <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/admin/applications">
+              <i class="fas fa-file-alt text-red-600"></i>
+              Applications
+            </a>
+            <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/admin/therapists">
+              <i class="fas fa-user-md text-red-600"></i>
+              Therapists
+            </a>
+
+          <!-- THERAPIST NAVIGATION -->
+          <% } else if (user.role === 'therapist') { %>
+            <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/therapist">
+              <i class="fas fa-user-md text-purple-600"></i>
+              Dashboard
+            </a>
+            <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors" href="/therapist/patients">
+              <i class="fas fa-users text-purple-600"></i>
+              My Patients
+            </a>
+            <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors" href="/therapist/schedule">
+              <i class="fas fa-calendar-alt text-purple-600"></i>
+              Schedule
+            </a>
+            
+
+          <!-- PATIENT NAVIGATION -->
+          <% } else if (user.role === 'patient') { %>
+            <a class="nav-link text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/dashboard">
+              <i class="fas fa-home text-blue-600 mr-2"></i>Dashboard
+            </a>
+
+            <!-- Therapy Tools Dropdown -->
+            <div class="relative group">
+              <button class="nav-link flex items-center gap-1 text-sm font-medium text-gray-900 hover:text-primary transition-colors">
+                <i class="fas fa-heart text-primary mr-2"></i>
+                Therapy Tools
+                <i class="fas fa-chevron-down text-xs transition-transform group-hover:rotate-180"></i>
+              </button>
+              <div class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
+                <div class="py-2">
+                  <a href="/music" class="block px-4 py-3 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                      <i class="fas fa-music text-primary text-lg"></i>
+                      <div>
+                        <div class="font-medium text-gray-900">Music Therapy</div>
+                        <div class="text-sm text-gray-500">Calming soundscapes</div>
+                      </div>
+                    </div>
+                  </a>
+                  <a href="/drawing" class="block px-4 py-3 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                      <i class="fas fa-palette text-secondary text-lg"></i>
+                      <div>
+                        <div class="font-medium text-gray-900">Art Therapy</div>
+                        <div class="text-sm text-gray-500">Express through art</div>
+                      </div>
+                    </div>
+                  </a>
+                  <a href="/panic" class="block px-4 py-3 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                      <i class="fas fa-shield-alt text-red-500 text-lg"></i>
+                      <div>
+                        <div class="font-medium text-gray-900">Panic Support</div>
+                        <div class="text-sm text-gray-500">Emergency assistance</div>
+                      </div>
+                    </div>
+                  </a>
+                  <a href="/mood-tracker" class="block px-4 py-3 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                      <i class="fas fa-chart-line text-accent text-lg"></i>
+                      <div>
+                        <div class="font-medium text-gray-900">Mood Tracker</div>
+                        <div class="text-sm text-gray-500">Track your progress</div>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/find-therapist">
+              <i class="fas fa-user-md text-purple-600"></i>
+              Find Therapist
+            </a>
+
+            <!-- <a class="nav-link flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors" href="/appointments">
+              <i class="fas fa-calendar text-green-600"></i>
+              Appointments
+            </a> -->
+          <% } %>
+
+          <!-- User Profile Dropdown (Common for all roles) -->
+          <div class="relative group">
+            <button class="flex items-center gap-3 p-2 rounded-full hover:bg-gray-50 transition-colors">
+              <!-- Profile Image -->
+              <% if (typeof profileImageUrl !== 'undefined' && profileImageUrl) { %>
+                <img src="<%= profileImageUrl %>" alt="<%= user.name %>'s Profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary/20">
+              <% } else { %>
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <i class="fas fa-user text-primary"></i>
+                </div>
+              <% } %>
+              
+              <!-- User Info -->
+              <div class="text-left">
+                <div class="font-medium text-gray-900 text-sm"><%= user.name.split(' ')[0] %></div>
+                <!-- Role Badge -->
+                <% if (user.role === 'admin') { %>
+                  <span class="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">Admin</span>
+                <% } else if (user.role === 'therapist') { %>
+                  <span class="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">Therapist</span>
+                <% } else { %>
+                  <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Patient</span>
+                <% } %>
+              </div>
+              
+              <i class="fas fa-chevron-down text-xs transition-transform group-hover:rotate-180"></i>
+            </button>
+
+            <!-- Profile Dropdown Menu -->
+            <div class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
+              <div class="py-2">
+                <!-- User Info Header -->
+                <div class="px-4 py-3 border-b border-gray-100">
+                  <div class="font-medium text-gray-900"><%= user.name %></div>
+                  <div class="text-sm text-gray-900"><%= user.email %></div>
+                </div>
+
+                <!-- Account Links -->
+                <a href="/account" class="block px-4 py-3 hover:bg-gray-50 transition-colors">
+                  <i class="fas fa-cog text-black mr-3"></i>
+                  <span class="text-gray-900">Account Settings</span>
+                </a>
+                <a href="/account/preferences" class="block px-4 py-3 hover:bg-gray-50 transition-colors">
+                  <i class="fas fa-sliders-h text-gray-900 mr-3"></i>Preferences
+                </a>
+                <a href="/help" class="block px-4 py-3 hover:bg-gray-50 transition-colors">
+                  <i class="fas fa-question-circle text-gray-900 mr-3"></i>Help & Support
+                </a>
+                
+                <div class="border-t border-gray-100"></div>
+                
+                <a href="/logout" class="block px-4 py-3 text-red-600 hover:bg-red-50 transition-colors">
+                  <i class="fas fa-sign-out-alt mr-3"></i>Sign Out
+                </a>
+              </div>
+            </div>
+          </div>
+
+        <% } else { %>
+          <!-- Non-authenticated Navigation -->
+          <a class="text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/">Home</a>
+          <a class="text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/about">About</a>
+          <a class="text-sm font-medium text-gray-900 hover:text-primary transition-colors" href="/login">Login</a>
+          <a class="rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-transform hover:scale-105" href="/signup">Sign Up</a>
+        <% } %>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <button id="mobile-menu-button" class="md:hidden rounded-full p-2 text-gray-900 hover:bg-primary/20">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M4 6h16M4 12h16m-7 6h7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200">
+      <div class="px-4 py-4 space-y-2">
+        <% if (typeof user !== 'undefined' && user) { %>
+          <!-- Mobile User Info -->
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
+            <% if (typeof profileImageUrl !== 'undefined' && profileImageUrl) { %>
+              <img src="<%= profileImageUrl %>" alt="<%= user.name %>'s Profile" class="w-12 h-12 rounded-full object-cover border-2 border-primary/20">
+            <% } else { %>
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <i class="fas fa-user text-primary"></i>
+              </div>
+            <% } %>
+            <div>
+              <div class="font-medium text-gray-900"><%= user.name %></div>
+              <div class="text-sm text-gray-500"><%= user.email %></div>
+              <% if (user.role === 'admin') { %>
+                <span class="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">Admin</span>
+              <% } else if (user.role === 'therapist') { %>
+                <span class="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">Therapist</span>
+              <% } else { %>
+                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Patient</span>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Mobile Navigation Links -->
+          <% if (user.role === 'admin') { %>
+            <a class="mobile-nav-item" href="/admin">
+              <i class="fas fa-tachometer-alt text-red-600 mr-3"></i>Admin Dashboard
+            </a>
+            <a class="mobile-nav-item" href="/admin/chat">
+              <i class="fas fa-comments text-red-600 mr-3"></i>Admin Chat
+            </a>
+            <a class="mobile-nav-item" href="/admin/applications">
+              <i class="fas fa-file-alt text-red-600 mr-3"></i>Applications
+            </a>
+            <a class="mobile-nav-item" href="/admin/therapists">
+              <i class="fas fa-user-md text-red-600 mr-3"></i>Therapists
+            </a>
+          <% } else if (user.role === 'therapist') { %>
+            <a class="mobile-nav-item" href="/therapist">
+              <i class="fas fa-user-md text-purple-600 mr-3"></i>Dashboard
+            </a>
+            <a class="mobile-nav-item" href="/therapist/patients">
+              <i class="fas fa-users text-purple-600 mr-3"></i>My Patients
+            </a>
+            <a class="mobile-nav-item" href="/therapist/schedule">
+              <i class="fas fa-calendar-alt text-purple-600 mr-3"></i>Schedule
+            </a>
+            <a class="mobile-nav-item" href="/therapist/chat">
+              <i class="fas fa-comments text-purple-600 mr-3"></i>Chat
+            </a>
+          <% } else if (user.role === 'patient') { %>
+            <a class="mobile-nav-item" href="/dashboard">
+              <i class="fas fa-home text-blue-600 mr-3"></i>Dashboard
+            </a>
+            <div class="px-4 py-2 text-sm font-semibold text-gray-500">Therapy Tools</div>
+            <a class="mobile-nav-item pl-6" href="/music">
+              <i class="fas fa-music text-primary mr-3"></i>Music Therapy
+            </a>
+            <a class="mobile-nav-item pl-6" href="/drawing">
+              <i class="fas fa-palette text-secondary mr-3"></i>Art Therapy
+            </a>
+            <a class="mobile-nav-item pl-6" href="/panic">
+              <i class="fas fa-shield-alt text-red-500 mr-3"></i>Panic Support
+            </a>
+            <a class="mobile-nav-item pl-6" href="/mood-tracker">
+              <i class="fas fa-chart-line text-accent mr-3"></i>Mood Tracker
+            </a>
+            <a class="mobile-nav-item" href="/therapists">
+              <i class="fas fa-user-md text-purple-600 mr-3"></i>Find Therapist
+            </a>
+            <a class="mobile-nav-item" href="/appointments">
+              <i class="fas fa-calendar text-green-600 mr-3"></i>Appointments
+            </a>
+          <% } %>
+
+          <!-- Common Mobile Links -->
+          <div class="border-t border-gray-200 mt-4 pt-4">
+            <a class="mobile-nav-item" href="/account">
+              <i class="fas fa-cog text-gray-900 mr-3"></i>Account Settings
+            </a>
+            <a class="mobile-nav-item" href="/help">
+              <i class="fas fa-question-circle text-gray-900 mr-3"></i>Help & Support
+            </a>
+            <a class="mobile-nav-item text-red-600" href="/logout">
+              <i class="fas fa-sign-out-alt mr-3"></i>Sign Out
+            </a>
+          </div>
+
+        <% } else { %>
+          <!-- Mobile Non-authenticated Navigation -->
+          <a class="mobile-nav-item" href="/">
+            <i class="fas fa-home mr-3"></i>Home
+          </a>
+          <a class="mobile-nav-item" href="/about">
+            <i class="fas fa-info-circle mr-3"></i>About
+          </a>
+          <a class="mobile-nav-item" href="/login">
+            <i class="fas fa-sign-in-alt mr-3"></i>Login
+          </a>
+          <a class="mobile-nav-item bg-primary text-white rounded-lg mt-2" href="/signup">
+            <i class="fas fa-user-plus mr-3"></i>Sign Up
+          </a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</header>
+

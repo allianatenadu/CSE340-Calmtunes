@@ -1,45 +1,61 @@
 console.log("🎵 Music.js loaded - Enhanced Version with Preview Fix");
 
-let currentTrackUri = null;
-let isPlaying = false;
-let player;
-let deviceId;
-let playerInitialized = false;
+// Check if we're on the music page before initializing
+const isOnMusicPage = () => {
+  return window.location.pathname.includes('/music') || 
+         document.getElementById('categories-data') || 
+         document.querySelector('.category-btn');
+};
+
 let currentAudio = null; // Track current HTML5 audio element
 
-// Spotify SDK callback
-window.onSpotifyWebPlaybackSDKReady = initializeSpotifyPlayer;
-
 document.addEventListener("DOMContentLoaded", () => {
+  // Only initialize if we're on the music page
+  if (!isOnMusicPage()) {
+    console.log("ℹ️ Not on music page, skipping music initialization");
+    return;
+  }
+  
+  console.log("🎵 On music page - initializing...");
   loadDataFromDivs();
   initializeApp();
 });
 
 function initializeApp() {
-  const token = getValidSpotifyToken();
+  console.log("🎵 Initializing music app - Preview + External Spotify Links");
 
-  // ✅ ALWAYS set up core functionality regardless of token status
+  // Always set up core functionality
   setupModalFunctionality();
   setupPreviewPlayback();
+  
+  // Check Spotify connection status
+  checkSpotifyConnection();
+}
 
-  if (!token) {
-    console.log("ℹ️ No Spotify token - Preview mode only");
+async function checkSpotifyConnection() {
+  try {
+    const response = await fetch('/spotify/check');
+    const data = await response.json();
+    
+    if (data.connected) {
+      console.log("✅ Spotify connected via API check");
+      window.SPOTIFY_TOKEN = data.token;
+      updatePlayerStatus("connected");
+      return true;
+    } else {
+      console.log("ℹ️ No Spotify connection");
+      updatePlayerStatus("preview");
+      return false;
+    }
+  } catch (error) {
+    console.error("❌ Error checking Spotify connection:", error);
     updatePlayerStatus("preview");
-    return;
-  }
-
-  console.log("✅ Spotify token found, initializing SDK...");
-  updatePlayerStatus("connecting");
-  window.SPOTIFY_TOKEN = token;
-
-  if (!window.Spotify) {
-    loadSpotifySDK();
-  } else {
-    initializeSpotifyPlayer();
+    return false;
   }
 }
 
 function getValidSpotifyToken() {
+  // Retained for potential future API use (e.g., user playlists), but not for playback
   let token = null;
 
   if (window.SPOTIFY_TOKEN && window.SPOTIFY_TOKEN.trim() !== "") {
@@ -53,24 +69,40 @@ function getValidSpotifyToken() {
   return token || null;
 }
 
-function loadSpotifySDK() {
-  const script = document.createElement("script");
-  script.src = "https://sdk.scdn.co/spotify-player.js";
-  script.async = true;
-  document.head.appendChild(script);
-}
-
 function updatePlayerStatus(status, message = null) {
   const playerStatus = document.getElementById("player-status");
   if (!playerStatus) return;
 
+  if (status === "connected") {
+    playerStatus.innerHTML = `
+      <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-green-800 font-medium flex items-center">
+              <i class="fas fa-check-circle mr-2"></i> Spotify Connected
+            </p>
+            <p class="text-sm text-green-600 mt-1">
+              Enjoy previews and open full tracks in Spotify
+            </p>
+          </div>
+          <div class="flex space-x-2">
+            <a href="/spotify/logout" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm">
+              <i class="fas fa-unlink mr-1"></i> Disconnect
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   if (status === "preview") {
     playerStatus.innerHTML = `
       <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <p class="text-blue-700 font-medium">🎵 Preview Mode</p>
-        <p class="text-sm text-gray-500">Play 30s previews or open tracks in Spotify</p>
+        <p class="text-blue-700 font-medium">🎵 Preview + Spotify Integration</p>
+        <p class="text-sm text-gray-500">Listen to 30s previews or open full tracks in the Spotify app</p>
         <a href="/spotify/login" class="mt-2 inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-          🎧 Connect Spotify
+          🔗 Connect Spotify Account
         </a>
       </div>
     `;
@@ -92,79 +124,17 @@ function updatePlayerStatus(status, message = null) {
   }
 }
 
-function initializeSpotifyPlayer() {
-  const token = getValidSpotifyToken();
-  if (!token) {
-    console.log("ℹ️ Running without Spotify SDK (preview mode only).");
+// Simplified playback: Open in Spotify app/web player
+function openInSpotify(openUrl) {
+  if (!openUrl || openUrl === "#") {
+    console.warn("❌ No Spotify URL available");
+    showTempMessage("This track is not available on Spotify.", "warning");
     return;
   }
 
-  if (playerInitialized) return;
-  playerInitialized = true;
-
-  player = new Spotify.Player({
-    name: "CalmTunes Player",
-    getOAuthToken: cb => cb(token),
-    volume: 0.5,
-  });
-
-  player.addListener("ready", ({ device_id }) => {
-    console.log("✅ Player ready with device", device_id);
-    deviceId = device_id;
-    updatePlayerStatus("ready");
-  });
-
-  player.addListener("authentication_error", ({ message }) => {
-    console.error("Auth error:", message);
-    updatePlayerStatus("error", "Authentication failed, using preview mode");
-  });
-
-  player.addListener("player_state_changed", (state) => {
-    if (state) {
-      currentTrackUri = state.track_window.current_track.uri;
-      isPlaying = !state.paused;
-      console.log("🎵 Playback state:", isPlaying ? "Playing" : "Paused", currentTrackUri);
-    }
-  });
-
-  player.connect();
-}
-
-// ✅ NEW: Spotify Web Playback SDK functions
-async function playSpotifyTrack(uri) {
-  const token = getValidSpotifyToken();
-  if (!token || !deviceId) {
-    console.warn("⚠️ Spotify device not ready, cannot play full track");
-    showTempMessage("Spotify device not ready. Using preview instead.", "warning");
-    return false;
-  }
-
-  try {
-    console.log("🎵 Playing Spotify track:", uri);
-    
-    const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-      method: "PUT",
-      body: JSON.stringify({ uris: [uri] }),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Spotify play failed:", response.status, errorText);
-      showTempMessage("Spotify playback failed. Using preview instead.", "error");
-      return false;
-    }
-
-    showTempMessage("🎵 Playing full track on Spotify!", "success");
-    return true;
-  } catch (error) {
-    console.error("❌ Error playing Spotify track:", error);
-    showTempMessage("Error playing track. Using preview instead.", "error");
-    return false;
-  }
+  console.log("🔗 Opening track in Spotify:", openUrl);
+  window.open(openUrl, "_blank");
+  showTempMessage("🎵 Opening full track in Spotify...", "success");
 }
 
 function showTempMessage(message, type = "info") {
@@ -187,35 +157,44 @@ function showTempMessage(message, type = "info") {
   }, 3000);
 }
 
-// ✅ NEW: Setup preview playback functionality
+// Setup preview playback functionality
 function setupPreviewPlayback() {
   console.log("🎧 Setting up preview playback...");
   
-  // Handle all audio controls in the page
-  document.addEventListener('play', (e) => {
-    if (e.target.tagName === 'AUDIO') {
-      // Stop any other currently playing audio
-      if (currentAudio && currentAudio !== e.target) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-      }
-      currentAudio = e.target;
-      console.log("▶️ Playing preview:", e.target.src);
-    }
-  }, true);
+  // Remove any existing listeners to prevent duplicates
+  document.removeEventListener('play', handleGlobalAudioPlay, true);
+  document.removeEventListener('pause', handleGlobalAudioPause, true);
+  document.removeEventListener('ended', handleGlobalAudioEnded, true);
+  
+  // Add global audio event handlers
+  document.addEventListener('play', handleGlobalAudioPlay, true);
+  document.addEventListener('pause', handleGlobalAudioPause, true);  
+  document.addEventListener('ended', handleGlobalAudioEnded, true);
+}
 
-  document.addEventListener('pause', (e) => {
-    if (e.target.tagName === 'AUDIO') {
-      console.log("⏸️ Paused preview:", e.target.src);
+function handleGlobalAudioPlay(e) {
+  if (e.target.tagName === 'AUDIO') {
+    // Stop any other currently playing audio
+    if (currentAudio && currentAudio !== e.target) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
     }
-  }, true);
+    currentAudio = e.target;
+    console.log("▶️ Playing preview:", e.target.src);
+  }
+}
 
-  document.addEventListener('ended', (e) => {
-    if (e.target.tagName === 'AUDIO') {
-      console.log("⏹️ Preview ended:", e.target.src);
-      currentAudio = null;
-    }
-  }, true);
+function handleGlobalAudioPause(e) {
+  if (e.target.tagName === 'AUDIO') {
+    console.log("⏸️ Paused preview:", e.target.src);
+  }
+}
+
+function handleGlobalAudioEnded(e) {
+  if (e.target.tagName === 'AUDIO') {
+    console.log("⏹️ Preview ended:", e.target.src);
+    currentAudio = null;
+  }
 }
 
 // Modal + song rendering
@@ -227,7 +206,10 @@ function setupModalFunctionality() {
   const closeModalBtn = document.getElementById("closeModalBtn");
   const closeModalBtn2 = document.getElementById("closeModalBtn2");
 
-  if (!modal) return;
+  if (!modal) {
+    console.warn("⚠️ Modal element not found - music functionality limited");
+    return;
+  }
 
   categoryButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -237,20 +219,21 @@ function setupModalFunctionality() {
 
       console.log(`🎵 Opening modal for category: ${catId}`, songs);
 
-      modalTitle.textContent = category?.title || "Songs";
+      if (modalTitle) modalTitle.textContent = category?.title || "Songs";
       
-      if (songs.length > 0) {
-        modalSongs.innerHTML = songs.map((song, i) => createSongElement(song, i).outerHTML).join("");
-        
-        // ✅ Re-setup preview functionality for new audio elements
-        setupAudioControls();
-      } else {
-        modalSongs.innerHTML = `
-          <div class="text-center py-12">
-            <i class="fas fa-music text-gray-300 text-4xl mb-4"></i>
-            <p class="text-gray-500">No songs available for this category</p>
-          </div>
-        `;
+      if (modalSongs) {
+        if (songs.length > 0) {
+          modalSongs.innerHTML = songs.map((song, i) => createSongElement(song, i).outerHTML).join("");
+          console.log(`🔊 Rendered ${songs.length} songs in modal`);
+        } else {
+          modalSongs.innerHTML = `
+            <div class="text-center py-12">
+              <i class="fas fa-music text-gray-300 text-4xl mb-4"></i>
+              <p class="text-gray-500">No songs available for this category</p>
+              <p class="text-xs text-gray-400 mt-2">Check console for loading errors</p>
+            </div>
+          `;
+        }
       }
 
       modal.classList.remove("hidden");
@@ -261,85 +244,28 @@ function setupModalFunctionality() {
   // Close modal handlers
   [closeModalBtn, closeModalBtn2].forEach(btn => {
     btn?.addEventListener("click", () => {
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
-      
-      // ✅ Stop any playing audio when modal closes
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
-      }
+      closeModal(modal);
     });
   });
 
   // Close modal when clicking outside
   modal?.addEventListener("click", (e) => {
     if (e.target === modal) {
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
-      
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
-      }
+      closeModal(modal);
     }
   });
 }
 
-// ✅ NEW: Setup audio controls for dynamically added elements
-function setupAudioControls() {
-  const audioElements = document.querySelectorAll('#modalSongs audio');
+function closeModal(modal) {
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
   
-  audioElements.forEach(audio => {
-    // Remove existing event listeners to prevent duplicates
-    audio.removeEventListener('play', handleAudioPlay);
-    audio.removeEventListener('pause', handleAudioPause);
-    audio.removeEventListener('ended', handleAudioEnded);
-    audio.removeEventListener('error', handleAudioError);
-    
-    // Add fresh event listeners
-    audio.addEventListener('play', handleAudioPlay);
-    audio.addEventListener('pause', handleAudioPause);
-    audio.addEventListener('ended', handleAudioEnded);
-    audio.addEventListener('error', handleAudioError);
-    
-    // Set volume to a reasonable level
-    audio.volume = 0.7;
-  });
-}
-
-function handleAudioPlay(e) {
-  // Stop any other currently playing audio
-  if (currentAudio && currentAudio !== e.target) {
+  // Stop any playing audio when modal closes
+  if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
+    currentAudio = null;
   }
-  currentAudio = e.target;
-  console.log("▶️ Playing preview:", e.target.src);
-}
-
-function handleAudioPause(e) {
-  console.log("⏸️ Paused preview:", e.target.src);
-}
-
-function handleAudioEnded(e) {
-  console.log("⏹️ Preview ended:", e.target.src);
-  currentAudio = null;
-}
-
-function handleAudioError(e) {
-  console.error("❌ Audio error:", e.target.error, e.target.src);
-  
-  // Show user-friendly error message
-  const errorMsg = document.createElement('div');
-  errorMsg.className = 'text-red-600 text-sm mt-1';
-  errorMsg.textContent = 'Preview not available';
-  
-  // Insert after the audio element
-  e.target.parentNode.insertBefore(errorMsg, e.target.nextSibling);
-  e.target.style.display = 'none';
 }
 
 function createSongElement(song, index) {
@@ -348,32 +274,31 @@ function createSongElement(song, index) {
 
   const hasPreview = song.preview_url && song.preview_url !== null && song.preview_url !== "null";
   const hasSpotifyLink = song.open_url && song.open_url !== "#";
-  const hasSpotifyUri = song.spotify_uri && song.spotify_uri !== null;
-  const hasSpotifyToken = !!getValidSpotifyToken();
-
-  console.log(`🎵 Song: ${song.title}, Preview: ${hasPreview ? 'Yes' : 'No'}, URI: ${hasSpotifyUri ? 'Yes' : 'No'}, Token: ${hasSpotifyToken ? 'Yes' : 'No'}`);
-
+  console.log(`🎵 Song: ${song.title}, Preview: ${hasPreview ? 'Yes' : 'No'}, Link: ${hasSpotifyLink ? 'Yes' : 'No'}`);
+ 
   // Song Info Section
   const songInfo = `
     <div class="flex items-center flex-1">
-      <img src="${song.cover_image || '/images/default-cover.jpg'}" 
-           alt="${song.title}" 
-           class="w-12 h-12 rounded-lg mr-4 object-cover shadow-sm">
+      <img src="${song.cover_image || '/images/default-cover.jpg'}"
+           alt="${song.title}"
+           class="w-12 h-12 rounded-lg mr-4 object-cover shadow-sm"
+           onerror="this.src='/images/pngtree-music-notes--musical-design-png-image_6283885.png'">
       <div>
         <p class="font-semibold text-gray-800">${song.title}</p>
         <p class="text-sm text-gray-600">${song.artist}</p>
       </div>
     </div>
   `;
-
+ 
   // Controls Section
   let controls = '<div class="flex items-center space-x-3">';
-
-  // ✅ Always show preview if available
+ 
+  // Always show preview if available
   if (hasPreview) {
+    const audioId = `audio-${index}`;
     controls += `
       <div class="flex flex-col items-center">
-        <audio controls preload="metadata" class="w-48 mb-1">
+        <audio id="${audioId}" controls preload="metadata" class="w-48 mb-1">
           <source src="${song.preview_url}" type="audio/mpeg">
           Your browser does not support the audio element.
         </audio>
@@ -382,34 +307,28 @@ function createSongElement(song, index) {
     `;
   } else {
     controls += `
-      <div class="w-48 flex items-center justify-center">
-        <span class="text-sm text-gray-500 italic">No preview available</span>
+      <div class="w-48 flex flex-col items-center justify-center">
+        <i class="fas fa-info-circle text-gray-400 mb-1 text-lg"></i>
+        <span class="text-sm text-gray-500 italic">Preview not available</span>
+        <span class="text-xs text-gray-400 mt-1">(Spotify API limitation)</span>
+        <span class="text-xs text-green-500 font-medium mt-1">Open for full track</span>
       </div>
     `;
   }
-
-  // ✅ Add Spotify playback button if user is logged in and has URI
-  if (hasSpotifyToken && hasSpotifyUri && deviceId) {
+ 
+  // Always show open in Spotify if link available
+  if (hasSpotifyLink) {
     controls += `
-      <button onclick="playSpotifyTrack('${song.spotify_uri}')" 
-              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center shadow-sm">
+      <a href="#" onclick="openInSpotify('${song.open_url}'); return false;"
+         class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center shadow-sm">
         <i class="fab fa-spotify mr-2"></i>
-        Play Full Track
-      </button>
-    `;
-  } else if (hasSpotifyLink) {
-    // Fallback to opening in Spotify app/web
-    controls += `
-      <a href="${song.open_url}" target="_blank" 
-         class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center">
-        <i class="fab fa-spotify mr-1"></i>
         Open in Spotify
       </a>
     `;
   }
-
+ 
   controls += '</div>';
-
+ 
   div.innerHTML = songInfo + controls;
   return div;
 }
@@ -417,18 +336,262 @@ function createSongElement(song, index) {
 function loadDataFromDivs() {
   try {
     const categoriesDiv = document.getElementById("categories-data");
-    window.CATEGORIES = JSON.parse(categoriesDiv?.textContent || "[]");
-
     const songsDiv = document.getElementById("songs-data");
-    window.ALL_SONGS = JSON.parse(songsDiv?.textContent || "{}");
     
-    console.log("📊 Loaded data:", {
+    if (!categoriesDiv || !songsDiv) {
+      console.warn("⚠️ Data divs not found - using empty data");
+      window.CATEGORIES = [];
+      window.ALL_SONGS = {};
+      return;
+    }
+
+    window.CATEGORIES = JSON.parse(categoriesDiv.textContent || "[]");
+    window.ALL_SONGS = JSON.parse(songsDiv.textContent || "{}");
+    
+    console.log("🔊 Loaded data:", {
       categories: window.CATEGORIES.length,
-      songs: Object.keys(window.ALL_SONGS).length
+      songs: Object.keys(window.ALL_SONGS).length,
+      songCounts: Object.keys(window.ALL_SONGS).map(key => `${key}: ${window.ALL_SONGS[key].length}`).join(', ')
     });
   } catch (e) {
     console.error("❌ Error loading data:", e);
     window.CATEGORIES = [];
     window.ALL_SONGS = {};
   }
+}
+function setupModalFunctionality() {
+  const categoryButtons = document.querySelectorAll(".category-btn");
+  const modal = document.getElementById("categoryModal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalSongs = document.getElementById("modalSongs");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const closeModalBtn2 = document.getElementById("closeModalBtn2");
+
+  if (!modal) {
+    console.warn("Modal element not found - music functionality limited");
+    return;
+  }
+
+  categoryButtons.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const catId = btn.dataset.categoryId;
+      const category = window.CATEGORIES.find(c => c.id === catId);
+      const songs = window.ALL_SONGS[catId] || [];
+
+      console.log(`Opening modal for category: ${catId}`, songs);
+
+      // Track the category selection
+      await trackCategorySelection(catId);
+
+      if (modalTitle) modalTitle.textContent = category?.title || "Songs";
+      
+      if (modalSongs) {
+        if (songs.length > 0) {
+          modalSongs.innerHTML = songs.map((song, i) => createSongElement(song, i).outerHTML).join("");
+          console.log(`Rendered ${songs.length} songs in modal`);
+        } else {
+          modalSongs.innerHTML = `
+            <div class="text-center py-12">
+              <i class="fas fa-music text-gray-300 text-4xl mb-4"></i>
+              <p class="text-gray-500">No songs available for this category</p>
+              <p class="text-xs text-gray-400 mt-2">Check console for loading errors</p>
+            </div>
+          `;
+        }
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    });
+  });
+
+  // Close modal handlers remain the same...
+  [closeModalBtn, closeModalBtn2].forEach(btn => {
+    btn?.addEventListener("click", () => {
+      closeModal(modal);
+    });
+  });
+
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal(modal);
+    }
+  });
+}
+// Enhanced music tracking - Replace the existing functions in your music.js
+
+// Track category usage - call this when user actually engages with music
+async function trackCategoryUsage(category, action = 'play') {
+    try {
+        console.log(`Tracking music category: ${category} (${action})`);
+        
+        const response = await fetch('/music/track-category', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                category: category,
+                action: action 
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log(`Category ${category} tracked successfully. Play count: ${data.playCount}`);
+        } else {
+            console.warn('Failed to track category:', data.message);
+        }
+    } catch (error) {
+        console.error('Error tracking category:', error);
+    }
+}
+
+// Enhanced openInSpotify function with tracking
+function openInSpotify(openUrl, categoryId) {
+  if (!openUrl || openUrl === "#") {
+    console.warn("No Spotify URL available");
+    showTempMessage("This track is not available on Spotify.", "warning");
+    return;
+  }
+
+  console.log("Opening track in Spotify:", openUrl, "Category:", categoryId);
+  
+  // Track the category usage when user opens Spotify
+  if (categoryId) {
+    trackCategoryUsage(categoryId, 'spotify_open');
+  }
+  
+  window.open(openUrl, "_blank");
+  showTempMessage("Opening full track in Spotify...", "success");
+}
+
+// Enhanced createSongElement function with proper tracking
+function createSongElement(song, index, categoryId) {
+  const div = document.createElement("div");
+  div.className = "flex items-center justify-between bg-gray-50 p-4 rounded-lg mb-3 hover:bg-gray-100 transition-colors";
+
+  const hasPreview = song.preview_url && song.preview_url !== null && song.preview_url !== "null";
+  const hasSpotifyLink = song.open_url && song.open_url !== "#";
+  
+  // Song Info Section
+  const songInfo = `
+    <div class="flex items-center flex-1">
+      <img src="${song.cover_image || '/images/default-cover.jpg'}"
+           alt="${song.title}"
+           class="w-12 h-12 rounded-lg mr-4 object-cover shadow-sm"
+           onerror="this.src='/images/pngtree-music-notes--musical-design-png-image_6283885.png'">
+      <div>
+        <p class="font-semibold text-gray-800">${song.title}</p>
+        <p class="text-sm text-gray-600">${song.artist}</p>
+      </div>
+    </div>
+  `;
+ 
+  // Controls Section
+  let controls = '<div class="flex items-center space-x-3">';
+ 
+  // Preview audio with tracking
+  if (hasPreview) {
+    const audioId = `audio-${index}`;
+    controls += `
+      <div class="flex flex-col items-center">
+        <audio id="${audioId}" controls preload="metadata" class="w-48 mb-1" 
+               onplay="trackCategoryUsage('${categoryId}', 'preview_play')">
+          <source src="${song.preview_url}" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
+        <span class="text-xs text-gray-500">30s Preview</span>
+      </div>
+    `;
+  } else {
+    controls += `
+      <div class="w-48 flex flex-col items-center justify-center">
+        <i class="fas fa-info-circle text-gray-400 mb-1 text-lg"></i>
+        <span class="text-sm text-gray-500 italic">Preview not available</span>
+        <span class="text-xs text-gray-400 mt-1">(Spotify API limitation)</span>
+        <span class="text-xs text-green-500 font-medium mt-1">Open for full track</span>
+      </div>
+    `;
+  }
+ 
+  // Spotify link with tracking
+  if (hasSpotifyLink) {
+    controls += `
+      <a href="#" onclick="openInSpotify('${song.open_url}', '${categoryId}'); return false;"
+         class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center shadow-sm">
+        <i class="fab fa-spotify mr-2"></i>
+        Open in Spotify
+      </a>
+    `;
+  }
+ 
+  controls += '</div>';
+ 
+  div.innerHTML = songInfo + controls;
+  return div;
+}
+
+// Updated modal setup with category tracking
+function setupModalFunctionality() {
+  const categoryButtons = document.querySelectorAll(".category-btn");
+  const modal = document.getElementById("categoryModal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalSongs = document.getElementById("modalSongs");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const closeModalBtn2 = document.getElementById("closeModalBtn2");
+
+  if (!modal) {
+    console.warn("Modal element not found - music functionality limited");
+    return;
+  }
+
+  categoryButtons.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const catId = btn.dataset.categoryId;
+      const category = window.CATEGORIES.find(c => c.id === catId);
+      const songs = window.ALL_SONGS[catId] || [];
+
+      console.log(`Opening modal for category: ${catId}`);
+
+      // Track category browsing (lighter tracking for just viewing)
+      await trackCategoryUsage(catId, 'browse');
+
+      if (modalTitle) modalTitle.textContent = category?.title || "Songs";
+      
+      if (modalSongs) {
+        if (songs.length > 0) {
+          // Pass categoryId to createSongElement for proper tracking
+          modalSongs.innerHTML = songs.map((song, i) => 
+            createSongElement(song, i, catId).outerHTML
+          ).join("");
+          console.log(`Rendered ${songs.length} songs in modal for category: ${catId}`);
+        } else {
+          modalSongs.innerHTML = `
+            <div class="text-center py-12">
+              <i class="fas fa-music text-gray-300 text-4xl mb-4"></i>
+              <p class="text-gray-500">No songs available for this category</p>
+            </div>
+          `;
+        }
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    });
+  });
+
+  // Close modal handlers
+  [closeModalBtn, closeModalBtn2].forEach(btn => {
+    btn?.addEventListener("click", () => {
+      closeModal(modal);
+    });
+  });
+
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal(modal);
+    }
+  });
 }

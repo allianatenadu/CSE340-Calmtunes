@@ -177,6 +177,12 @@
       <div class="card">
         <h3 class="text-lg font-semibold text-textMain mb-4">Quick Actions</h3>
         <div class="space-y-3">
+          <!-- Notifications Button -->
+          <a href="/notifications" class="block w-full text-left p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors">
+            <i class="fas fa-bell text-orange-600 mr-3"></i>
+            <span class="font-medium">Notifications</span>
+          </a>
+
           <% if (user.role === 'therapist') { %>
             <a href="/therapist/patients" class="block w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
               <i class="fas fa-users text-blue-600 mr-3"></i>
@@ -196,57 +202,148 @@
               <span class="font-medium">Apply Now</span>
             </a>
           <% } %>
-          <a href="/dashboard" class="block w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-            <i class="fas fa-home text-gray-600 mr-3"></i>
-            <span class="font-medium">Main Dashboard</span>
-          </a>
+         
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Statistics (for approved therapists) - Now pulls from database -->
+  <!-- Enhanced Statistics Dashboard (for approved therapists) -->
   <% if (user.role === 'therapist' && stats) { %>
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="card text-center">
-      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-        <i class="fas fa-users text-xl text-blue-600"></i>
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-textMain">📊 Practice Statistics</h2>
+      <div class="text-sm text-gray-500">
+        Last updated: <%= new Date().toLocaleDateString() %>
       </div>
-      <h3 class="text-2xl font-bold text-textMain"><%= stats.activePatients || 0 %></h3>
-      <p class="text-gray-600">Active Patients</p>
     </div>
-    <div class="card text-center">
-      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-        <i class="fas fa-calendar-check text-xl text-green-600"></i>
+
+    <!-- Main Statistics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <!-- Active Patients -->
+      <div class="card text-center hover:shadow-lg transition-shadow">
+        <div class="flex items-center justify-center mb-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <i class="fas fa-users text-xl text-white"></i>
+          </div>
+        </div>
+        <h3 class="text-3xl font-bold text-textMain mb-1"><%= stats.activePatients || 0 %></h3>
+        <p class="text-gray-600 font-medium">Active Patients</p>
+        <p class="text-xs text-gray-500 mt-1">Currently under care</p>
       </div>
-      <h3 class="text-2xl font-bold text-textMain"><%= stats.weekSessions || 0 %></h3>
-      <p class="text-gray-600">This Week</p>
+
+      <!-- This Week Sessions -->
+      <div class="card text-center hover:shadow-lg transition-shadow">
+        <div class="flex items-center justify-center mb-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+            <i class="fas fa-calendar-check text-xl text-white"></i>
+          </div>
+        </div>
+        <h3 class="text-3xl font-bold text-textMain mb-1"><%= stats.weekSessions || 0 %></h3>
+        <p class="text-gray-600 font-medium">Sessions This Week</p>
+        <p class="text-xs text-gray-500 mt-1">Last 7 days</p>
+      </div>
+
+      <!-- Average Rating -->
+      <div class="card text-center hover:shadow-lg transition-shadow">
+        <div class="flex items-center justify-center mb-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <i class="fas fa-star text-xl text-white"></i>
+          </div>
+        </div>
+        <h3 class="text-3xl font-bold text-textMain mb-1"><%= stats.avgRating || '0.0' %></h3>
+        <p class="text-gray-600 font-medium">Average Rating</p>
+        <div class="flex items-center justify-center mt-2">
+          <% for (let i = 0; i < 5; i++) { %>
+            <i class="fas fa-star text-yellow-400 text-sm <%= i < Math.floor(stats.avgRating || 0) ? '' : 'text-gray-300' %>"></i>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Total Hours -->
+      <div class="card text-center hover:shadow-lg transition-shadow">
+        <div class="flex items-center justify-center mb-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-clock text-xl text-white"></i>
+          </div>
+        </div>
+        <h3 class="text-3xl font-bold text-textMain mb-1"><%= stats.totalHours || 0 %></h3>
+        <p class="text-gray-600 font-medium">Total Hours</p>
+        <p class="text-xs text-gray-500 mt-1">All time</p>
+      </div>
     </div>
-    <div class="card text-center">
-      <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-        <i class="fas fa-star text-xl text-purple-600"></i>
+
+    <!-- Additional Statistics Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Monthly Sessions -->
+      <div class="card text-center bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200">
+        <div class="flex items-center justify-center mb-3">
+          <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-calendar-alt text-indigo-600"></i>
+          </div>
+        </div>
+        <h4 class="text-lg font-semibold text-textMain mb-1">This Month</h4>
+        <p class="text-2xl font-bold text-indigo-600"><%= Math.floor((stats.weekSessions || 0) * 4.3) %></p>
+        <p class="text-xs text-gray-600">Estimated sessions</p>
       </div>
-      <h3 class="text-2xl font-bold text-textMain"><%= stats.avgRating || '0.0' %></h3>
-      <p class="text-gray-600">Rating</p>
-    </div>
-    <div class="card text-center">
-      <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-        <i class="fas fa-clock text-xl text-yellow-600"></i>
+
+      <!-- Patient Satisfaction -->
+      <div class="card text-center bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200">
+        <div class="flex items-center justify-center mb-3">
+          <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-heart text-emerald-600"></i>
+          </div>
+        </div>
+        <h4 class="text-lg font-semibold text-textMain mb-1">Satisfaction</h4>
+        <p class="text-2xl font-bold text-emerald-600">
+          <%= stats.avgRating ? Math.round((parseFloat(stats.avgRating) / 5) * 100) : 0 %>%
+        </p>
+        <p class="text-xs text-gray-600">Based on ratings</p>
       </div>
-      <h3 class="text-2xl font-bold text-textMain"><%= stats.totalHours || 0 %></h3>
-      <p class="text-gray-600">Total Hours</p>
+
+      <!-- Response Time -->
+      <div class="card text-center bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+        <div class="flex items-center justify-center mb-3">
+          <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-bolt text-amber-600"></i>
+          </div>
+        </div>
+        <h4 class="text-lg font-semibold text-textMain mb-1">Avg Response</h4>
+        <p class="text-2xl font-bold text-amber-600">< 2h</p>
+        <p class="text-xs text-gray-600">Message responses</p>
+      </div>
     </div>
   </div>
   <% } %>
 
-  <!-- Empty state for statistics if no stats available -->
+  <!-- Enhanced Empty state for statistics if no stats available -->
   <% if (user.role === 'therapist' && !stats) { %>
-  <div class="card text-center py-8 mb-8">
-    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-      <i class="fas fa-chart-line text-2xl text-gray-500"></i>
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-textMain">📊 Practice Statistics</h2>
+      <div class="text-sm text-gray-500">
+        Start seeing patients to view statistics
+      </div>
     </div>
-    <h3 class="text-lg font-medium text-textMain mb-2">Statistics Coming Soon</h3>
-    <p class="text-gray-600">Your practice statistics will appear here once you start seeing patients.</p>
+
+    <div class="card text-center py-12">
+      <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <i class="fas fa-chart-line text-3xl text-gray-400"></i>
+      </div>
+      <h3 class="text-xl font-semibold text-textMain mb-3">Ready to Track Your Progress?</h3>
+      <p class="text-gray-600 mb-6 max-w-md mx-auto">
+        Your practice statistics will appear here once you start accepting patients and conducting sessions.
+        All your metrics will be automatically calculated and displayed.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/find-therapist" class="btn-primary">
+          <i class="fas fa-search mr-2"></i>Browse Patients
+        </a>
+        <a href="/therapist/patients" class="btn-secondary">
+          <i class="fas fa-users mr-2"></i>View My Patients
+        </a>
+      </div>
+    </div>
   </div>
   <% } %>
 </div>

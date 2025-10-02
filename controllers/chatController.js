@@ -1,193 +1,94 @@
-// controllers/chatController.js - Fixed with better error handling and notifications
+// controllers/chatController.js - COMPLETE FIXED VERSION with Admin Support
 const db = require("../config/database");
 const { v4: uuidv4 } = require("uuid");
+
+// Add this to the end of chatController.js, before the createNotification function
 
 // Start a new conversation
 exports.startConversation = async (req, res) => {
   const userId = req.session.user.id;
   const userRole = req.session.user.role;
-  let otherId, otherRole, initiatorRole;
 
   try {
-    console.log('Starting conversation for user', userId, 'role', userRole);
+    console.log('Starting conversation for user:', userId, 'role:', userRole);
+
+    let patientId, therapistId;
 
     if (userRole === 'patient') {
-      otherId = req.body.therapistId;
-      otherRole = 'therapist';
-      initiatorRole = 'patient';
+      patientId = userId;
+      therapistId = req.body.therapistId;
     } else if (userRole === 'therapist') {
-      otherId = req.body.patientId;
-      otherRole = 'patient';
-      initiatorRole = 'therapist';
+      patientId = req.body.patientId;
+      therapistId = userId;
     } else {
-      return res.status(403).json({
-        success: false,
-        error: "Invalid user role"
-      });
-    }
-
-    if (!otherId) {
       return res.status(400).json({
         success: false,
-        error: `${otherRole} ID is required`
+        error: 'Invalid user role for starting conversation'
       });
     }
 
-    // Validate other user exists and has correct role
-    let otherCheck;
-    let otherResult;
-    if (otherRole === 'therapist') {
-      otherCheck = `
-        SELECT u.id, u.name, u.email, ta.status,
-               COALESCE(ta.specialty, 'General Practice') as specialty,
-               ta.profile_image
-        FROM users u
-        LEFT JOIN therapist_applications ta ON u.id = ta.user_id
-        WHERE u.id = $1 AND u.role = 'therapist' AND ta.status = 'approved'
-      `;
-    } else {
-      otherCheck = `
-        SELECT u.id, u.name, u.email
-        FROM users u
-        WHERE u.id = $1 AND u.role = 'patient'
-      `;
-    }
-
-    otherResult = await new Promise((resolve, reject) => {
-      db.query(otherCheck, [otherId], (err, results) => {
-        if (err) reject(err);
-        else resolve(results);
-      });
-    });
-
-    if (!otherResult.rows || otherResult.rows.length === 0) {
-      return res.status(404).json({
+    if (!patientId || !therapistId) {
+      return res.status(400).json({
         success: false,
-        error: `${otherRole.charAt(0).toUpperCase() + otherRole.slice(1)} not found or not available`,
+        error: 'Missing required parameters'
       });
-    }
-
-    const otherUser = otherResult.rows[0];
-
-    // Determine patient_id and therapist_id
-    let patientId, therapistId;
-    if (initiatorRole === 'patient') {
-      patientId = userId;
-      therapistId = otherId;
-    } else {
-      patientId = otherId;
-      therapistId = userId;
     }
 
     // Check if conversation already exists
-    const existingConversation = `
+    const existingQuery = `
       SELECT id FROM conversations
-      WHERE patient_id = $1 AND therapist_id = $2 AND status = 'active'
+      WHERE patient_id = $1 AND therapist_id = $2
+        AND (conversation_type IS NULL OR conversation_type = 'regular')
     `;
 
     const existingResult = await new Promise((resolve, reject) => {
-      db.query(
-        existingConversation,
-        [patientId, therapistId],
-        (err, results) => {
-          if (err) reject(err);
-          else resolve(results);
-        }
-      );
+      db.query(existingQuery, [patientId, therapistId], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
     });
 
     if (existingResult.rows && existingResult.rows.length > 0) {
       return res.json({
         success: true,
         conversationId: existingResult.rows[0].id,
-        message: "Existing conversation found",
+        message: 'Conversation already exists'
       });
     }
 
     // Create new conversation
     const conversationId = uuidv4();
-    const createConversation = `
-      INSERT INTO conversations (id, patient_id, therapist_id, status, created_at, updated_at)
-      VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    const createQuery = `
+      INSERT INTO conversations (
+        id, patient_id, therapist_id, conversation_type, status,
+        created_at, updated_at
+      ) VALUES ($1, $2, $3, 'regular', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING id
     `;
 
-    await new Promise((resolve, reject) => {
-      db.query(
-        createConversation,
-        [conversationId, patientId, therapistId],
-        (err, results) => {
-          if (err) reject(err);
-          else resolve(results);
-        }
-      );
-    });
-
-    // Send welcome message only if patient is initiating
-    if (initiatorRole === 'patient') {
-      const welcomeMessage = `
-        INSERT INTO messages (conversation_id, sender_id, content, message_type, created_at)
-        VALUES ($1, $2, $3, 'system', CURRENT_TIMESTAMP)
-      `;
-
-      await new Promise((resolve, reject) => {
-        db.query(
-          welcomeMessage,
-          [
-            conversationId,
-            therapistId,
-            `Hello! I'm ${otherUser.name}. I'm here to help you on your mental health journey. Feel free to share what's on your mind.`,
-          ],
-          (err, results) => {
-            if (err) reject(err);
-            else resolve(results);
-          }
-        );
+    const result = await new Promise((resolve, reject) => {
+      db.query(createQuery, [conversationId, patientId, therapistId], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
       });
-
-      // Create notification for therapist
-      await createNotification(
-        therapistId,
-        "new_conversation",
-        "New Chat Started",
-        `${req.session.user.name} has started a conversation with you.`,
-        { conversationId: conversationId }
-      );
-
-      // Create notification for patient
-      await createNotification(
-        patientId,
-        "conversation_started",
-        "Conversation Started",
-        `Your conversation with ${otherUser.name} has been started. They've sent you a welcome message.`,
-        { conversationId: conversationId }
-      );
-    } else {
-      // Therapist initiating - no welcome message, just notify patient
-      await createNotification(
-        patientId,
-        "new_conversation",
-        "Therapist Message",
-        `${req.session.user.name} would like to discuss your progress.`,
-        { conversationId: conversationId }
-      );
-    }
+    });
 
     res.json({
       success: true,
-      conversationId: conversationId,
-      message: "Conversation started successfully",
+      conversationId: result.rows[0].id,
+      message: 'Conversation created successfully'
     });
+
   } catch (error) {
-    console.error("Error starting conversation:", error);
+    console.error('Error starting conversation:', error);
     res.status(500).json({
       success: false,
-      error: "Failed to start conversation",
+      error: 'Failed to start conversation'
     });
   }
 };
 
-// Get user's conversations
+// Get user's conversations - Works for patients, therapists, AND admins
 exports.getConversations = async (req, res) => {
   const userId = req.session.user.id;
   const userRole = req.session.user.role;
@@ -195,54 +96,96 @@ exports.getConversations = async (req, res) => {
   try {
     console.log('Loading conversations for user:', userId, 'role:', userRole);
 
-    let query;
-    if (userRole === "therapist") {
-      query = `
-        SELECT c.*, 
-               u.name as patient_name,
-               u.email as patient_email,
-               u.profile_image as patient_image,
+    // ADMIN: Get admin conversations
+    if (userRole === 'admin') {
+      const query = `
+        SELECT c.*,
+               u.name as participant_name,
+               u.email as participant_email,
+               u.role as participant_role,
+               ta.profile_image as participant_image,
+               ta.specialty as participant_specialty,
                m.content as last_message,
                m.created_at as last_message_time,
                COUNT(CASE WHEN m2.is_read = false AND m2.sender_id != $1 THEN 1 END) as unread_count
         FROM conversations c
         JOIN users u ON c.patient_id = u.id
-        LEFT JOIN messages m ON c.id = m.conversation_id 
-            AND m.created_at = (
-                SELECT MAX(created_at) 
-                FROM messages 
-                WHERE conversation_id = c.id
-            )
-        LEFT JOIN messages m2 ON c.id = m2.conversation_id
-        WHERE c.therapist_id = $1 AND c.status = 'active'
-        GROUP BY c.id, u.name, u.email, u.profile_image, m.content, m.created_at
-        ORDER BY COALESCE(m.created_at, c.created_at) DESC
-      `;
-    } else {
-      query = `
-        SELECT c.*, 
-               u.name as therapist_name,
-               u.email as therapist_email,
-               ta.profile_image as therapist_image,
-               COALESCE(ta.specialty, 'General Practice') as specialty,
-               m.content as last_message,
-               m.created_at as last_message_time,
-               COUNT(CASE WHEN m2.is_read = false AND m2.sender_id != $1 THEN 1 END) as unread_count
-        FROM conversations c
-        JOIN users u ON c.therapist_id = u.id
         LEFT JOIN therapist_applications ta ON u.id = ta.user_id
         LEFT JOIN messages m ON c.id = m.conversation_id 
-            AND m.created_at = (
-                SELECT MAX(created_at) 
-                FROM messages 
-                WHERE conversation_id = c.id
-            )
+          AND m.created_at = (SELECT MAX(created_at) FROM messages WHERE conversation_id = c.id)
         LEFT JOIN messages m2 ON c.id = m2.conversation_id
-        WHERE c.patient_id = $1 AND c.status = 'active'
-        GROUP BY c.id, u.name, u.email, ta.profile_image, ta.specialty, m.content, m.created_at
+        WHERE c.therapist_id = $1 
+          AND c.conversation_type = 'admin'
+          AND (c.status IS NULL OR c.status = 'active')
+        GROUP BY c.id, u.name, u.email, u.role, ta.profile_image, ta.specialty, m.content, m.created_at
         ORDER BY COALESCE(m.created_at, c.created_at) DESC
       `;
+
+      const result = await new Promise((resolve, reject) => {
+        db.query(query, [userId], (err, results) => {
+          if (err) reject(err);
+          else resolve(results);
+        });
+      });
+
+      const formattedConversations = (result.rows || []).map(conv => ({
+        id: conv.id,
+        conversation_type: 'admin',
+        other_user: {
+          id: conv.patient_id,
+          name: conv.participant_name,
+          role: conv.participant_role,
+          image: conv.participant_image,
+          specialty: conv.participant_role === 'therapist' ? 
+            (conv.participant_specialty || 'Therapist') : 'Patient'
+        },
+        last_message: conv.last_message,
+        last_message_time: conv.last_message_time,
+        unread_count: parseInt(conv.unread_count) || 0,
+        created_at: conv.created_at
+      }));
+
+      return res.json({
+        success: true,
+        conversations: formattedConversations
+      });
     }
+
+    // PATIENT/THERAPIST: Get both regular AND admin conversations
+    const query = `
+      SELECT c.*,
+             CASE
+               WHEN c.patient_id = $1 AND c.conversation_type = 'admin' THEN ut.name
+               WHEN c.patient_id = $1 THEN ut.name
+               WHEN c.therapist_id = $1 THEN up.name
+             END as other_user_name,
+             CASE
+               WHEN c.patient_id = $1 AND c.conversation_type = 'admin' THEN ut.id
+               WHEN c.patient_id = $1 THEN ut.id
+               WHEN c.therapist_id = $1 THEN up.id
+             END as other_user_id,
+             CASE
+               WHEN c.patient_id = $1 AND c.conversation_type = 'admin' THEN 'admin'
+               WHEN c.patient_id = $1 THEN 'therapist'
+               WHEN c.therapist_id = $1 THEN 'patient'
+             END as other_user_role,
+             ta.profile_image as therapist_image,
+             ta.specialty as therapist_specialty,
+             m.content as last_message,
+             m.created_at as last_message_time,
+             COUNT(CASE WHEN m2.is_read = false AND m2.sender_id != $1 THEN 1 END) as unread_count
+      FROM conversations c
+      JOIN users up ON c.patient_id = up.id
+      JOIN users ut ON c.therapist_id = ut.id
+      LEFT JOIN therapist_applications ta ON ut.id = ta.user_id
+      LEFT JOIN messages m ON c.id = m.conversation_id
+        AND m.created_at = (SELECT MAX(created_at) FROM messages WHERE conversation_id = c.id)
+      LEFT JOIN messages m2 ON c.id = m2.conversation_id
+      WHERE (c.patient_id = $1 OR c.therapist_id = $1)
+      GROUP BY c.id, up.name, up.id, ut.name, ut.id,
+               ta.profile_image, ta.specialty, m.content, m.created_at
+      ORDER BY COALESCE(m.created_at, c.created_at) DESC
+    `;
 
     const result = await new Promise((resolve, reject) => {
       db.query(query, [userId], (err, results) => {
@@ -251,42 +194,58 @@ exports.getConversations = async (req, res) => {
       });
     });
 
-    console.log('Found conversations:', result.rows?.length || 0);
+    const formattedConversations = (result.rows || []).map(conv => {
+      const isPatient = conv.patient_id === userId;
+      
+      return {
+        id: conv.id,
+        conversation_type: conv.conversation_type || 'regular',
+        other_user: {
+          id: conv.other_user_id,
+          name: conv.other_user_name,
+          role: conv.other_user_role,
+          image: isPatient ? conv.therapist_image : null,
+          specialty: isPatient ? (conv.therapist_specialty || 'General Practice') : 'Patient'
+        },
+        last_message: conv.last_message,
+        last_message_time: conv.last_message_time,
+        unread_count: parseInt(conv.unread_count) || 0,
+        created_at: conv.created_at
+      };
+    });
 
     res.json({
       success: true,
-      conversations: result.rows || [],
+      conversations: formattedConversations
     });
+
   } catch (error) {
     console.error("Error fetching conversations:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch conversations",
+      error: "Failed to fetch conversations"
     });
   }
 };
 
-// Get messages for a conversation
+// Get messages for a conversation - Works for all user types
 exports.getMessages = async (req, res) => {
   const { conversationId } = req.params;
   const userId = req.session.user.id;
-  const limit = parseInt(req.query.limit) || 50;
-  const offset = parseInt(req.query.offset) || 0;
+  const userRole = req.session.user.role;
 
   try {
-    console.log('Getting messages for conversation:', conversationId, 'user:', userId);
+    console.log('Getting messages for conversation:', conversationId, 'user:', userId, 'role:', userRole);
 
-    // Verify user is part of this conversation
     const verifyQuery = `
-      SELECT c.*, 
-             p.name as patient_name, p.profile_image as patient_image,
-             t.name as therapist_name,
-             ta.profile_image as therapist_image, 
-             COALESCE(ta.specialty, 'General Practice') as specialty
+      SELECT c.*,
+             up.name as patient_name, up.email as patient_email, up.id as patient_id,
+             ut.name as therapist_name, ut.email as therapist_email, ut.id as therapist_id,
+             ta.profile_image as therapist_image, ta.specialty as therapist_specialty
       FROM conversations c
-      JOIN users p ON c.patient_id = p.id
-      JOIN users t ON c.therapist_id = t.id
-      LEFT JOIN therapist_applications ta ON t.id = ta.user_id
+      JOIN users up ON c.patient_id = up.id
+      JOIN users ut ON c.therapist_id = ut.id
+      LEFT JOIN therapist_applications ta ON ut.id = ta.user_id
       WHERE c.id = $1 AND (c.patient_id = $2 OR c.therapist_id = $2)
     `;
 
@@ -300,7 +259,7 @@ exports.getMessages = async (req, res) => {
     if (!verifyResult.rows || verifyResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "Conversation not found or access denied",
+        error: "Conversation not found or access denied"
       });
     }
 
@@ -308,178 +267,127 @@ exports.getMessages = async (req, res) => {
 
     // Get messages
     const messagesQuery = `
-      SELECT m.*, 
-             u.name as sender_name,
+      SELECT m.*, u.name as sender_name, u.role as sender_role,
              CASE 
-                 WHEN u.id = c.patient_id THEN p.profile_image
-                 ELSE ta.profile_image
-             END as display_image
+               WHEN u.role = 'therapist' THEN ta.profile_image
+               ELSE null
+             END as sender_image
       FROM messages m
-      JOIN conversations c ON m.conversation_id = c.id
       JOIN users u ON m.sender_id = u.id
-      LEFT JOIN users p ON c.patient_id = p.id
-      LEFT JOIN therapist_applications ta ON c.therapist_id = ta.user_id
+      LEFT JOIN therapist_applications ta ON u.id = ta.user_id AND u.role = 'therapist'
       WHERE m.conversation_id = $1
       ORDER BY m.created_at ASC
-      LIMIT $2 OFFSET $3
     `;
 
     const messagesResult = await new Promise((resolve, reject) => {
-      db.query(
-        messagesQuery,
-        [conversationId, limit, offset],
-        (err, results) => {
-          if (err) reject(err);
-          else resolve(results);
-        }
-      );
-    });
-
-    // Mark messages as read for the current user
-    await new Promise((resolve, reject) => {
-      db.query(
-        "UPDATE messages SET is_read = true WHERE conversation_id = $1 AND sender_id != $2",
-        [conversationId, userId],
-        (err, results) => {
-          if (err) reject(err);
-          else resolve(results);
-        }
-      );
-    });
-
-    console.log('Retrieved messages:', messagesResult.rows?.length || 0);
-
-    res.json({
-      success: true,
-      conversation: conversation,
-      messages: messagesResult.rows || [],
-    });
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch messages",
-    });
-  }
-};
-
-// Send a message
-exports.sendMessage = async (req, res) => {
-  const { conversationId } = req.params;
-  const { content } = req.body;
-  const senderId = req.session.user.id;
-
-  try {
-    console.log('Sending message from user:', senderId, 'to conversation:', conversationId);
-
-    if (!content || content.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Message content cannot be empty",
-      });
-    }
-
-    // Verify conversation exists and user is part of it
-    const verifyQuery = `
-      SELECT c.*, p.name as patient_name, t.name as therapist_name
-      FROM conversations c
-      JOIN users p ON c.patient_id = p.id
-      JOIN users t ON c.therapist_id = t.id
-      WHERE c.id = $1 AND (c.patient_id = $2 OR c.therapist_id = $2) AND c.status = 'active'
-    `;
-
-    const verifyResult = await new Promise((resolve, reject) => {
-      db.query(verifyQuery, [conversationId, senderId], (err, results) => {
+      db.query(messagesQuery, [conversationId], (err, results) => {
         if (err) reject(err);
         else resolve(results);
       });
     });
 
-    if (!verifyResult.rows || verifyResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: "Conversation not found or access denied",
-      });
-    }
-
-    const conversation = verifyResult.rows[0];
-
-    // Insert message
-    const messageQuery = `
-      INSERT INTO messages (conversation_id, sender_id, content, message_type, is_read, created_at)
-      VALUES ($1, $2, $3, 'text', false, CURRENT_TIMESTAMP)
-      RETURNING *
-    `;
-
-    const result = await new Promise((resolve, reject) => {
-      db.query(
-        messageQuery,
-        [conversationId, senderId, content.trim()],
-        (err, results) => {
-          if (err) reject(err);
-          else resolve(results);
-        }
-      );
-    });
-
-    const message = result.rows[0];
-
-    // Update conversation timestamp
+    // Mark messages as read
     await new Promise((resolve, reject) => {
       db.query(
-        "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1",
-        [conversationId],
-        (err, results) => {
+        "UPDATE messages SET is_read = true WHERE conversation_id = $1 AND sender_id != $2",
+        [conversationId, userId],
+        (err) => {
           if (err) reject(err);
-          else resolve(results);
+          else resolve();
         }
       );
     });
 
-    // Notify the other party
-    const recipientId = senderId === conversation.patient_id ? 
-      conversation.therapist_id : conversation.patient_id;
-    
-    const senderName = senderId === conversation.patient_id ? 
-      conversation.patient_name : conversation.therapist_name;
+    // Determine other user based on role
+    let otherUser;
+    const isAdmin = conversation.conversation_type === 'admin';
 
-    console.log('Notifying recipient:', recipientId, 'from sender:', senderName);
-
-    await createNotification(
-      recipientId,
-      "new_message",
-      "New Message",
-      `You have a new message from ${senderName}`,
-      { 
-        conversationId: conversationId, 
-        messageId: message.id,
-        messagePreview: content.trim().substring(0, 50) + (content.trim().length > 50 ? '...' : '')
-      }
-    );
+    if (isAdmin && userRole === 'admin') {
+      // Admin viewing conversation with patient/therapist
+      otherUser = {
+        id: conversation.patient_id,
+        name: conversation.patient_name,
+        role: conversation.patient_role, // ← FIXED: Use actual role from database
+        image: conversation.patient_role === 'therapist' ? conversation.therapist_image : null,
+        specialty: conversation.patient_role === 'therapist' ?
+          (conversation.therapist_specialty || 'Therapist') : 'Patient'
+      };
+    } else if (isAdmin) {
+      // Patient/Therapist viewing admin conversation
+      otherUser = {
+        id: conversation.therapist_id,
+        name: conversation.therapist_name,
+        role: 'admin',
+        image: null,
+        specialty: 'Admin Support'
+      };
+    } else {
+      // Regular patient-therapist conversation
+      const isPatient = conversation.patient_id === userId;
+      otherUser = isPatient ? {
+        id: conversation.therapist_id,
+        name: conversation.therapist_name,
+        role: 'therapist',
+        image: conversation.therapist_image,
+        specialty: conversation.therapist_specialty || 'General Practice'
+      } : {
+        id: conversation.patient_id,
+        name: conversation.patient_name,
+        role: 'patient',
+        image: null,
+        specialty: null
+      };
+    }
 
     res.json({
       success: true,
-      message: message,
+      conversation: {
+        id: conversation.id,
+        patient_id: conversation.patient_id,
+        therapist_id: conversation.therapist_id,
+        conversation_type: conversation.conversation_type,
+        other_user: otherUser
+      },
+      messages: messagesResult.rows || [],
+      isAdminConversation: isAdmin
     });
+
   } catch (error) {
-    console.error("Error sending message:", error);
+    console.error("Error fetching messages:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to send message",
+      error: "Failed to fetch messages"
     });
   }
 };
 
-// Start video call
-exports.startVideoCall = async (req, res) => {
-  const { conversationId } = req.body;
-  const userId = req.session.user.id;
+// Send message - FIXED to work with patient_id/therapist_id
+exports.sendMessage = async (req, res) => {
+  const { conversationId } = req.params;
+  const { content } = req.body;
+  const userId = req.session?.user?.id;
+  const userName = req.session?.user?.name;
+  const userRole = req.session?.user?.role;
 
   try {
-    // Verify conversation
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Message content is required"
+      });
+    }
+
+    // FIXED: Verify using patient_id/therapist_id
     const verifyQuery = `
-      SELECT * FROM conversations 
-      WHERE id = $1 AND (patient_id = $2 OR therapist_id = $2) AND status = 'active'
+      SELECT c.*, 
+             up.name as patient_name, 
+             ut.name as therapist_name
+      FROM conversations c
+      JOIN users up ON c.patient_id = up.id
+      JOIN users ut ON c.therapist_id = ut.id
+      WHERE c.id = $1 
+        AND (c.patient_id = $2 OR c.therapist_id = $2) 
+        AND (c.status IS NULL OR c.status = 'active')
     `;
 
     const verifyResult = await new Promise((resolve, reject) => {
@@ -492,133 +400,98 @@ exports.startVideoCall = async (req, res) => {
     if (!verifyResult.rows || verifyResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "Conversation not found",
+        error: "Conversation not found or access denied"
       });
     }
 
     const conversation = verifyResult.rows[0];
-    const roomId = uuidv4();
-    const callId = uuidv4();
 
-    // Create video call record
-    const videoCallQuery = `
-      INSERT INTO video_calls (id, conversation_id, room_id, initiated_by, status, created_at)
-      VALUES ($1, $2, $3, $4, 'active', CURRENT_TIMESTAMP)
-      RETURNING *
+    // Insert message
+    const messageQuery = `
+      INSERT INTO messages (conversation_id, sender_id, content, message_type, created_at)
+      VALUES ($1, $2, $3, 'text', CURRENT_TIMESTAMP)
+      RETURNING id, created_at
     `;
 
-    const callResult = await new Promise((resolve, reject) => {
+    const messageResult = await new Promise((resolve, reject) => {
+      db.query(messageQuery, [conversationId, userId, content.trim()], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
+
+    // Update conversation timestamp
+    await new Promise((resolve, reject) => {
       db.query(
-        videoCallQuery,
-        [callId, conversationId, roomId, userId],
-        (err, results) => {
+        "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+        [conversationId],
+        (err) => {
           if (err) reject(err);
-          else resolve(results);
+          else resolve();
         }
       );
     });
 
-    // Notify the other party
-    const otherUserId = userId === conversation.patient_id ? 
+    // Get other participant ID
+    const otherUserId = conversation.patient_id === userId ? 
       conversation.therapist_id : conversation.patient_id;
 
+    // Create notification
     await createNotification(
       otherUserId,
-      "video_call_request",
-      "Video Call Request",
-      `${req.session.user.name} is requesting a video call`,
-      { conversationId: conversationId, roomId: roomId }
+      conversation.conversation_type === 'admin' ? 'admin_message' : 'new_message',
+      userRole === 'admin' ? 'New Message from Admin' : 'New Message',
+      `${userName} sent you a message`,
+      { conversationId: conversationId }
     );
 
-    res.json({
-      success: true,
-      videoCall: callResult.rows[0],
-      roomId: roomId,
-    });
-  } catch (error) {
-    console.error("Error starting video call:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to start video call",
-    });
-  }
-};
-
-// Join video call
-exports.joinVideoCall = async (req, res) => {
-  const { videoCallId } = req.params;
-
-  try {
-    // Update video call status
-    const updateQuery = `
-      UPDATE video_calls 
-      SET status = 'in_progress', started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-      RETURNING *
-    `;
-
-    const result = await new Promise((resolve, reject) => {
-      db.query(updateQuery, [videoCallId], (err, results) => {
-        if (err) reject(err);
-        else resolve(results);
+    // Emit real-time message via socket
+    const io = req.app?.get('io');
+    if (io) {
+      io.to(conversationId).emit('new_message', {
+        id: messageResult.rows[0].id,
+        conversationId: conversationId,
+        senderId: userId,
+        content: content.trim(),
+        messageType: 'text',
+        createdAt: messageResult.rows[0].created_at,
+        senderName: userName,
+        senderRole: userRole
       });
-    });
+    }
 
     res.json({
       success: true,
-      videoCall: result.rows[0],
+      message: {
+        id: messageResult.rows[0].id,
+        conversation_id: conversationId,
+        sender_id: userId,
+        content: content.trim(),
+        message_type: 'text',
+        created_at: messageResult.rows[0].created_at,
+        sender_name: userName,
+        sender_role: userRole
+      }
     });
+
   } catch (error) {
-    console.error("Error joining video call:", error);
+    console.error("Error sending message:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to join video call",
+      error: "Failed to send message"
     });
   }
 };
 
-// End video call
-exports.endVideoCall = async (req, res) => {
-  const { videoCallId } = req.params;
-
-  try {
-    const updateQuery = `
-      UPDATE video_calls 
-      SET status = 'ended', ended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
-          duration = EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - COALESCE(started_at, created_at)))
-      WHERE id = $1
-      RETURNING *
-    `;
-
-    const result = await new Promise((resolve, reject) => {
-      db.query(updateQuery, [videoCallId], (err, results) => {
-        if (err) reject(err);
-        else resolve(results);
-      });
-    });
-
-    res.json({
-      success: true,
-      videoCall: result.rows[0],
-    });
-  } catch (error) {
-    console.error("Error ending video call:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to end video call",
-    });
-  }
-};
-
-// Helper function to create notifications
+// Helper function
 async function createNotification(userId, type, title, message, data = {}) {
-  const query = `
-    INSERT INTO notifications (user_id, type, title, message, data, created_at)
-    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-    RETURNING id
-  `;
-
   try {
+    const query = `
+      INSERT INTO notifications (user_id, type, title, message, data, created_at)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+      RETURNING id
+    `;
+
     await new Promise((resolve, reject) => {
       db.query(
         query,
@@ -629,7 +502,6 @@ async function createNotification(userId, type, title, message, data = {}) {
         }
       );
     });
-    console.log('Notification created for user:', userId, 'type:', type);
   } catch (error) {
     console.error("Error creating notification:", error);
   }

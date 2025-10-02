@@ -26,12 +26,20 @@ router.get("/find-therapist", requirePatient, (req, res) => {
       ta.profile_image,
       ta.resume_file,
       ta.certification_file,
-      ta.phone
+      ta.phone,
+      COALESCE(active_patients.count, 0) as active_patient_count
     FROM users u
     INNER JOIN therapist_applications ta ON u.id = ta.user_id
-    WHERE u.role = 'therapist' 
+    LEFT JOIN (
+      SELECT therapist_id, COUNT(*) as count
+      FROM therapist_patient_relationships
+      WHERE status = 'active'
+      GROUP BY therapist_id
+    ) active_patients ON u.id = active_patients.therapist_id
+    WHERE u.role = 'therapist'
       AND ta.status = 'approved'
       AND ta.status IS NOT NULL
+      AND (active_patients.count IS NULL OR active_patients.count < 5)
     ORDER BY ta.updated_at DESC NULLS LAST, u.name ASC
   `;
 
@@ -43,7 +51,7 @@ router.get("/find-therapist", requirePatient, (req, res) => {
       
       // Ultra-safe fallback query with only guaranteed columns
       const safeFallbackQuery = `
-        SELECT 
+        SELECT
           u.id,
           u.name,
           u.email,
@@ -51,11 +59,19 @@ router.get("/find-therapist", requirePatient, (req, res) => {
           u.created_at as user_created_at,
           ta.id as application_id,
           ta.status,
-          ta.created_at as application_date
+          ta.created_at as application_date,
+          COALESCE(active_patients.count, 0) as active_patient_count
         FROM users u
         INNER JOIN therapist_applications ta ON u.id = ta.user_id
-        WHERE u.role = 'therapist' 
+        LEFT JOIN (
+          SELECT therapist_id, COUNT(*) as count
+          FROM therapist_patient_relationships
+          WHERE status = 'active'
+          GROUP BY therapist_id
+        ) active_patients ON u.id = active_patients.therapist_id
+        WHERE u.role = 'therapist'
           AND ta.status = 'approved'
+          AND (active_patients.count IS NULL OR active_patients.count < 5)
         ORDER BY u.name
       `;
       
@@ -74,7 +90,7 @@ router.get("/find-therapist", requirePatient, (req, res) => {
           ...therapist,
           bio: "Experienced mental health professional dedicated to helping clients achieve their wellness goals.",
           specialty: "General Practice",
-          specialtyDisplay: "General Practice", 
+          specialtyDisplay: "General Practice",
           experienceDisplay: "Professional Experience in Mental Health",
           experience: "Professional Experience in Mental Health",
           average_rating: "5.0",
@@ -108,7 +124,9 @@ router.get("/find-therapist", requirePatient, (req, res) => {
         average_rating: "5.0",
         review_count: Math.floor(Math.random() * 50),
         patient_count: Math.floor(Math.random() * 20),
-        profileImageUrl: therapist.profile_image ? `/uploads/${therapist.profile_image}` : null
+        profile_image: therapist.profile_image,
+        profileImageUrl: therapist.profile_image ?
+          (therapist.profile_image.startsWith('/') ? therapist.profile_image : `/uploads/${therapist.profile_image}`) : null
       }));
 
     console.log(`Found ${therapists.length} approved therapists`);

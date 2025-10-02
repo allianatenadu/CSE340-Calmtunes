@@ -1,248 +1,432 @@
 // routes/appointments.js - Debug version with extensive logging
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const appointmentController = require('../controllers/appointmentController');
-const chatController = require('../controllers/chatController');
-const therapistController = require('../controllers/therapistController');
-const { 
-    requireAuth, 
-    requireAuthAPI,
-    requirePatientAPI,
-    requireTherapistAPI 
-} = require('../middleware/auth');
+const appointmentController = require("../controllers/appointmentController");
+const chatController = require("../controllers/chatController");
+const therapistController = require("../controllers/therapistController");
+const {
+  requireAuth,
+  requireAuthAPI,
+  requirePatientAPI,
+  requireTherapistAPI,
+} = require("../middleware/auth");
 
 // API Routes (use requireAuthAPI - returns JSON errors)
-router.post('/book', requireAuthAPI, appointmentController.bookAppointment);
-router.get('/my-appointments', requireAuthAPI, appointmentController.getUserAppointments);
-router.put('/:appointmentId/confirm', requireTherapistAPI, appointmentController.confirmAppointment);
-router.put('/:appointmentId/reject', requireTherapistAPI, appointmentController.rejectAppointment);
-router.put('/:appointmentId/cancel', requireAuthAPI, appointmentController.cancelAppointment);
+router.post("/book", requireAuthAPI, appointmentController.bookAppointment);
+router.get(
+  "/my-appointments",
+  requireAuthAPI,
+  appointmentController.getUserAppointments
+);
+router.put(
+  "/:appointmentId/confirm",
+  requireTherapistAPI,
+  appointmentController.confirmAppointment
+);
+router.put(
+  "/:appointmentId/reject",
+  requireTherapistAPI,
+  appointmentController.rejectAppointment
+);
+router.put(
+  "/:appointmentId/cancel",
+  requireAuthAPI,
+  appointmentController.cancelAppointment
+);
 
 // Enhanced location tracking routes
-router.post('/:appointmentId/location', requireAuthAPI, appointmentController.updateLocationEnhanced || appointmentController.updateLocation);
-router.get('/:appointmentId/proximity-check', requireAuthAPI, appointmentController.checkProximity);
-router.post('/:appointmentId/location/stop', requireAuthAPI, appointmentController.stopLocationTracking);
-router.get('/:appointmentId/location/status', requireAuthAPI, appointmentController.getLocationStatus);
+router.post(
+  "/:appointmentId/location",
+  requireAuthAPI,
+  appointmentController.updateLocationEnhanced ||
+    appointmentController.updateLocation
+);
+router.get(
+  "/:appointmentId/proximity-check",
+  requireAuthAPI,
+  appointmentController.checkProximity
+);
+router.post(
+  "/:appointmentId/location/stop",
+  requireAuthAPI,
+  appointmentController.stopLocationTracking
+);
+router.get(
+  "/:appointmentId/location/status",
+  requireAuthAPI,
+  appointmentController.getLocationStatus
+);
 
 // Chat API routes (use requireAuthAPI)
-router.post('/chat/start', requireAuthAPI, chatController.startConversation);
-router.get('/chat/conversations', requireAuthAPI, chatController.getConversations);
-router.get('/chat/:conversationId/messages', requireAuthAPI, chatController.getMessages);
-router.post('/chat/:conversationId/send', requireAuthAPI, chatController.sendMessage);
+router.post("/chat/start", requireAuthAPI, chatController.startConversation);
+router.get(
+  "/chat/conversations",
+  requireAuthAPI,
+  chatController.getConversations
+);
+router.get(
+  "/chat/:conversationId/messages",
+  requireAuthAPI,
+  chatController.getMessages
+);
+router.post(
+  "/chat/:conversationId/send",
+  requireAuthAPI,
+  chatController.sendMessage
+);
 
-// Video call routes
-router.post('/video/start', requireAuthAPI, chatController.startVideoCall);
-router.post('/video/:videoCallId/join', requireAuthAPI, chatController.joinVideoCall);
-router.post('/video/:videoCallId/end', requireAuthAPI, chatController.endVideoCall);
+
+// Video call routes - TEMPORARILY DISABLED (functions not in current chatController)
+// TODO: Re-enable when video call functionality is implemented
+// router.post("/video/start", requireAuthAPI, chatController.startVideoCall);
+// router.post(
+//   "/video/:videoCallId/join",
+//   requireAuthAPI,
+//   chatController.joinVideoCall
+// );
+// router.post(
+//   "/video/:videoCallId/end",
+//   requireAuthAPI,
+//   chatController.endVideoCall
+// );
 
 // Therapist availability routes
-router.get('/therapist/:therapistId/availability', therapistController.getAvailability);
-
+router.get(
+  "/therapist/:therapistId/availability",
+  therapistController.getAvailability
+);
 
 // DEBUG VERSION: Add extensive logging to identify the issue
-router.get('/chat/:conversationId', requireAuth, async (req, res) => {
-    console.log('=== CHAT ROUTE DEBUG ===');
-    console.log('Request URL:', req.originalUrl);
-    console.log('Route params:', req.params);
-    console.log('Query params:', req.query);
-    console.log('Session user:', req.session?.user);
-    console.log('User agent:', req.get('User-Agent'));
-    console.log('Method:', req.method);
-    
-    let conversationId = req.params.conversationId;
-    console.log('Conversation ID:', conversationId);
-    
-    if (conversationId === 'new') {
-        console.log('Processing NEW conversation request');
-        
-        try {
-            const userId = req.session?.user?.id;
-            const userRole = req.session?.user?.role;
-            
-            console.log('User ID:', userId);
-            console.log('User Role:', userRole);
-            
-            if (!userId || !userRole) {
-                console.error('Missing session data - userId or userRole is undefined');
-                return res.status(401).render('pages/error', {
-                    title: 'Error',
-                    message: 'Session expired. Please log in again.',
-                    user: req.session?.user || null
-                });
-            }
-            
-            let otherId, patientId, therapistId;
-            
-            // Get the other user ID from query parameters
-            if (userRole === 'patient') {
-                otherId = req.query.therapistId;
-                console.log('Patient requesting chat with therapist ID:', otherId);
-                
-                if (!otherId) {
-                    console.error('Missing therapistId in query parameters');
-                    // Redirect to find therapist page instead of showing error
-                    return res.redirect('/find-therapist?action=chat');
-                }
-                patientId = userId;
-                therapistId = otherId;
-            } else if (userRole === 'therapist') {
-                otherId = req.query.patientId;
-                console.log('Therapist requesting chat with patient ID:', otherId);
-                
-                if (!otherId) {
-                    console.error('Missing patientId in query parameters');
-                    // Redirect to therapist patients page or chat list instead of showing error
-                    return res.redirect('/therapist/patients?action=chat');
-                }
-                patientId = otherId;
-                therapistId = userId;
-            } else {
-                console.error('Invalid user role:', userRole);
-                return res.status(403).render('pages/error', {
-                    title: 'Error',
-                    message: 'Invalid user role. Please contact support.',
-                    user: req.session.user
-                });
-            }
+router.get("/chat/:conversationId", requireAuth, async (req, res) => {
+  console.log("=== CHAT ROUTE DEBUG ===");
+  console.log("Request URL:", req.originalUrl);
+  console.log("Route params:", req.params);
+  console.log("Query params:", req.query);
+  console.log("Session user:", req.session?.user);
+  console.log("User agent:", req.get("User-Agent"));
+  console.log("Method:", req.method);
 
-            console.log('Final IDs - Patient:', patientId, 'Therapist:', therapistId);
+  let conversationId = req.params.conversationId;
+  console.log("Conversation ID:", conversationId);
 
-            const db = require('../config/database');
-            const { v4: uuidv4 } = require('uuid');
+  if (conversationId === "new") {
+    console.log("Processing NEW conversation request");
 
-            // Verify the other user exists and has the correct role
-            let verifyQuery, verifyParams;
-            if (userRole === 'patient') {
-                // Verify therapist exists and is approved
-                verifyQuery = `
+    try {
+      const userId = req.session?.user?.id;
+      const userRole = req.session?.user?.role;
+
+      console.log("User ID:", userId);
+      console.log("User Role:", userRole);
+
+      if (!userId || !userRole) {
+        console.error("Missing session data - userId or userRole is undefined");
+        return res.status(401).render("pages/error", {
+          title: "Error",
+          message: "Session expired. Please log in again.",
+          user: req.session?.user || null,
+        });
+      }
+
+      let otherId, patientId, therapistId, participantType;
+
+      // Get the other user ID from query parameters
+      if (userRole === "patient") {
+        otherId = req.query.therapistId;
+        console.log("Patient requesting chat with therapist ID:", otherId);
+
+        if (!otherId) {
+          console.error("Missing therapistId in query parameters");
+          // Redirect to find therapist page instead of showing error
+          return res.redirect("/find-therapist?action=chat");
+        }
+        patientId = userId;
+        therapistId = otherId;
+      } else if (userRole === "therapist") {
+        otherId = req.query.patientId;
+        console.log("Therapist requesting chat with patient ID:", otherId);
+
+        if (!otherId) {
+          console.error("Missing patientId in query parameters");
+          // Redirect to therapist patients page or chat list instead of showing error
+          return res.redirect("/therapist/patients?action=chat");
+        }
+        patientId = otherId;
+        therapistId = userId;
+      } else if (userRole === "admin") {
+        otherId = req.query.participantId;
+        participantType = req.query.participantType;
+
+        console.log(
+          "Admin requesting chat with participant ID:",
+          otherId,
+          "Type:",
+          participantType
+        );
+
+        if (!otherId || !participantType) {
+          console.error(
+            "Missing participantId or participantType in query parameters"
+          );
+          return res.redirect("/admin/chat?action=chat");
+        }
+
+        if (!["patient", "therapist"].includes(participantType)) {
+          console.error("Invalid participant type:", participantType);
+          return res.status(400).render("pages/error", {
+            title: "Error",
+            message:
+              "Invalid participant type. Must be 'patient' or 'therapist'.",
+            user: req.session.user,
+          });
+        }
+      } else {
+        console.error("Invalid user role:", userRole);
+        return res.status(403).render("pages/error", {
+          title: "Error",
+          message: "Invalid user role. Please contact support.",
+          user: req.session.user,
+        });
+      }
+
+      console.log("Final IDs - Patient:", patientId, "Therapist:", therapistId);
+
+      const db = require("../config/database");
+      const { v4: uuidv4 } = require("uuid");
+
+      // Verify the other user exists and has the correct role
+      let verifyQuery, verifyParams;
+      if (userRole === "patient") {
+        // Verify therapist exists and is approved
+        verifyQuery = `
                     SELECT u.id, u.name, u.email, ta.status
                     FROM users u
                     JOIN therapist_applications ta ON u.id = ta.user_id
                     WHERE u.id = $1 AND u.role = 'therapist' AND ta.status = 'approved'
                 `;
-                verifyParams = [therapistId];
-            } else {
-                // Verify patient exists
-                verifyQuery = `
+        verifyParams = [therapistId];
+      } else if (userRole === "admin") {
+        // Verify participant exists based on type
+        if (participantType === "therapist") {
+          verifyQuery = `
+                      SELECT u.id, u.name, u.email, ta.status, COALESCE(ta.specialty, 'General Practice') as specialty
+                      FROM users u
+                      JOIN therapist_applications ta ON u.id = ta.user_id
+                      WHERE u.id = $1 AND u.role = 'therapist' AND ta.status = 'approved'
+                  `;
+        } else {
+          verifyQuery = `
+                      SELECT u.id, u.name, u.email
+                      FROM users u
+                      WHERE u.id = $1 AND u.role = 'patient'
+                  `;
+        }
+        verifyParams = [otherId];
+      } else {
+        // Verify patient exists
+        verifyQuery = `
                     SELECT u.id, u.name, u.email
                     FROM users u
                     WHERE u.id = $1 AND u.role = 'patient'
                 `;
-                verifyParams = [patientId];
-            }
+        verifyParams = [patientId];
+      }
 
-            console.log('Verifying other user with query:', verifyQuery);
-            console.log('Query params:', verifyParams);
+      console.log("Verifying other user with query:", verifyQuery);
+      console.log("Query params:", verifyParams);
 
-            const verifyResult = await new Promise((resolve, reject) => {
-                db.query(verifyQuery, verifyParams, (err, results) => {
-                    if (err) {
-                        console.error('Database error during verification:', err);
-                        reject(err);
-                    } else {
-                        console.log('Verification result:', results.rows);
-                        resolve(results);
-                    }
-                });
-            });
+      const verifyResult = await new Promise((resolve, reject) => {
+        db.query(verifyQuery, verifyParams, (err, results) => {
+          if (err) {
+            console.error("Database error during verification:", err);
+            reject(err);
+          } else {
+            console.log("Verification result:", results.rows);
+            resolve(results);
+          }
+        });
+      });
 
-            if (!verifyResult.rows || verifyResult.rows.length === 0) {
-                const errorMsg = userRole === 'patient' ? 
-                    'Therapist not found or not available for chat' : 
-                    'Patient not found or not available for chat';
-                console.error('Verification failed:', errorMsg);
-                return res.status(404).render('pages/error', {
-                    title: 'Error',
-                    message: errorMsg,
-                    user: req.session.user
-                });
-            }
+      if (!verifyResult.rows || verifyResult.rows.length === 0) {
+        let errorMsg;
+        if (userRole === "patient") {
+          errorMsg = "Therapist not found or not available for chat";
+        } else if (userRole === "admin") {
+          errorMsg = `${
+            participantType.charAt(0).toUpperCase() + participantType.slice(1)
+          } not found or not available for chat`;
+        } else {
+          errorMsg = "Patient not found or not available for chat";
+        }
+        console.error("Verification failed:", errorMsg);
+        return res.status(404).render("pages/error", {
+          title: "Error",
+          message: errorMsg,
+          user: req.session.user,
+        });
+      }
 
-            console.log('Other user verified successfully');
+      console.log("Other user verified successfully");
 
-            // Check if conversation already exists
-            const existingQuery = `
+      // Check if conversation already exists
+      const existingQuery = `
                 SELECT id FROM conversations
                 WHERE patient_id = $1 AND therapist_id = $2 AND status = 'active'
             `;
-            
-            console.log('Checking for existing conversation');
-            const existingResult = await new Promise((resolve, reject) => {
-                db.query(existingQuery, [patientId, therapistId], (err, results) => {
-                    if (err) {
-                        console.error('Database error checking existing conversation:', err);
-                        reject(err);
-                    } else {
-                        console.log('Existing conversation check result:', results.rows);
-                        resolve(results);
-                    }
-                });
-            });
 
-            if (existingResult.rows && existingResult.rows.length > 0) {
-                const existingId = existingResult.rows[0].id;
-                console.log('Found existing conversation:', existingId);
-                return res.redirect(`/appointments/chat/${existingId}`);
+      console.log("Checking for existing conversation");
+      const existingResult = await new Promise((resolve, reject) => {
+        db.query(existingQuery, [patientId, therapistId], (err, results) => {
+          if (err) {
+            console.error(
+              "Database error checking existing conversation:",
+              err
+            );
+            reject(err);
+          } else {
+            console.log("Existing conversation check result:", results.rows);
+            resolve(results);
+          }
+        });
+      });
+
+      if (existingResult.rows && existingResult.rows.length > 0) {
+        const existingId = existingResult.rows[0].id;
+        console.log("Found existing conversation:", existingId);
+        return res.redirect(`/appointments/chat/${existingId}`);
+      }
+
+      // For admin conversations, check admin_conversations table
+      if (userRole === "admin") {
+        const adminExistingQuery = `
+          SELECT id FROM admin_conversations
+          WHERE admin_id = $1 AND participant_id = $2 AND participant_type = $3 AND status = 'active'
+        `;
+
+        const adminExistingResult = await new Promise((resolve, reject) => {
+          db.query(
+            adminExistingQuery,
+            [userId, otherId, participantType],
+            (err, results) => {
+              if (err) {
+                console.error(
+                  "Database error checking existing admin conversation:",
+                  err
+                );
+                reject(err);
+              } else {
+                console.log(
+                  "Admin existing conversation check result:",
+                  results.rows
+                );
+                resolve(results);
+              }
             }
+          );
+        });
 
-            // Create new conversation
-            const newConversationId = uuidv4();
-            console.log('Creating new conversation with ID:', newConversationId);
-            
-            const createQuery = `
-                INSERT INTO conversations (id, patient_id, therapist_id, status, created_at, updated_at)
-                VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            `;
-
-            await new Promise((resolve, reject) => {
-                db.query(createQuery, [newConversationId, patientId, therapistId], (err, results) => {
-                    if (err) {
-                        console.error('Database error creating conversation:', err);
-                        reject(err);
-                    } else {
-                        console.log('Conversation created successfully');
-                        resolve(results);
-                    }
-                });
-            });
-
-            console.log('Redirecting to new conversation:', newConversationId);
-            return res.redirect(`/appointments/chat/${newConversationId}`);
-
-        } catch (error) {
-            console.error('Error in new conversation creation:', error);
-            console.error('Stack trace:', error.stack);
-            return res.status(500).render('pages/error', {
-                title: 'Error',
-                message: 'Failed to start conversation. Please try again later.',
-                user: req.session?.user || null
-            });
+        if (adminExistingResult.rows && adminExistingResult.rows.length > 0) {
+          const existingId = adminExistingResult.rows[0].id;
+          console.log("Found existing admin conversation:", existingId);
+          return res.redirect(`/appointments/chat/${existingId}`);
         }
+      }
+
+      // Create new conversation
+      let createQuery, createParams, newConversationId;
+      if (userRole === "admin") {
+        // Create admin conversation with UUID
+        const { v4: uuidv4 } = require("uuid");
+        newConversationId = uuidv4();
+
+        createQuery = `
+          INSERT INTO admin_conversations (id, admin_id, participant_id, participant_type, conversation_type, status, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, 'general', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          RETURNING id
+        `;
+        createParams = [newConversationId, userId, otherId, participantType];
+
+        const result = await new Promise((resolve, reject) => {
+          db.query(createQuery, createParams, (err, results) => {
+            if (err) {
+              console.error("Database error creating admin conversation:", err);
+              reject(err);
+            } else {
+              console.log("Admin conversation created successfully");
+              resolve(results);
+            }
+          });
+        });
+      } else {
+        // Create regular conversation
+        const newConversationId = uuidv4();
+        createQuery = `
+          INSERT INTO conversations (id, patient_id, therapist_id, status, created_at, updated_at)
+          VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `;
+        createParams = [newConversationId, patientId, therapistId];
+
+        await new Promise((resolve, reject) => {
+          db.query(createQuery, createParams, (err, results) => {
+            if (err) {
+              console.error("Database error creating conversation:", err);
+              reject(err);
+            } else {
+              console.log("Conversation created successfully");
+              resolve(results);
+            }
+          });
+        });
+      }
+
+      console.log("Redirecting to new conversation:", newConversationId);
+      return res.redirect(`/appointments/chat/${newConversationId}`);
+    } catch (error) {
+      console.error("Error in new conversation creation:", error);
+      console.error("Stack trace:", error.stack);
+      return res.status(500).render("pages/error", {
+        title: "Error",
+        message: "Failed to start conversation. Please try again later.",
+        user: req.session?.user || null,
+      });
     }
-    
-    console.log('Rendering conversation page for ID:', conversationId);
-    res.render('pages/conversation', {
-        title: 'Chat',
-        user: req.session.user,
-        conversationId: conversationId
-    });
+  }
+
+  console.log("Rendering conversation page for ID:", conversationId);
+  res.render("pages/conversation", {
+    title: "Chat",
+    user: req.session.user,
+    conversationId: conversationId,
+  });
 });
 
-router.get('/chat', requireAuth, (req, res) => {
-    console.log('Chat list route accessed by user:', req.session?.user?.id);
-    res.render('pages/conversation', {
-        title: 'Messages',
-        user: req.session.user,
-        conversationId: null // Set to null when showing conversation list
-    });
+router.get("/chat", requireAuth, (req, res) => {
+  console.log("=== CHAT ROUTE ACCESSED ===");
+  console.log("Request URL:", req.originalUrl);
+  console.log("Route params:", req.params);
+  console.log("Query params:", req.query);
+  console.log("Session user:", req.session?.user);
+  console.log("User agent:", req.get("User-Agent"));
+  console.log("Method:", req.method);
+
+  // Check if admin=true parameter is present
+  const showAdminChat = req.query.admin === "true";
+  console.log("showAdminChat flag:", showAdminChat);
+
+  res.render("pages/conversation", {
+    title: "Messages",
+    user: req.session.user,
+    conversationId: null, // Set to null when showing conversation list
+    showAdminChat: showAdminChat, // Pass admin chat flag to template
+  });
 });
 
-router.get('/appointments', requireAuth, (req, res) => {
-    console.log('Appointments route accessed by user:', req.session?.user?.id);
-    res.render('pages/appointments', {
-        title: 'My Appointments',
-        user: req.session.user
-    });
+router.get("/appointments", requireAuth, (req, res) => {
+  console.log("Appointments route accessed by user:", req.session?.user?.id);
+  res.render("pages/appointments", {
+    title: "My Appointments",
+    user: req.session.user,
+  });
 });
 
 module.exports = router;

@@ -15,17 +15,15 @@
     </div>
     <!-- Player Status Display -->
     <div id="player-status" class="mt-4">
-      <% if (!spotifyToken) { %>
+      <% if (!hasSpotifyToken) { %>
       <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-blue-800 font-medium flex items-center">
-              <i class="fas fa-music mr-2"></i> Connect Spotify for Full
-              Playback
+              <i class="fas fa-music mr-2"></i> Enhanced Music Experience
             </p>
             <p class="text-sm text-blue-600 mt-1">
-              Currently showing 30-second previews only. Connect your Spotify
-              account to play full tracks.
+              Listen to available 30s previews. Connect Spotify for personalized recommendations and seamless full-track access in the app.
             </p>
           </div>
           <a
@@ -44,7 +42,7 @@
               <i class="fas fa-check-circle mr-2"></i> Spotify Connected
             </p>
             <p class="text-sm text-green-600 mt-1">
-              Loading Spotify Web Player...
+              Enjoy available previews and open full tracks in Spotify. Note: Not all songs have 30s previews due to Spotify's API.
             </p>
           </div>
           <div class="flex space-x-2">
@@ -53,12 +51,6 @@
               class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
             >
               <i class="fas fa-unlink mr-1"></i> Disconnect
-            </a>
-            <a
-              href="/spotify/refresh"
-              class="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
-            >
-              <i class="fas fa-sync-alt mr-1"></i> Refresh Token
             </a>
           </div>
         </div>
@@ -273,5 +265,66 @@
 <div id="songs-data" style="display: none">
   <%- JSON.stringify(allSongs || {}) %>
 </div>
-<!-- Page-specific JavaScript -->
+<script>
+// Enhanced music.js integration with proper category tracking
+window.SPOTIFY_TOKEN = '<%= spotifyToken || "" %>';
 
+// Make trackCategoryUsage globally available
+window.trackCategoryUsage = async function(category, action = 'play') {
+    try {
+        console.log(`Tracking music category: ${category} (${action})`);
+        
+        const response = await fetch('/music/track-category', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                category: category,
+                action: action 
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log(`Category ${category} tracked successfully. Play count: ${data.playCount}`);
+        } else {
+            console.warn('Failed to track category:', data.message);
+        }
+    } catch (error) {
+        console.error('Error tracking category:', error);
+    }
+};
+
+// Make openInSpotify globally available with tracking
+window.openInSpotify = function(openUrl, categoryId) {
+  if (!openUrl || openUrl === "#") {
+    console.warn("No Spotify URL available");
+    return;
+  }
+
+  console.log("Opening track in Spotify:", openUrl, "Category:", categoryId);
+  
+  // Track the category usage when user opens Spotify
+  if (categoryId) {
+    trackCategoryUsage(categoryId, 'spotify_open');
+  }
+  
+  window.open(openUrl, "_blank");
+  
+  // Show success message
+  const messageDiv = document.getElementById("temp-message");
+  if (messageDiv) {
+    messageDiv.className = "fixed top-4 right-4 p-3 border-l-4 rounded shadow-lg z-50 bg-green-100 border-green-500 text-green-700";
+    messageDiv.textContent = "Opening full track in Spotify...";
+    messageDiv.classList.remove("hidden");
+    
+    setTimeout(() => {
+      messageDiv.classList.add("hidden");
+    }, 3000);
+  }
+};
+
+console.log("Music tracking functions loaded");
+</script>

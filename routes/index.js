@@ -69,17 +69,24 @@ router.get('/about', (req, res) => {
 
 router.get('/contact', (req, res) => {
   try {
-    res.render('pages/contact', { 
+    res.render('pages/contact', {
       title: 'Contact Us - CalmTunes',
-      user: req.session.user || null 
+      user: req.session.user || null
     });
   } catch (error) {
     console.error('Contact page error:', error);
-    res.render('pages/contact', { 
+    res.render('pages/contact', {
       title: 'Contact Us - CalmTunes',
-      user: null 
+      user: null
     });
   }
+});
+
+// Fallback route for /chat requests - redirect to proper chat route
+router.get('/chat', requireAuth, (req, res) => {
+  // Redirect to the proper chat route
+  const queryString = req.url.split('?')[1] || '';
+  res.redirect(`/appointments/chat${queryString ? '?' + queryString : ''}`);
 });
 
 module.exports = router;

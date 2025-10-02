@@ -1,277 +1,897 @@
-
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-                🫁 Panic Relief Center
-            </h1>
-            <p class="text-xl text-gray-600 mb-6">
-                Take control of anxiety and panic with guided breathing exercises and grounding techniques
-            </p>
-            <div class="bg-blue-100 border border-blue-200 rounded-lg p-4 inline-block">
-                <p class="text-blue-800 text-sm">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    Remember: You are safe. This feeling will pass. Focus on your breathing.
-                </p>
-            </div>
+<!-- Panic Support Page with Enhanced Recording UI -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+  <!-- Emergency Banner -->
+  <div
+    id="emergency-banner"
+    class="fixed top-0 left-0 right-0 bg-red-600 text-white p-4 z-50 shadow-xl"
+  >
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center">
+        <i
+          class="fas fa-exclamation-triangle mr-3 text-yellow-300 text-2xl"
+        ></i>
+        <div>
+          <h1 class="text-xl font-bold">🚨 Emergency Panic Support</h1>
+          <p class="text-sm">You're not alone - help is here</p>
         </div>
-
-        <!-- Quick Relief Section -->
-        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <div class="text-center">
-                <h2 class="text-2xl font-bold text-textMain mb-6">Immediate Relief</h2>
-                
-                <!-- Breathing Animation -->
-                <div class="relative mb-8">
-                    <div id="breathing-circle" class="breathing-circle w-48 h-48 mx-auto bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg">
-                        <div class="text-white text-center">
-                            <div id="breath-instruction" class="text-2xl font-bold mb-2">Breathe</div>
-                            <div id="breath-count" class="text-lg opacity-75">Press Start</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Breathing Controls -->
-                <div class="space-y-4 mb-8">
-                    <div class="flex justify-center space-x-4">
-                        <button id="start-breathing" class="btn-primary text-lg py-3 px-8">
-                            <i class="fas fa-play mr-2"></i>Start Breathing Exercise
-                        </button>
-                        <button id="stop-breathing" class="bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 hidden">
-                            <i class="fas fa-stop mr-2"></i>Stop
-                        </button>
-                    </div>
-                    
-                    <div class="text-gray-600">
-                        <p id="breathing-instructions" class="text-lg">Click start to begin the 4-7-8 breathing technique</p>
-                    </div>
-                </div>
-
-                <!-- Progress -->
-                <div id="breathing-progress" class="hidden">
-                    <div class="bg-gray-200 rounded-full h-2 mb-4">
-                        <div id="progress-bar" class="bg-primary h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                    </div>
-                    <p class="text-sm text-gray-600">
-                        Cycle <span id="current-cycle">1</span> of <span id="total-cycles">4</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Grounding Techniques -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="card">
-                <h3 class="text-xl font-bold text-textMain mb-4 flex items-center">
-                    <i class="fas fa-hand-paper text-primary mr-3"></i>
-                    5-4-3-2-1 Grounding
-                </h3>
-                <p class="text-gray-600 mb-4">Use your senses to ground yourself in the present moment:</p>
-                <ul class="space-y-3 text-gray-700">
-                    <li class="flex items-start">
-                        <span class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">5</span>
-                        <span>Name 5 things you can <strong>see</strong></span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="bg-secondary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">4</span>
-                        <span>Name 4 things you can <strong>touch</strong></span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="bg-accent text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">3</span>
-                        <span>Name 3 things you can <strong>hear</strong></span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</span>
-                        <span>Name 2 things you can <strong>smell</strong></span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="bg-pink-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</span>
-                        <span>Name 1 thing you can <strong>taste</strong></span>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h3 class="text-xl font-bold text-textMain mb-4 flex items-center">
-                    <i class="fas fa-brain text-secondary mr-3"></i>
-                    Positive Affirmations
-                </h3>
-                <p class="text-gray-600 mb-4">Repeat these phrases to yourself:</p>
-                <div class="space-y-3">
-                    <div class="bg-blue-50 p-3 rounded-lg">
-                        <p class="text-blue-800 italic">"This feeling is temporary and will pass"</p>
-                    </div>
-                    <div class="bg-green-50 p-3 rounded-lg">
-                        <p class="text-green-800 italic">"I am safe and in control"</p>
-                    </div>
-                    <div class="bg-purple-50 p-3 rounded-lg">
-                        <p class="text-purple-800 italic">"I have overcome challenges before"</p>
-                    </div>
-                    <div class="bg-orange-50 p-3 rounded-lg">
-                        <p class="text-orange-800 italic">"I am stronger than I think"</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Emergency Resources -->
-        <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
-            <div class="flex items-start">
-                <i class="fas fa-exclamation-triangle text-red-400 text-xl mr-4 mt-1"></i>
-                <div>
-                    <h3 class="text-lg font-semibold text-red-800 mb-2">Need Immediate Help?</h3>
-                    <p class="text-red-700 mb-4">
-                        If you're experiencing a mental health crisis or having thoughts of self-harm, please reach out for immediate support:
-                    </p>
-                    <div class="space-y-2">
-                        <p class="text-red-800 font-semibold">
-                            <i class="fas fa-phone mr-2"></i>
-                            Crisis Text Line: Text HOME to 741741
-                        </p>
-                        <p class="text-red-800 font-semibold">
-                            <i class="fas fa-phone mr-2"></i>
-                            National Suicide Prevention Lifeline: 988
-                        </p>
-                        <p class="text-red-800 font-semibold">
-                            <i class="fas fa-phone mr-2"></i>
-                            Emergency Services: 911
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Additional Techniques -->
-        <div class="mt-12">
-            <h2 class="text-2xl font-bold text-textMain text-center mb-8">More Calming Techniques</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="card text-center">
-                    <div class="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-water text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-textMain mb-2">Cold Water</h3>
-                    <p class="text-gray-600">Splash cold water on your face or hold ice cubes to activate your dive response</p>
-                </div>
-
-                <div class="card text-center">
-                    <div class="bg-green-100 text-green-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-walking text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-textMain mb-2">Gentle Movement</h3>
-                    <p class="text-gray-600">Take a slow walk, stretch, or do light exercises to release tension</p>
-                </div>
-
-                <div class="card text-center">
-                    <div class="bg-purple-100 text-purple-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-music text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-textMain mb-2">Calming Sounds</h3>
-                    <p class="text-gray-600">Listen to soft music, nature sounds, or white noise to relax your mind</p>
-                    <a href="/music" class="btn-primary text-sm mt-3 inline-block">
-                        Go to Music Therapy
-                    </a>
-                </div>
-            </div>
-        </div>
+      </div>
+      <button
+        onclick="closeBanner()"
+        class="text-white hover:text-gray-200 text-xl"
+      >
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-</div>
+  </div>
 
-<script>
-// Breathing exercise functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const startBtn = document.getElementById('start-breathing');
-    const stopBtn = document.getElementById('stop-breathing');
-    const breathingCircle = document.getElementById('breathing-circle');
-    const breathInstruction = document.getElementById('breath-instruction');
-    const breathCount = document.getElementById('breath-count');
-    const instructions = document.getElementById('breathing-instructions');
-    const progress = document.getElementById('breathing-progress');
-    const progressBar = document.getElementById('progress-bar');
-    const currentCycle = document.getElementById('current-cycle');
-    const totalCycles = document.getElementById('total-cycles');
+  <!-- Recording Indicator (Hidden by default) -->
+  <div id="recording-indicator" class="hidden fixed top-4 left-4 z-40"></div>
 
-    let breathingInterval;
-    let isBreathing = false;
-    let currentPhase = 0; // 0: inhale, 1: hold, 2: exhale
-    let cycleCount = 0;
-    let phaseTime = 0;
+  <!-- Session Info Panel -->
+  <div id="session-info" class="fixed top-20 left-4 right-4 z-30"></div>
 
-    const phases = [
-        { name: 'Inhale', duration: 4, instruction: 'Breathe In', color: 'from-primary to-accent' },
-        { name: 'Hold', duration: 7, instruction: 'Hold', color: 'from-accent to-secondary' },
-        { name: 'Exhale', duration: 8, instruction: 'Breathe Out', color: 'from-secondary to-primary' }
-    ];
+  <div class="max-w-7xl mx-auto px-4 py-8 pt-20">
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-800 mb-4">Breathe & Get Help</h1>
+      <p class="text-xl text-gray-600 mb-8">
+        Immediate tools for panic attacks and emergency support
+      </p>
+      <div class="flex justify-center space-x-4 mb-8">
+        <button
+          onclick="startBreathing()"
+          class="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-blue-700 transition-all"
+        >
+          <i class="fas fa-lungs mr-2"></i>Start Breathing Exercise
+        </button>
+        <button
+          onclick="syncFailedSessions()"
+          id="sync-btn"
+          class="hidden bg-orange-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-orange-700 transition-all"
+        >
+          <i class="fas fa-sync mr-2"></i>Sync Failed Sessions
+        </button>
+        <button
+          onclick="scrollToEmergency()"
+          class="bg-red-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-red-700 transition-all"
+        >
+          <i class="fas fa-phone mr-2"></i>Emergency Contacts
+        </button>
+        <button
+          onclick="initializePanicSession('manual')"
+          class="bg-green-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-green-700 transition-all"
+        >
+          <i class="fas fa-record-vinyl mr-2"></i>Start Recording Session
+        </button>
+      </div>
+    </div>
 
-    function startBreathingExercise() {
-        isBreathing = true;
-        cycleCount = 0;
-        currentPhase = 0;
-        phaseTime = 0;
-        
-        startBtn.classList.add('hidden');
-        stopBtn.classList.remove('hidden');
-        progress.classList.remove('hidden');
-        instructions.textContent = 'Follow the circle and instructions to control your breathing';
-        
-        breathingInterval = setInterval(updateBreathing, 1000);
-        updateBreathing();
+    <!-- Session Recording Panel (Initially Hidden) -->
+    <div id="session-recording-panel" class="hidden mb-8">
+      <div class="bg-white rounded-2xl shadow-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center">
+            <div
+              class="w-4 h-4 bg-red-500 rounded-full mr-3 animate-pulse"
+            ></div>
+            <h2 class="text-xl font-bold text-gray-800">
+              Active Session Recording
+            </h2>
+          </div>
+          <div class="flex space-x-3">
+            <button
+              onclick="pauseRecording()"
+              id="pause-recording-btn"
+              class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
+            >
+              <i class="fas fa-pause mr-1"></i>Pause
+            </button>
+            <button
+              onclick="endPanicSession()"
+              class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+            >
+              <i class="fas fa-stop mr-1"></i>End Session
+            </button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="bg-blue-50 p-4 rounded-lg">
+            <div class="flex items-center">
+              <i class="fas fa-clock text-blue-600 mr-2"></i>
+              <div>
+                <p class="text-sm text-blue-700">Duration</p>
+                <p class="font-bold text-blue-800" id="session-duration">
+                  0:00
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-green-50 p-4 rounded-lg">
+            <div class="flex items-center">
+              <i class="fas fa-microphone text-green-600 mr-2"></i>
+              <div>
+                <p class="text-sm text-green-700">Audio Status</p>
+                <p class="font-bold text-green-800" id="audio-status">
+                  Recording...
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-purple-50 p-4 rounded-lg">
+            <div class="flex items-center">
+              <i class="fas fa-heartbeat text-purple-600 mr-2"></i>
+              <div>
+                <p class="text-sm text-purple-700">Activities</p>
+                <p class="font-bold text-purple-800" id="activities-count">
+                  0 completed
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content - Side by Side Layout -->
+    <div class="grid lg:grid-cols-2 gap-8 mb-12">
+      <!-- Left Side: Breathing Exercise -->
+      <section
+        id="breathing-section"
+        class="bg-white rounded-2xl shadow-xl p-10"
+      >
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">
+          4-7-8 Breathing Technique
+        </h2>
+        <p class="text-center text-gray-600 mb-8">
+          Inhale for 4 seconds, hold for 7, exhale for 8. Repeat 4 times.
+        </p>
+
+        <div class="flex justify-center items-center">
+          <div
+            id="breathing-circle"
+            class="w-64 h-64 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-2xl relative overflow-hidden cursor-pointer"
+          >
+            <div id="breath-text">Click to Start</div>
+            <div
+              id="breath-progress"
+              class="absolute inset-0 rounded-full bg-white opacity-20"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+
+        <div class="text-center mt-8 space-y-4">
+          <p id="instruction-text" class="text-lg font-medium text-gray-700">
+            Get ready to breathe
+          </p>
+          <div class="flex justify-center space-x-4 text-sm text-gray-500">
+            <span>Phase: <span id="phase-display">Ready</span></span>
+            <span>Time: <span id="timer-display">0s</span></span>
+          </div>
+          <button
+            onclick="stopBreathing()"
+            id="stop-btn"
+            class="hidden bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-colors"
+          >
+            <i class="fas fa-stop mr-2"></i>Stop
+          </button>
+        </div>
+
+        <div class="mt-8 p-4 bg-blue-50 rounded-xl">
+          <h3 class="font-semibold text-blue-800 mb-2">How to Use:</h3>
+          <ul class="text-sm text-blue-700 space-y-1 list-disc list-inside">
+            <li>Find a comfortable position</li>
+            <li>Place one hand on your belly</li>
+            <li>Follow the circle: Inhale (expand), Hold, Exhale (contract)</li>
+            <li>Repeat the cycle 4 times</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Right Side: Emergency Contacts -->
+      <section
+        id="emergency-section"
+        class="bg-white rounded-2xl shadow-xl p-10"
+      >
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">Emergency Contacts</h2>
+          <button
+            onclick="openAddContactModal()"
+            class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center"
+          >
+            <i class="fas fa-plus mr-2"></i>Add Contact
+          </button>
+        </div>
+        <p class="text-center text-gray-600 mb-6">
+          Call immediately if you feel unsafe or need urgent help
+        </p>
+
+        <div class="space-y-4">
+          <% emergencyContacts.forEach(contact => { %> <% if
+          (contact.is_default) { %>
+          <div
+            class="bg-red-50 border border-red-200 rounded-xl p-4 hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i
+                  class="fas fa-<% if (contact.type === 'police') { %>shield-alt <% } else if (contact.type === 'medical') { %>ambulance <% } else { %>headset <% } %> text-2xl text-red-600 mr-3"
+                ></i>
+                <div>
+                  <h3 class="font-bold text-gray-800"><%= contact.name %></h3>
+                  <p class="text-red-600 font-bold text-lg">
+                    <%= contact.number %>
+                  </p>
+                </div>
+              </div>
+              <button
+                data-number="<%= contact.number %>"
+                onclick="dialEmergency(this.dataset.number)"
+                class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              >
+                <i class="fas fa-phone mr-1"></i>Call
+              </button>
+            </div>
+          </div>
+          <% } %> <% }) %>
+        </div>
+
+        <!-- Personal Contacts Section -->
+        <div id="personal-contacts-section" class="mt-6" style="display: none">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            Your Personal Contacts
+          </h3>
+          <div id="personal-contacts-grid" class="space-y-3">
+            <!-- Contacts will be populated by JavaScript -->
+          </div>
+        </div>
+        <div
+          id="no-contacts-placeholder"
+          class="text-center py-6 bg-gray-50 rounded-xl mt-6"
+        >
+          <i class="fas fa-address-book text-gray-400 text-3xl mb-3"></i>
+          <p class="text-gray-600 mb-3">No personal contacts added yet</p>
+          <button
+            onclick="openAddContactModal()"
+            class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700"
+          >
+            <i class="fas fa-plus mr-2"></i>Add Your First Contact
+          </button>
+        </div>
+
+        <!-- Additional Resources -->
+        <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+          <h3
+            class="font-semibold text-yellow-800 mb-3 flex items-center justify-center"
+          >
+            <i class="fas fa-heart mr-2"></i>Mental Health Resources
+          </h3>
+          <div class="text-sm text-yellow-700 space-y-2">
+            <div class="flex justify-between">
+              <span><strong>Mental Health Authority:</strong></span>
+              <span>0302-302060</span>
+            </div>
+            <div class="flex justify-between">
+              <span><strong>24/7 Crisis Hotline:</strong></span>
+              <span>0800-431-996</span>
+            </div>
+            <div class="mt-3 pt-3 border-t border-yellow-200">
+              <p class="font-medium mb-2">Quick Tips During Panic:</p>
+              <ul class="list-disc list-inside space-y-1 text-xs">
+                <li>Find a safe space</li>
+                <li>Focus on 5 things you can see</li>
+                <li>Reach out to your therapist</li>
+                <li>Use grounding techniques</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Session Recordings Section -->
+    <section
+      id="session-recordings-section"
+      class="bg-white rounded-2xl shadow-xl p-8 mb-8"
+      style="display: none"
+    >
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-headphones mr-3 text-blue-600"></i>Session Recordings
+      </h2>
+
+      <div id="session-recordings" class="space-y-4">
+        <!-- Recordings will be populated dynamically -->
+      </div>
+
+      <!-- No recordings placeholder -->
+      <div id="no-recordings-placeholder" class="text-center py-8">
+        <i class="fas fa-microphone-slash text-gray-400 text-4xl mb-4"></i>
+        <p class="text-gray-600 mb-2">No recordings yet</p>
+        <p class="text-sm text-gray-500">
+          Start a panic session to create your first recording
+        </p>
+      </div>
+    </section>
+
+    <!-- Therapist Support Section - Full Width -->
+    <section class="bg-white rounded-2xl shadow-xl p-8">
+      <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">
+        Professional Support
+      </h2>
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="text-center">
+          <% if (hasTherapist) { %>
+          <div class="mb-6">
+            <i class="fas fa-user-md text-green-600 text-4xl mb-3"></i>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">
+              Your Therapist
+            </h3>
+            <p class="text-gray-600 mb-4">
+              You have an assigned therapist. Reach out for immediate support.
+            </p>
+            <a
+              href="/chat"
+              class="inline-block bg-green-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-green-700 transition-colors shadow-lg"
+            >
+              <i class="fas fa-comments mr-2"></i>Message Your Therapist
+            </a>
+          </div>
+          <% } else { %>
+          <div class="mb-6">
+            <i class="fas fa-search text-blue-600 text-4xl mb-3"></i>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">
+              Find Support
+            </h3>
+            <p class="text-gray-600 mb-4">
+              Connect with a therapist for personalized care.
+            </p>
+            <div class="space-y-3">
+              <a
+                href="/find-therapist"
+                class="block bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors"
+              >
+                <i class="fas fa-search mr-2"></i>Find a Therapist
+              </a>
+              <a
+                href="/appointments"
+                class="block bg-indigo-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-indigo-700 transition-colors"
+              >
+                <i class="fas fa-calendar-alt mr-2"></i>Book Appointment
+              </a>
+            </div>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- Quick Chat Option -->
+        <div
+          class="bg-green-50 border border-green-200 rounded-xl p-6 text-center"
+        >
+          <i class="fas fa-comments text-green-600 text-4xl mb-3"></i>
+          <h3 class="font-semibold text-green-800 mb-2">
+            Immediate Chat Support
+          </h3>
+          <p class="text-green-700 text-sm mb-4">
+            Need to talk to someone right now?
+          </p>
+          <a
+            href="/chat"
+            class="block w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+          >
+            <i class="fas fa-comments mr-2"></i>Start Chat Session
+          </a>
+          <p class="text-xs text-green-600 mt-2">
+            Available 24/7 for crisis support
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Add Contact Modal -->
+  <div
+    id="add-contact-modal"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4"
+  >
+    <div
+      class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl"
+    >
+      <!-- Modal Header -->
+      <div
+        class="flex justify-between items-center p-6 bg-gradient-to-r from-green-500 to-green-600 text-white"
+      >
+        <div>
+          <h2 class="text-2xl font-bold">Add Emergency Contact</h2>
+          <p class="text-green-100 text-sm">
+            Add someone you trust for support
+          </p>
+        </div>
+        <button
+          onclick="closeAddContactModal()"
+          class="text-white hover:text-green-200 p-2 rounded-full hover:bg-white/10"
+        >
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 max-h-[60vh] overflow-y-auto">
+        <form id="add-contact-form">
+          <div class="mb-4">
+            <label
+              for="contact-name"
+              class="block text-sm font-medium text-gray-700 mb-2"
+              >Contact Name</label
+            >
+            <input
+              type="text"
+              id="contact-name"
+              name="name"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="e.g., Mom - Jane"
+            />
+          </div>
+
+          <div class="mb-4">
+            <label
+              for="contact-phone"
+              class="block text-sm font-medium text-gray-700 mb-2"
+              >Phone Number</label
+            >
+            <input
+              type="tel"
+              id="contact-phone"
+              name="phone"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="e.g., +233 24 123 4567"
+            />
+          </div>
+
+          <div class="mb-6">
+            <label
+              for="contact-type"
+              class="block text-sm font-medium text-gray-700 mb-2"
+              >Relationship (optional)</label
+            >
+            <select
+              id="contact-type"
+              name="type"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="personal">Personal Contact</option>
+              <option value="family">Family</option>
+              <option value="friend">Friend</option>
+              <option value="colleague">Colleague</option>
+            </select>
+          </div>
+
+          <div id="form-message" class="hidden mb-4 p-3 rounded text-sm"></div>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-gray-50 border-t flex justify-end space-x-3">
+        <button
+          onclick="closeAddContactModal()"
+          class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onclick="submitAddContact()"
+          class="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+        >
+          Add Contact
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recording Control Modal -->
+  <div
+    id="recording-control-modal"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4"
+  >
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+      <div class="p-6">
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-microphone text-blue-600 text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800">Recording Controls</h2>
+        </div>
+
+        <div class="space-y-4">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-700">Session Duration:</span>
+              <span class="font-bold" id="modal-session-duration">0:00</span>
+            </div>
+          </div>
+
+          <div class="flex space-x-3">
+            <button
+              onclick="pauseRecording()"
+              class="flex-1 bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600"
+            >
+              <i class="fas fa-pause mr-2"></i>Pause
+            </button>
+            <button
+              onclick="resumeRecording()"
+              class="flex-1 bg-green-500 text-white py-3 rounded-lg hover:bg-green-600"
+            >
+              <i class="fas fa-play mr-2"></i>Resume
+            </button>
+            <button
+              onclick="endPanicSession()"
+              class="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600"
+            >
+              <i class="fas fa-stop mr-2"></i>End
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breathing Audio (optional ambient sounds) -->
+  <audio id="ambient-sound" loop preload="auto">
+    <source src="/audio/Fido-Joy-Is-Coming.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- Temporary Message Display -->
+  <div id="temp-message" class="hidden"></div>
+
+  <script>
+    // Contact management functions
+    function openAddContactModal() {
+      const modal = document.getElementById("add-contact-modal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        // Focus on name input
+        setTimeout(() => {
+          const nameInput = document.getElementById("contact-name");
+          if (nameInput) nameInput.focus();
+        }, 100);
+      }
     }
 
-    function stopBreathingExercise() {
-        isBreathing = false;
-        clearInterval(breathingInterval);
-        
-        startBtn.classList.remove('hidden');
-        stopBtn.classList.add('hidden');
-        progress.classList.add('hidden');
-        
-        breathInstruction.textContent = 'Breathe';
-        breathCount.textContent = 'Press Start';
-        instructions.textContent = 'Click start to begin the 4-7-8 breathing technique';
-        breathingCircle.className = 'breathing-circle w-48 h-48 mx-auto bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg';
-        
-        progressBar.style.width = '0%';
-        currentCycle.textContent = '1';
-    }
+    function closeAddContactModal() {
+      const modal = document.getElementById("add-contact-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
 
-    function updateBreathing() {
-        if (!isBreathing) return;
+        // Clear form
+        const form = document.getElementById("add-contact-form");
+        if (form) form.reset();
 
-        const phase = phases[currentPhase];
-        const progress = ((phaseTime + 1) / phase.duration) * 100;
-        
-        breathInstruction.textContent = phase.instruction;
-        breathCount.textContent = `${phaseTime + 1} / ${phase.duration}`;
-        
-        // Update circle appearance
-        breathingCircle.className = `breathing-circle w-48 h-48 mx-auto bg-gradient-to-br ${phase.color} rounded-full flex items-center justify-center shadow-lg`;
-        
-        phaseTime++;
-        
-        if (phaseTime >= phase.duration) {
-            phaseTime = 0;
-            currentPhase++;
-            
-            if (currentPhase >= phases.length) {
-                currentPhase = 0;
-                cycleCount++;
-                currentCycle.textContent = cycleCount + 1;
-                
-                // Update overall progress
-                const overallProgress = (cycleCount / 4) * 100;
-                progressBar.style.width = overallProgress + '%';
-                
-                if (cycleCount >= 4) {
-                    stopBreathingExercise();
-                    instructions.innerHTML = '<span class="text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>Great job! You completed the breathing exercise. How do you feel?</span>';
-                    return;
-                }
-            }
+        // Hide any error messages
+        const message = document.getElementById("form-message");
+        if (message) {
+          message.classList.add("hidden");
         }
+      }
     }
 
-    startBtn.addEventListener('click', startBreathingExercise);
-    stopBtn.addEventListener('click', stopBreathingExercise);
-});
-</script>
+    function submitAddContact() {
+      const name = document.getElementById("contact-name").value.trim();
+      const phone = document.getElementById("contact-phone").value.trim();
+      const type = document.getElementById("contact-type").value;
+      const messageDiv = document.getElementById("form-message");
+
+      // Validation
+      if (!name || !phone) {
+        showFormMessage("Please fill in both name and phone number.", "error");
+        return;
+      }
+
+      // Phone number validation (basic)
+      if (phone.length < 10) {
+        showFormMessage("Please enter a valid phone number.", "error");
+        return;
+      }
+
+      // Create contact object
+      const contact = {
+        id: "contact_" + Date.now(),
+        name: name,
+        phone: phone,
+        type: type,
+        dateAdded: new Date().toISOString(),
+      };
+
+      // Save to localStorage
+      try {
+        const contacts = JSON.parse(
+          localStorage.getItem("calmtunes_personal_contacts") || "[]"
+        );
+        contacts.push(contact);
+        localStorage.setItem(
+          "calmtunes_personal_contacts",
+          JSON.stringify(contacts)
+        );
+
+        // Add to DOM
+        addContactToDOM(contact);
+
+        // Close modal
+        closeAddContactModal();
+
+        showTempMessage("Contact added successfully!", "success");
+      } catch (error) {
+        showFormMessage("Error saving contact. Please try again.", "error");
+      }
+    }
+
+    function showFormMessage(message, type) {
+      const messageDiv = document.getElementById("form-message");
+      if (!messageDiv) return;
+
+      const colors = {
+        error: "bg-red-100 border border-red-400 text-red-700",
+        success: "bg-green-100 border border-green-400 text-green-700",
+      };
+
+      messageDiv.className = `mb-4 p-3 rounded text-sm ${
+        colors[type] || colors.error
+      }`;
+      messageDiv.textContent = message;
+      messageDiv.classList.remove("hidden");
+    }
+
+    function addContactToDOM(contact) {
+      const contactsGrid = document.getElementById("personal-contacts-grid");
+      const noContactsPlaceholder = document.getElementById("no-contacts-placeholder");
+      const personalContactsSection = document.getElementById("personal-contacts-section");
+
+      if (!contactsGrid || !noContactsPlaceholder || !personalContactsSection) return;
+
+      // Hide the "no contacts" placeholder
+      noContactsPlaceholder.style.display = "none";
+
+      // Show the personal contacts section
+      personalContactsSection.style.display = "block";
+
+      // Create contact element
+      const contactElement = document.createElement("div");
+      contactElement.className = "bg-blue-50 border border-blue-200 rounded-lg p-4";
+      contactElement.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-user text-blue-600 text-xl mr-3"></i>
+            <div>
+              <h4 class="font-semibold text-gray-800">${contact.name}</h4>
+              <p class="text-blue-600 font-medium">${contact.phone}</p>
+              <p class="text-sm text-gray-500 capitalize">${contact.type}</p>
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            <button onclick="callContact('${contact.phone}')" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm">
+              <i class="fas fa-phone mr-1"></i>Call
+            </button>
+            <button onclick="deleteContact('${contact.id}')" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm">
+              <i class="fas fa-trash mr-1"></i>Delete
+            </button>
+          </div>
+        </div>
+      `;
+
+      contactsGrid.appendChild(contactElement);
+    }
+
+    function loadExistingContacts() {
+      try {
+        const contacts = JSON.parse(localStorage.getItem("calmtunes_personal_contacts") || "[]");
+
+        if (contacts.length > 0) {
+          const noContactsPlaceholder = document.getElementById("no-contacts-placeholder");
+          const personalContactsSection = document.getElementById("personal-contacts-section");
+
+          if (noContactsPlaceholder) noContactsPlaceholder.style.display = "none";
+          if (personalContactsSection) personalContactsSection.style.display = "block";
+
+          contacts.forEach(contact => addContactToDOM(contact));
+        }
+      } catch (error) {
+        console.error("Error loading existing contacts:", error);
+      }
+    }
+
+    function callContact(phoneNumber) {
+      // In a real app, this would initiate a phone call
+      // For now, we'll just show an alert
+      alert(`Calling ${phoneNumber}...`);
+      // You could also use: window.location.href = `tel:${phoneNumber}`;
+    }
+
+    function deleteContact(contactId) {
+      try {
+        const contacts = JSON.parse(localStorage.getItem("calmtunes_personal_contacts") || "[]");
+        const updatedContacts = contacts.filter(contact => contact.id !== contactId);
+        localStorage.setItem("calmtunes_personal_contacts", JSON.stringify(updatedContacts));
+
+        // Reload the page to refresh the contacts display
+        location.reload();
+      } catch (error) {
+        console.error("Error deleting contact:", error);
+        alert("Error deleting contact. Please try again.");
+      }
+    }
+
+    function showTempMessage(message, type) {
+      const tempMessage = document.getElementById("temp-message");
+      if (!tempMessage) return;
+
+      const colors = {
+        success: "bg-green-100 border border-green-400 text-green-700",
+        error: "bg-red-100 border border-red-400 text-red-700",
+      };
+
+      tempMessage.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${colors[type] || colors.success}`;
+      tempMessage.textContent = message;
+      tempMessage.classList.remove("hidden");
+
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        tempMessage.classList.add("hidden");
+      }, 3000);
+    }
+
+    // Recording UI functions
+    function showRecordingPanel() {
+      const panel = document.getElementById("session-recording-panel");
+      if (panel) {
+        panel.classList.remove("hidden");
+      }
+
+      const recordingsSection = document.getElementById(
+        "session-recordings-section"
+      );
+      if (recordingsSection) {
+        recordingsSection.style.display = "block";
+      }
+    }
+
+    function hideRecordingPanel() {
+      const panel = document.getElementById("session-recording-panel");
+      if (panel) {
+        panel.classList.add("hidden");
+      }
+    }
+
+    function updateSessionUI() {
+      const duration = sessionData.startTime
+        ? Math.floor(
+            (Date.now() - new Date(sessionData.startTime).getTime()) / 1000
+          )
+        : 0;
+
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      const timeString = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+      // Update duration displays
+      const durationElements = document.querySelectorAll(
+        "#session-duration, #modal-session-duration"
+      );
+      durationElements.forEach((el) => {
+        if (el) el.textContent = timeString;
+      });
+
+      // Update activities count
+      const activitiesEl = document.getElementById("activities-count");
+      if (activitiesEl) {
+        let count = 0;
+        if (sessionData.breathingUsed) count++;
+        count += sessionData.emergencyContactsUsed.length;
+        activitiesEl.textContent = `${count} completed`;
+      }
+
+      // Update audio status
+      const audioStatusEl = document.getElementById("audio-status");
+      if (audioStatusEl) {
+        audioStatusEl.textContent = isRecording ? "Recording..." : "Paused";
+      }
+    }
+
+    function displayRecordingInUI(recording) {
+      const recordingsList = document.getElementById("session-recordings");
+      const placeholder = document.getElementById("no-recordings-placeholder");
+
+      if (!recordingsList) return;
+
+      // Hide placeholder
+      if (placeholder) {
+        placeholder.style.display = "none";
+      }
+
+      const recordingElement = document.createElement("div");
+      recordingElement.className =
+        "bg-gray-50 border border-gray-200 rounded-lg p-4";
+      recordingElement.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-microphone text-blue-600 mr-3 text-xl"></i>
+            <div>
+              <p class="font-medium text-gray-800">Panic Session Recording</p>
+              <p class="text-sm text-gray-600">
+                ${Math.round(recording.duration / 1000)}s • 
+                ${new Date(recording.timestamp).toLocaleString()}
+              </p>
+              <p class="text-xs text-gray-500">
+                Session: ${recording.sessionId.slice(-8)} • 
+                Size: ${Math.round(recording.size / 1024)}KB
+              </p>
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            <button onclick="playRecording('${
+              recording.id
+            }')" class="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm">
+              <i class="fas fa-play mr-1"></i>Play
+            </button>
+            <button onclick="downloadRecording('${
+              recording.id
+            }')" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600 text-sm">
+              <i class="fas fa-download mr-1"></i>Save
+            </button>
+            <button onclick="deleteRecording('${
+              recording.id
+            }')" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm">
+              <i class="fas fa-trash mr-1"></i>Delete
+            </button>
+          </div>
+        </div>
+        <audio id="audio-${
+          recording.id
+        }" controls class="w-full mt-3" style="display: none;">
+          <source src="${recording.url}" type="audio/webm">
+        </audio>
+      `;
+
+      recordingsList.appendChild(recordingElement);
+    }
+
+    // Recording control functions
+    function pauseRecording() {
+      // This will be implemented in the main panic.js
+      console.log("Pause recording requested");
+    }
+
+    function resumeRecording() {
+      // This will be implemented in the main panic.js
+      console.log("Resume recording requested");
+    }
+
+    // Utility functions
+    function scrollToEmergency() {
+      const section = document.getElementById("emergency-section");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
+      closeBanner();
+    }
+
+    function closeBanner() {
+      const banner = document.getElementById("emergency-banner");
+      if (banner) {
+        banner.style.display = "none";
+      }
+    }
+
+    // Load existing contacts when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      loadExistingContacts();
+    });
+  </script>
+</div>

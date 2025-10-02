@@ -1,0 +1,641 @@
+<!-- Therapist Chat Interface - Uses the same layout as main conversation page -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+      💬 Conversations
+    </h1>
+    <p class="text-xl text-gray-600">
+      Chat with your patients and manage your practice conversations
+    </p>
+  </div>
+
+  <!-- Chat Mode Toggle for Therapists -->
+  <div class="bg-white rounded-xl shadow-md mb-6 p-4">
+    <div class="flex flex-wrap gap-3 items-center justify-between">
+      <div class="flex flex-wrap gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium text-gray-600">Chat Mode:</span>
+          <button onclick="switchToPatientChat()" id="patient-chat-btn" class="btn-primary">
+            <i class="fas fa-users mr-2"></i>My Patients
+          </button>
+          <button onclick="switchToAdminChat()" id="admin-chat-btn" class="btn-secondary">
+            <i class="fas fa-headset mr-2"></i>Contact Admin
+          </button>
+        </div>
+      </div>
+
+      <!-- Connection Status -->
+      <div id="connection-status" class="flex items-center text-sm text-gray-600">
+        <div id="status-indicator" class="w-2 h-2 rounded-full bg-gray-400 mr-2"></div>
+        <span id="status-text">Connecting...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversations List -->
+  <div id="conversations-container" class="bg-white rounded-xl shadow-md">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-semibold text-textMain">Active Conversations</h2>
+          <p class="text-sm text-gray-600 mt-1">
+            ${currentChatMode === 'admin' ? 'Your recent messages with admin support' : 'Your recent messages with patients'}
+          </p>
+        </div>
+        <button onclick="refreshConversations()" class="text-gray-500 hover:text-gray-700" title="Refresh conversations">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="conversations-list" class="divide-y divide-gray-200">
+      <!-- Conversations will be loaded here -->
+    </div>
+
+    <div id="no-conversations" class="text-center py-12 hidden">
+      <div class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+        <i class="fas fa-comments text-3xl text-gray-400"></i>
+      </div>
+      <h3 class="text-xl font-medium text-gray-600 mb-2">No Conversations Yet</h3>
+      <p class="text-gray-500 mb-6">
+        ${currentChatMode === 'admin' ? 'Your admin conversations will appear here.' : 'Your patient conversations will appear here.'}
+      </p>
+    </div>
+
+    <div id="loading-conversations" class="text-center py-8">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <p class="text-gray-600 mt-2">Loading conversations...</p>
+    </div>
+  </div>
+
+  <!-- Chat View - Hidden by default -->
+  <div id="chat-view" class="hidden bg-white rounded-xl shadow-md mt-6">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <button onclick="backToConversations()" class="btn-secondary mr-4">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Conversations
+          </button>
+          <div id="chat-header" class="flex items-center">
+            <!-- Chat header will be populated by JavaScript -->
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="refreshMessages()" class="btn-secondary px-3 py-2" title="Refresh messages">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button onclick="startPhoneCall()" class="btn-secondary px-4 py-2">
+            <i class="fas fa-phone mr-2"></i>Phone Call
+          </button>
+          <button onclick="startVideoCall()" class="btn-primary px-4 py-2">
+            <i class="fas fa-video mr-2"></i>Video Call
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="messages-container" class="h-96 overflow-y-auto bg-gray-50 p-4 space-y-4">
+      <div class="text-center text-gray-500 py-8" id="chat-loading">
+        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
+        <span class="text-gray-600">Loading messages...</span>
+      </div>
+    </div>
+
+    <!-- Message Input Form -->
+    <form id="message-form" class="p-6 border-t border-gray-200 hidden">
+      <div class="flex space-x-2">
+        <input type="text" id="message-input" placeholder="Type a message..." class="flex-1 form-input rounded-lg border-gray-300" required />
+        <button type="submit" class="btn-primary px-6" id="send-btn">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Socket.IO Client -->
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+// Therapist Chat JavaScript
+let conversations = [];
+let currentConversationId = null;
+let messages = [];
+let socket = null;
+let currentUserId = "<%= user.id %>";
+let currentChatMode = 'patient'; // Default to patient chat
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", function() {
+  console.log("Initializing therapist chat");
+  initializeSocket();
+  loadConversations();
+  setupEventListeners();
+});
+
+// Initialize Socket.IO connection
+function initializeSocket() {
+  socket = io();
+  socket.on("connect", () => {
+    console.log("Socket connected:", socket.id);
+    updateConnectionStatus(true);
+    socket.emit("authenticate", { userId: currentUserId, role: "therapist" });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected");
+    updateConnectionStatus(false);
+  });
+
+  socket.on("new_message", (data) => {
+    if (data && data.conversationId === currentConversationId && data.message) {
+      const messageExists = messages.some(msg => msg.id === data.message.id);
+      if (!messageExists) {
+        messages.push(data.message);
+        displayMessages();
+        showToast("New message received");
+      }
+    }
+  });
+}
+
+// Set up event listeners
+function setupEventListeners() {
+  const messageForm = document.getElementById("message-form");
+  if (messageForm) {
+    messageForm.addEventListener("submit", sendMessage);
+  }
+
+  const messageInput = document.getElementById("message-input");
+  if (messageInput) {
+    messageInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(e);
+      }
+    });
+  }
+}
+
+// Update connection status indicator
+function updateConnectionStatus(connected) {
+  const indicator = document.getElementById("status-indicator");
+  const text = document.getElementById("status-text");
+
+  if (connected) {
+    indicator.className = "w-2 h-2 rounded-full bg-green-400 mr-2";
+    text.textContent = "Connected";
+  } else {
+    indicator.className = "w-2 h-2 rounded-full bg-red-400 mr-2";
+    text.textContent = "Disconnected";
+  }
+}
+
+// Replace the loadConversations function in your therapist chat template
+// This version loads BOTH patient and admin conversations together
+
+async function loadConversations() {
+  const loadingElement = document.getElementById("loading-conversations");
+  const conversationsList = document.getElementById("conversations-list");
+
+  if (loadingElement) loadingElement.classList.remove("hidden");
+
+  try {
+    // Load BOTH patient conversations and admin conversations
+    const [patientResponse, adminResponse] = await Promise.all([
+      fetch('/therapist/api/conversations', {
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+      }),
+      fetch('/therapist/api/admin-conversations', {
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+      })
+    ]);
+
+    const patientData = await patientResponse.json();
+    const adminData = await adminResponse.json();
+
+    // Combine both types of conversations
+    let allConversations = [];
+    
+    if (patientData.success && patientData.conversations) {
+      // Mark patient conversations
+      allConversations = patientData.conversations.map(conv => ({
+        ...conv,
+        conversation_type: conv.conversation_type || 'patient',
+        is_admin_chat: false
+      }));
+    }
+    
+    if (adminData.success && adminData.conversations) {
+      // Mark admin conversations
+      const adminConvs = adminData.conversations.map(conv => ({
+        ...conv,
+        conversation_type: 'admin',
+        is_admin_chat: true
+      }));
+      allConversations = [...allConversations, ...adminConvs];
+    }
+
+    // Sort by most recent activity
+    allConversations.sort((a, b) => {
+      const aTime = new Date(a.last_message_time || a.created_at);
+      const bTime = new Date(b.last_message_time || b.created_at);
+      return bTime - aTime;
+    });
+
+    // Filter based on current mode if needed
+    if (currentChatMode === 'admin') {
+      conversations = allConversations.filter(c => c.is_admin_chat);
+    } else if (currentChatMode === 'patient') {
+      conversations = allConversations.filter(c => !c.is_admin_chat);
+    } else {
+      conversations = allConversations; // Show all
+    }
+
+    console.log('Loaded conversations:', conversations);
+    displayConversations();
+    
+  } catch (error) {
+    console.error("Error loading conversations:", error);
+    showNoConversations();
+  } finally {
+    if (loadingElement) loadingElement.classList.add("hidden");
+  }
+}
+
+// Updated displayConversations to properly show both types
+function displayConversations() {
+  const container = document.getElementById("conversations-list");
+  const noConversations = document.getElementById("no-conversations");
+
+  if (!conversations || conversations.length === 0) {
+    container.innerHTML = "";
+    noConversations.classList.remove("hidden");
+    return;
+  }
+
+  noConversations.classList.add("hidden");
+
+  container.innerHTML = conversations.map(conversation => {
+    // Determine if this is an admin conversation
+    const isAdminChat = conversation.is_admin_chat || conversation.conversation_type === 'admin';
+    
+    // Get the other user info
+    let otherUser;
+    if (isAdminChat) {
+      // Admin conversation
+      otherUser = {
+        name: conversation.other_user_name || "Admin Support",
+        role: "admin",
+        specialty: conversation.other_user_specialty || "CalmTunes Admin Team",
+        email: conversation.other_user_email || "admin@calmtunes.com"
+      };
+    } else {
+      // Patient conversation
+      otherUser = {
+        name: conversation.other_user_name || conversation.patient_name || "Patient",
+        role: "patient",
+        specialty: "Patient",
+        email: conversation.other_user_email || ""
+      };
+    }
+
+    const lastMessageTime = conversation.last_message_time
+      ? formatMessageTime(conversation.last_message_time)
+      : formatMessageTime(conversation.created_at);
+
+    const unreadCount = parseInt(conversation.unread_count) || 0;
+
+    return `
+      <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${
+        isAdminChat ? "border-blue-500 bg-blue-50/30" : "border-green-500 bg-green-50/30"
+      }" onclick="openConversation('${conversation.id}', ${isAdminChat})">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center flex-1">
+            <div class="w-12 h-12 bg-gradient-to-br ${
+              isAdminChat
+                ? "from-blue-500 to-purple-600"
+                : "from-green-400 to-blue-500"
+            } rounded-full flex items-center justify-center mr-4">
+              <i class="fas ${isAdminChat ? 'fa-headset' : 'fa-user'} text-white"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-semibold text-textMain truncate">${otherUser.name}</h3>
+                  ${isAdminChat
+                    ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Admin Support</span>'
+                    : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Patient</span>'}
+                </div>
+                <div class="flex items-center space-x-2 ml-2">
+                  ${unreadCount > 0 ? `<span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">${unreadCount > 99 ? "99+" : unreadCount}</span>` : ''}
+                  <span class="text-sm text-gray-500">${lastMessageTime}</span>
+                </div>
+              </div>
+              <p class="text-sm ${isAdminChat ? 'text-blue-600' : 'text-gray-500'} mb-1">${otherUser.specialty}</p>
+              <p class="text-gray-600 truncate">${conversation.last_message || "No messages yet"}</p>
+            </div>
+          </div>
+          <div class="ml-4">
+            <i class="fas fa-chevron-right text-gray-400"></i>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Chat mode switching functions
+function switchToPatientChat() {
+  currentChatMode = 'patient';
+
+  // Update button styles
+  document.getElementById('patient-chat-btn').classList.remove('btn-secondary');
+  document.getElementById('patient-chat-btn').classList.add('btn-primary');
+  document.getElementById('admin-chat-btn').classList.remove('btn-primary');
+  document.getElementById('admin-chat-btn').classList.add('btn-secondary');
+
+  // Update page title and description
+  document.querySelector('h1').innerHTML = '💬 Patient Conversations';
+  document.querySelector('.text-xl').textContent = 'Chat with your patients and manage your practice conversations';
+
+  // Reload conversations for patient chat mode
+  loadConversations();
+
+  showToast('Switched to Patient Chat Mode');
+}
+
+function switchToAdminChat() {
+  currentChatMode = 'admin';
+
+  // Update button styles
+  document.getElementById('admin-chat-btn').classList.remove('btn-secondary');
+  document.getElementById('admin-chat-btn').classList.add('btn-primary');
+  document.getElementById('patient-chat-btn').classList.remove('btn-primary');
+  document.getElementById('patient-chat-btn').classList.add('btn-secondary');
+
+  // Update page title and description
+  document.querySelector('h1').innerHTML = '💬 Admin Support';
+  document.querySelector('.text-xl').textContent = 'Contact admin support for assistance with your therapist account and practice';
+
+  // Load admin conversations
+  loadConversations();
+
+  showToast('Switched to Admin Chat Mode');
+}
+
+// Updated openConversation to handle both types
+function openConversation(conversationId, isAdminChat) {
+  currentConversationId = conversationId;
+  
+  // Store whether this is an admin conversation
+  window.currentConversationIsAdmin = isAdminChat;
+
+  if (socket) {
+    socket.emit("join_conversation", conversationId);
+  }
+
+  document.getElementById("conversations-container").classList.add("hidden");
+  document.getElementById("chat-view").classList.remove("hidden");
+
+  loadChat(conversationId, isAdminChat);
+}
+
+// Updated loadChat to use correct endpoint
+async function loadChat(conversationId, isAdminChat) {
+  const loadingElement = document.getElementById("chat-loading");
+  if (loadingElement) loadingElement.style.display = "block";
+
+  try {
+    // Use the appropriate endpoint
+    const endpoint = isAdminChat
+      ? `/therapist/api/admin-conversations/${conversationId}/messages`
+      : `/therapist/api/conversations/${conversationId}/messages`;
+
+    const response = await fetch(endpoint, {
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      messages = data.messages || [];
+      displayChatHeader(isAdminChat);
+      displayMessages();
+
+      const messageForm = document.getElementById("message-form");
+      if (messageForm) messageForm.classList.remove("hidden");
+    } else {
+      console.error("Failed to load chat:", data.error);
+      showToast("Failed to load messages", "error");
+    }
+  } catch (error) {
+    console.error("Error loading chat:", error);
+    showToast("Error loading messages", "error");
+  } finally {
+    if (loadingElement) loadingElement.style.display = "none";
+  }
+}
+
+// Updated displayChatHeader
+function displayChatHeader(isAdminChat) {
+  const header = document.getElementById("chat-header");
+  if (!header) return;
+
+  const currentConv = conversations.find(c => c.id === currentConversationId);
+  
+  let otherUser;
+  if (isAdminChat) {
+    otherUser = {
+      name: currentConv?.other_user_name || "Admin Support",
+      specialty: currentConv?.other_user_specialty || "CalmTunes Admin Team",
+      role: "admin"
+    };
+  } else {
+    otherUser = {
+      name: currentConv?.other_user_name || currentConv?.patient_name || "Patient",
+      specialty: "Patient",
+      role: "patient"
+    };
+  }
+
+  header.innerHTML = `
+    <div class="w-10 h-10 bg-gradient-to-br ${
+      isAdminChat ? "from-blue-500 to-purple-600" : "from-green-400 to-blue-500"
+    } rounded-full flex items-center justify-center mr-3">
+      <i class="fas ${isAdminChat ? 'fa-headset' : 'fa-user'} text-white text-sm"></i>
+    </div>
+    <div>
+      <h3 class="font-semibold text-textMain">${otherUser.name}</h3>
+      <p class="text-sm ${isAdminChat ? 'text-blue-600' : 'text-gray-500'}">${otherUser.specialty}</p>
+      ${isAdminChat ? '<p class="text-xs text-blue-600 font-medium">Admin Support</p>' : ''}
+    </div>
+  `;
+}
+
+function displayMessages() {
+  const container = document.getElementById("messages-container");
+  if (!container) return;
+
+  if (messages.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-gray-500 py-8">
+        <i class="fas fa-comments text-4xl mb-2 text-gray-400"></i>
+        <p class="text-gray-600">No messages yet. Start the conversation!</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = messages.map(msg => {
+    const isOwn = msg.sender_id == currentUserId;
+    const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    return `
+      <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4">
+        <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm ${isOwn ? 'bg-primary text-white ml-auto' : 'bg-white border ml-0'}">
+          <p class="text-sm">${msg.content || "No content"}</p>
+          <p class="text-xs ${isOwn ? 'text-primary/70' : 'text-gray-500'} mt-1">${time}</p>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  setTimeout(() => {
+    container.scrollTop = container.scrollHeight;
+  }, 100);
+}
+
+// Updated sendMessage
+async function sendMessage(event) {
+  event.preventDefault();
+
+  const input = document.getElementById("message-input");
+  const sendBtn = document.getElementById("send-btn");
+  const content = input.value.trim();
+
+  if (!content || !currentConversationId) return;
+
+  input.disabled = true;
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+  try {
+    // Use correct endpoint based on conversation type
+    const isAdminChat = window.currentConversationIsAdmin;
+    const endpoint = isAdminChat
+      ? `/therapist/api/admin-conversations/${currentConversationId}/messages`
+      : `/therapist/api/conversations/${currentConversationId}/messages`;
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      input.value = "";
+      
+      if (data.message) {
+        const messageExists = messages.some(msg => msg.id === data.message.id);
+        if (!messageExists) {
+          messages.push(data.message);
+          displayMessages();
+        }
+      }
+    } else {
+      showToast(data.error || "Failed to send message", "error");
+    }
+  } catch (error) {
+    console.error("Error sending message:", error);
+    showToast("Failed to send message", "error");
+  } finally {
+    input.disabled = false;
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+  }
+}
+
+function backToConversations() {
+  currentConversationId = null;
+
+  if (socket) {
+    socket.emit("leave_conversation", currentConversationId);
+  }
+
+  document.getElementById("chat-view").classList.add("hidden");
+  document.getElementById("conversations-container").classList.remove("hidden");
+
+  loadConversations();
+}
+
+function refreshConversations() {
+  loadConversations();
+  showToast("Conversations refreshed");
+}
+
+function refreshMessages() {
+  if (currentConversationId) {
+    const isAdminChat = window.currentConversationIsAdmin;
+    loadChat(currentConversationId, isAdminChat);
+    showToast("Messages refreshed");
+  }
+}
+
+function showNoConversations() {
+  const container = document.getElementById("conversations-list");
+  const noConversations = document.getElementById("no-conversations");
+
+  container.innerHTML = "";
+  noConversations.classList.remove("hidden");
+}
+
+function formatMessageTime(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now - date;
+
+  if (diff < 24 * 60 * 60 * 1000) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  if (diff < 7 * 24 * 60 * 60 * 1000) {
+    return date.toLocaleDateString([], { weekday: "short" });
+  }
+
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function showToast(message, type = "success") {
+  const toast = document.createElement("div");
+  toast.className = `fixed top-4 right-4 ${type === "error" ? "bg-red-500" : "bg-green-500"} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+  toast.innerHTML = `
+    <div class="flex items-center">
+      <i class="fas ${type === "error" ? "fa-exclamation-circle" : "fa-check-circle"} mr-2"></i>
+      <span>${message}</span>
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+// Placeholder functions for calling features
+function startPhoneCall() {
+  showToast("Phone calling feature coming soon!", "info");
+}
+
+function startVideoCall() {
+  showToast("Video calling feature coming soon!", "info");
+}
+</script>

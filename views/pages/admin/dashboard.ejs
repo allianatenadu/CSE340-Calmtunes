@@ -1,9 +1,11 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">   
-  <h1 class="text-3xl font-bold text-textMain mb-6">🛠️ Admin Dashboard</h1>   
-  <p class="text-gray-600 mb-8">Welcome, <%= user?.name %>. Manage therapists and patients from here.</p>    
-  
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <h1 class="text-3xl font-bold text-textMain mb-6">🛠️ Admin Dashboard</h1>
+  <p class="text-gray-600 mb-8">
+    Welcome, <%= user?.name %>. Manage therapists and patients from here.
+  </p>
+
   <!-- Statistics Cards -->
-  <% if (stats && userStats) { %>
+  <% if (userStats) { %>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <!-- Total Applications -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -13,11 +15,13 @@
         </div>
         <div class="ml-4">
           <p class="text-sm font-medium text-gray-600">Total Applications</p>
-          <p class="text-2xl font-bold text-gray-900"><%= stats.total_applications || 0 %></p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= (stats && stats.total_applications) || 0 %>
+          </p>
         </div>
       </div>
     </div>
-    
+
     <!-- Pending Applications -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div class="flex items-center">
@@ -26,11 +30,13 @@
         </div>
         <div class="ml-4">
           <p class="text-sm font-medium text-gray-600">Pending Review</p>
-          <p class="text-2xl font-bold text-gray-900"><%= stats.pending_applications || 0 %></p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= (stats && stats.pending_applications) || 0 %>
+          </p>
         </div>
       </div>
     </div>
-    
+
     <!-- Total Users -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div class="flex items-center">
@@ -39,11 +45,13 @@
         </div>
         <div class="ml-4">
           <p class="text-sm font-medium text-gray-600">Total Users</p>
-          <p class="text-2xl font-bold text-gray-900"><%= userStats.total_users || 0 %></p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= userStats.total_users || 0 %>
+          </p>
         </div>
       </div>
     </div>
-    
+
     <!-- Active Therapists -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div class="flex items-center">
@@ -52,12 +60,14 @@
         </div>
         <div class="ml-4">
           <p class="text-sm font-medium text-gray-600">Active Therapists</p>
-          <p class="text-2xl font-bold text-gray-900"><%= userStats.total_therapists || 0 %></p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= userStats.total_therapists || 0 %>
+          </p>
         </div>
       </div>
     </div>
   </div>
-  
+
   <!-- Recent Activity -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -65,49 +75,88 @@
       <div class="space-y-4">
         <div class="flex items-center text-sm">
           <i class="fas fa-calendar text-blue-500 mr-3"></i>
-          <span><%= stats.applications_this_week || 0 %> applications this week</span>
+          <span
+            ><%= (stats && stats.applications_this_week) || 0 %> applications
+            this week</span
+          >
         </div>
         <div class="flex items-center text-sm">
           <i class="fas fa-calendar-alt text-green-500 mr-3"></i>
-          <span><%= stats.applications_this_month || 0 %> applications this month</span>
+          <span
+            ><%= (stats && stats.applications_this_month) || 0 %> applications
+            this month</span
+          >
         </div>
         <div class="flex items-center text-sm">
           <i class="fas fa-user-plus text-purple-500 mr-3"></i>
-          <span><%= userStats.new_users_this_month || 0 %> new users this month</span>
+          <span
+            ><%= userStats.new_users_this_month || 0 %> new users this
+            month</span
+          >
         </div>
       </div>
     </div>
-    
+
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h3 class="text-lg font-semibold mb-4">Application Status</h3>
       <div class="space-y-4">
         <div class="flex justify-between items-center">
           <span class="text-sm text-gray-600">Approved</span>
           <div class="flex items-center">
-            <span class="text-sm font-medium mr-2"><%= stats.approved_applications || 0 %></span>
+            <span class="text-sm font-medium mr-2"
+              ><%= (stats && stats.approved_applications) || 0 %></span
+            >
             <div class="w-20 bg-gray-200 rounded-full h-2">
-              <% const approvedPercentage = stats.total_applications > 0 ? (stats.approved_applications / stats.total_applications * 100) : 0; %>
-              <div class="bg-green-500 h-2 rounded-full" style="--width: <%= approvedPercentage.toFixed(0) %>; width: calc(var(--width) * 1%);"></div>
+              <% const approvedPercentage = (stats && stats.total_applications >
+              0) ? ((stats.approved_applications || 0) /
+              stats.total_applications * 100) : 0; %>
+              <div
+                class="bg-green-500 h-2 rounded-full"
+                style="
+                  --width: <%= approvedPercentage.toFixed(0) %>;
+                  width: calc(var(--width) * 1%);
+                "
+              ></div>
             </div>
           </div>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-sm text-gray-600">Pending</span>
           <div class="flex items-center">
-            <span class="text-sm font-medium mr-2"><%= stats.pending_applications || 0 %></span>
+            <span class="text-sm font-medium mr-2"
+              ><%= (stats && stats.pending_applications) || 0 %></span
+            >
             <div class="w-20 bg-gray-200 rounded-full h-2">
-              <% const pendingPercentage = stats.total_applications > 0 ? (stats.pending_applications / stats.total_applications * 100) : 0; %>
-              <div class="bg-yellow-500 h-2 rounded-full" style="--width: <%= pendingPercentage.toFixed(0) %>; width: calc(var(--width) * 1%);"></div>
+              <% const pendingPercentage = (stats && stats.total_applications >
+              0) ? ((stats.pending_applications || 0) / stats.total_applications
+              * 100) : 0; %>
+              <div
+                class="bg-yellow-500 h-2 rounded-full"
+                style="
+                  --width: <%= pendingPercentage.toFixed(0) %>;
+                  width: calc(var(--width) * 1%);
+                "
+              ></div>
             </div>
           </div>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-sm text-gray-600">Rejected</span>
           <div class="flex items-center">
-            <span class="text-sm font-medium mr-2"><%= stats.rejected_applications || 0 %></span>
+            <span class="text-sm font-medium mr-2"
+              ><%= (stats && stats.rejected_applications) || 0 %></span
+            >
             <div class="w-20 bg-gray-200 rounded-full h-2">
-              <% const rejectedPercentage = stats.total_applications > 0 ? (stats.rejected_applications / stats.total_applications * 100) : 0; %>
-              <div class="bg-red-500 h-2 rounded-full" style="--width: <%= rejectedPercentage.toFixed(0) %>; width: calc(var(--width) * 1%);"></div>
+              <% const rejectedPercentage = (stats && stats.total_applications >
+              0) ? ((stats.rejected_applications || 0) /
+              stats.total_applications * 100) : 0; %>
+              <div
+                class="bg-red-500 h-2 rounded-full"
+                style="
+                  --width: <%= rejectedPercentage.toFixed(0) %>;
+                  width: calc(var(--width) * 1%);
+                "
+              ></div>
             </div>
           </div>
         </div>
@@ -117,40 +166,96 @@
   <% } %>
 
   <!-- Action Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">     
-    <a href="/admin/applications" class="card hover:shadow-lg transition-shadow duration-200 group">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <a
+      href="/admin/applications"
+      class="card hover:shadow-lg transition-shadow duration-200 group"
+    >
       <div class="flex items-center mb-4">
-        <div class="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+        <div
+          class="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors"
+        >
           <i class="fas fa-file-medical text-blue-600 text-xl"></i>
         </div>
         <% if (stats && stats.pending_applications > 0) { %>
-        <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+        <span
+          class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full"
+        >
           <%= stats.pending_applications %>
         </span>
         <% } %>
       </div>
-      <h2 class="text-xl font-semibold mb-2 group-hover:text-blue-600 transition-colors">Therapist Applications</h2>       
-      <p class="text-gray-600">Review pending therapist applications and approve/reject them.</p>     
-    </a>      
+      <h2
+        class="text-xl font-semibold mb-2 group-hover:text-blue-600 transition-colors"
+      >
+        Therapist Applications
+      </h2>
+      <p class="text-gray-600">
+        Review pending therapist applications and approve/reject them.
+      </p>
+    </a>
 
-    <a href="/admin/therapists" class="card hover:shadow-lg transition-shadow duration-200 group">
+    <a
+      href="/admin/therapists"
+      class="card hover:shadow-lg transition-shadow duration-200 group"
+    >
       <div class="flex items-center mb-4">
-        <div class="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+        <div
+          class="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors"
+        >
           <i class="fas fa-user-md text-purple-600 text-xl"></i>
         </div>
       </div>
-      <h2 class="text-xl font-semibold mb-2 group-hover:text-purple-600 transition-colors">Manage Therapists</h2>       
-      <p class="text-gray-600">View and manage approved therapists and their status.</p>     
-    </a>      
+      <h2
+        class="text-xl font-semibold mb-2 group-hover:text-purple-600 transition-colors"
+      >
+        Manage Therapists
+      </h2>
+      <p class="text-gray-600">
+        View and manage approved therapists and their status.
+      </p>
+    </a>
 
-    <a href="/admin/users" class="card hover:shadow-lg transition-shadow duration-200 group">
+    <a
+      href="/admin/chat"
+      class="card hover:shadow-lg transition-shadow duration-200 group"
+    >
       <div class="flex items-center mb-4">
-        <div class="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-          <i class="fas fa-users text-green-600 text-xl"></i>
+        <div
+          class="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors"
+        >
+          <i class="fas fa-comments text-green-600 text-xl"></i>
         </div>
       </div>
-      <h2 class="text-xl font-semibold mb-2 group-hover:text-green-600 transition-colors">Manage Users</h2>       
-      <p class="text-gray-600">View and manage registered patients and all users.</p>     
-    </a>   
+      <h2
+        class="text-xl font-semibold mb-2 group-hover:text-green-600 transition-colors"
+      >
+        Admin Chat
+      </h2>
+      <p class="text-gray-600">
+        Chat with therapists and patients, handle concerns and contracts.
+      </p>
+    </a>
+
+    <a
+      href="/admin/users"
+      class="card hover:shadow-lg transition-shadow duration-200 group"
+    >
+      <div class="flex items-center mb-4">
+        <div
+          class="p-3 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors"
+        >
+          <i class="fas fa-users text-orange-600 text-xl"></i>
+        </div>
+      </div>
+      <h2
+        class="text-xl font-semibold mb-2 group-hover:text-orange-600 transition-colors"
+      >
+        Manage Users
+      </h2>
+      <p class="text-gray-600">
+        View and manage registered patients and all users.
+      </p>
+    </a>
   </div>
 </div>

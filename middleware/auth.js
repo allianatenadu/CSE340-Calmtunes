@@ -117,13 +117,37 @@ const requireAuthGeneral = (req, res, next) => {
 
 // NEW: API-compatible auth middleware (returns JSON instead of redirects)
 const requireAuthAPI = (req, res, next) => {
-  if (!req.session || !req.session.user) {
+  // Check if session exists
+  if (!req.session) {
+    console.log('No session found - redirecting to login');
     return res.status(401).json({
       success: false,
-      error: 'Authentication required',
+      error: 'Session expired. Please login again.',
       redirect: '/login'
     });
   }
+
+  // Check if user exists in session
+  if (!req.session.user) {
+    console.log('No user in session - redirecting to login');
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required. Please login again.',
+      redirect: '/login'
+    });
+  }
+
+  // Check if user has required fields
+  if (!req.session.user.id || !req.session.user.role) {
+    console.log('Invalid session data - missing id or role');
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid session. Please login again.',
+      redirect: '/login'
+    });
+  }
+
+  console.log('API auth successful for user:', req.session.user.id, 'role:', req.session.user.role);
   next();
 };
 

@@ -1,372 +1,704 @@
-
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-user-authenticated="<%= user ? 'true' : 'false' %>">
-    <!-- Header -->
-    <div class="mb-8">
+<div
+  class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+  data-user-authenticated="<%= user ? 'true' : 'false' %>"
+>
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
         <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-            👩‍⚕️ Find a Therapist
+          👩‍⚕️ Find a Therapist
         </h1>
         <p class="text-xl text-gray-600">
-            Connect with licensed mental health professionals who understand your needs
+          Connect with licensed mental health professionals who understand your
+          needs
         </p>
+      </div>
+
+      <!-- Quick Access Links -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="/notifications" class="btn-outline">
+          <i class="fas fa-bell mr-2"></i>Notifications
+        </a>
+        <a href="/dashboard" class="btn-secondary">
+          <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-textMain mb-2"
+          >Search</label
+        >
+        <input
+          type="text"
+          placeholder="Name or specialty..."
+          class="form-input"
+          id="therapist-search"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-textMain mb-2"
+          >Specialty</label
+        >
+        <select class="form-input" id="specialty-filter">
+          <option value="">All Specialties</option>
+          <option value="anxiety">Anxiety & Depression</option>
+          <option value="cbt">Cognitive Behavioral Therapy</option>
+          <option value="trauma">Trauma & PTSD</option>
+          <option value="couples">Couples Therapy</option>
+          <option value="family">Family Therapy</option>
+          <option value="addiction">Addiction Counseling</option>
+          <option value="child">Child Psychology</option>
+          <option value="grief">Grief Counseling</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-textMain mb-2"
+          >Experience</label
+        >
+        <select class="form-input" id="experience-filter">
+          <option value="">Any Experience</option>
+          <option value="1-3">1-3 years</option>
+          <option value="4-7">4-7 years</option>
+          <option value="8-15">8-15 years</option>
+          <option value="15+">15+ years</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button class="btn-primary w-full" onclick="filterTherapists()">
+          <i class="fas fa-search mr-2"></i>Find Therapists
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Therapist Directory -->
+  <div class="mb-12">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-textMain">Available Therapists</h2>
+      <div class="text-sm text-gray-600">
+        <span id="therapist-count"><%= approvedTherapists.length %></span>
+        therapists available
+      </div>
     </div>
 
-    <!-- Search and Filters -->
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-textMain mb-2">Search</label>
-                <input 
-                    type="text" 
-                    placeholder="Name or specialty..." 
-                    class="form-input"
-                    id="therapist-search"
-                >
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      id="therapists-grid"
+    >
+      <% if (approvedTherapists && approvedTherapists.length > 0) { %> <%
+      approvedTherapists.forEach(therapist => { %>
+      <div
+        class="card relative"
+        data-specialty="<%= therapist.specialty %>"
+        data-experience="<%= therapist.experience %>"
+        data-name="<%= therapist.name.toLowerCase() %>"
+        data-therapist-id="<%= therapist.id %>"
+        data-bio="<%= (therapist.bio || 'No bio available').replace(/'/g, "\\'").replace(/"/g, '"') %>"
+        data-therapist-name="<%= therapist.name %>"
+      >
+        <div class="text-center mb-4">
+          <% let profileImageUrl = null; if (therapist.profile_image) {
+          profileImageUrl = therapist.profile_image.startsWith('/') ?
+          therapist.profile_image : `/uploads/${therapist.profile_image}`; } %>
+          <% if (profileImageUrl) { %>
+          <img
+            src="<%= profileImageUrl %>"
+            alt="<%= therapist.name %>"
+            class="w-24 h-24 rounded-full mx-auto mb-4 object-cover shadow-md border-2 border-primary/20"
+          />
+          <% } else { %>
+          <div
+            class="w-24 h-24 rounded-full mx-auto mb-4 bg-primary/10 flex items-center justify-center shadow-md"
+          >
+            <i class="fas fa-user-md text-2xl text-primary"></i>
+          </div>
+          <% } %>
+
+          <h3 class="text-xl font-bold text-textMain mb-1">
+            <%= therapist.name %>
+          </h3>
+          <p class="text-primary font-medium mb-2 capitalize">
+            <%= therapist.specialty ? therapist.specialty.replace('-', ' & ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Practice' %>
+          </p>
+
+          <div class="flex items-center justify-center mb-3">
+            <div class="flex items-center">
+              <% for (let i = 0; i < 5; i++) { %>
+              <i class="fas fa-star text-yellow-400 text-sm"></i>
+              <% } %>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-textMain mb-2">Specialty</label>
-                <select class="form-input" id="specialty-filter">
-                    <option value="">All Specialties</option>
-                    <option value="anxiety">Anxiety & Depression</option>
-                    <option value="cbt">Cognitive Behavioral Therapy</option>
-                    <option value="trauma">Trauma & PTSD</option>
-                    <option value="couples">Couples Therapy</option>
-                    <option value="family">Family Therapy</option>
-                    <option value="addiction">Addiction Counseling</option>
-                    <option value="child">Child Psychology</option>
-                    <option value="grief">Grief Counseling</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-textMain mb-2">Experience</label>
-                <select class="form-input" id="experience-filter">
-                    <option value="">Any Experience</option>
-                    <option value="1-3">1-3 years</option>
-                    <option value="4-7">4-7 years</option>
-                    <option value="8-15">8-15 years</option>
-                    <option value="15+">15+ years</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button class="btn-primary w-full" onclick="filterTherapists()">
-                    <i class="fas fa-search mr-2"></i>Find Therapists
-                </button>
-            </div>
+            <span class="ml-2 text-sm text-gray-600">5.0</span>
+          </div>
         </div>
+
+        <div class="space-y-2 mb-6">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-graduation-cap text-primary mr-2"></i>
+            <span
+              ><%= therapist.experience || 'Professional' %> experience</span
+            >
+          </div>
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-video text-primary mr-2"></i>
+            <span>Video & In-person sessions</span>
+          </div>
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-certificate text-primary mr-2"></i>
+            <span>Licensed Professional</span>
+          </div>
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-clock text-primary mr-2"></i>
+            <span>Available today</span>
+          </div>
+        </div>
+
+        <!-- Bio Preview -->
+        <% if (therapist.bio) { %>
+        <div class="mb-4">
+          <p class="text-sm text-gray-600 line-clamp-3">
+            <%= therapist.bio.substring(0, 120) %><%= therapist.bio.length > 120
+            ? '...' : '' %>
+          </p>
+        </div>
+        <% } %>
+
+        <div class="space-y-3">
+           <% if (user) { %>
+           <button
+             onclick="selectTherapist(this)"
+             class="w-full btn-primary therapist-select-btn"
+             data-therapist-id="<%= therapist.id %>"
+           >
+             <i class="fas fa-user-md mr-2"></i>Make Your Therapist
+           </button>
+           <button
+             onclick="scheduleConsultation('<%= therapist.id %>', '<%= therapist.name %>')"
+             class="w-full btn-secondary"
+           >
+             <i class="fas fa-calendar mr-2"></i>Schedule Consultation
+           </button>
+           <button
+             onclick="startChat('<%= therapist.id %>', '<%= therapist.name %>')"
+             class="w-full btn-outline"
+           >
+             <i class="fas fa-comments mr-2"></i>Start Chat
+           </button>
+           <% } else { %>
+           <a
+             href="/login"
+             class="w-full btn-primary block text-center"
+           >
+             <i class="fas fa-user-md mr-2"></i>Login to Connect
+           </a>
+           <a
+             href="/login"
+             class="w-full btn-secondary block text-center"
+           >
+             <i class="fas fa-calendar mr-2"></i>Login to Schedule
+           </a>
+           <a
+             href="/login"
+             class="w-full btn-outline block text-center"
+           >
+             <i class="fas fa-comments mr-2"></i>Login to Chat
+           </a>
+           <% } %>
+         </div>
+      </div>
+      <% }) %> <% } else { %>
+      <div class="col-span-full text-center py-12">
+        <div
+          class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center"
+        >
+          <i class="fas fa-user-md text-3xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-medium text-gray-600 mb-2">
+          No Approved Therapists Yet
+        </h3>
+        <p class="text-gray-500">
+          We're currently reviewing therapist applications. Check back soon!
+        </p>
+      </div>
+      <% } %>
     </div>
+  </div>
 
-    
-    <!-- Therapist Directory -->
-    <div class="mb-12">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-textMain">Available Therapists</h2>
-            <div class="text-sm text-gray-600">
-                <span id="therapist-count"><%= approvedTherapists.length %></span> therapists available
-            </div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="therapists-grid">
-            <% if (approvedTherapists && approvedTherapists.length > 0) { %>
-                <% approvedTherapists.forEach(therapist => { %>
-                <div class="card group hover:transform hover:scale-105 transition-all duration-300" 
-                     data-specialty="<%= therapist.specialty %>" 
-                     data-experience="<%= therapist.experience %>"
-                     data-name="<%= therapist.name.toLowerCase() %>"
-                     data-therapist-id="<%= therapist.id %>">
-                    <div class="text-center mb-4">
-                        <% 
-                        let profileImageUrl = null;
-                        if (therapist.profile_image) {
-                            profileImageUrl = therapist.profile_image.startsWith('/') ? therapist.profile_image : `/uploads/${therapist.profile_image}`;
-                        }
-                        %>
-                        
-                        <% if (profileImageUrl) { %>
-                            <img 
-                                src="<%= profileImageUrl %>" 
-                                alt="<%= therapist.name %>" 
-                                class="w-24 h-24 rounded-full mx-auto mb-4 object-cover shadow-md border-2 border-primary/20"
-                            >
-                        <% } else { %>
-                            <div class="w-24 h-24 rounded-full mx-auto mb-4 bg-primary/10 flex items-center justify-center shadow-md">
-                                <i class="fas fa-user-md text-2xl text-primary"></i>
-                            </div>
-                        <% } %>
-                        
-                        <h3 class="text-xl font-bold text-textMain mb-1"><%= therapist.name %></h3>
-                        <p class="text-primary font-medium mb-2 capitalize">
-                            <%= therapist.specialty ? therapist.specialty.replace('-', ' & ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Practice' %>
-                        </p>
-                        
-                        <div class="flex items-center justify-center mb-3">
-                            <div class="flex items-center">
-                                <% for (let i = 0; i < 5; i++) { %>
-                                    <i class="fas fa-star text-yellow-400 text-sm"></i>
-                                <% } %>
-                            </div>
-                            <span class="ml-2 text-sm text-gray-600">5.0</span>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-2 mb-6">
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="fas fa-graduation-cap text-primary mr-2"></i>
-                            <span><%= therapist.experience || 'Professional' %> experience</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="fas fa-video text-primary mr-2"></i>
-                            <span>Video & In-person sessions</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="fas fa-certificate text-primary mr-2"></i>
-                            <span>Licensed Professional</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="fas fa-clock text-primary mr-2"></i>
-                            <span>Available today</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Bio Preview -->
-                    <% if (therapist.bio) { %>
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-600 line-clamp-3">
-                            <%= therapist.bio.substring(0, 120) %><%= therapist.bio.length > 120 ? '...' : '' %>
-                        </p>
-                    </div>
-                    <% } %>
-                    
-                    <div class="space-y-3">
-                        <% if (user) { %>
-                            <button onclick="scheduleConsultation('<%= therapist.id %>', '<%= therapist.name %>')" class="w-full btn-primary group-hover:bg-primary/90 transition-colors duration-200">
-                                <i class="fas fa-calendar mr-2"></i>Schedule Consultation
-                            </button>
-                            <button onclick="startChat('<%= therapist.id %>', '<%= therapist.name %>')" class="w-full btn-secondary group-hover:bg-secondary/90 transition-colors duration-200">
-                                <i class="fas fa-comments mr-2"></i>Start Chat
-                            </button>
-                        <% } else { %>
-                            <a href="/login" class="w-full btn-primary group-hover:bg-primary/90 transition-colors duration-200 block text-center">
-                                <i class="fas fa-calendar mr-2"></i>Login to Schedule
-                            </a>
-                            <a href="/login" class="w-full btn-secondary group-hover:bg-secondary/90 transition-colors duration-200 block text-center">
-                                <i class="fas fa-comments mr-2"></i>Login to Chat
-                            </a>
-                        <% } %>
-                    </div>
-                </div>
-                <% }) %>
-            <% } else { %>
-                <div class="col-span-full text-center py-12">
-                    <div class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-                        <i class="fas fa-user-md text-3xl text-gray-400"></i>
-                    </div>
-                    <h3 class="text-xl font-medium text-gray-600 mb-2">No Approved Therapists Yet</h3>
-                    <p class="text-gray-500">
-                        We're currently reviewing therapist applications. Check back soon!
-                    </p>
-                </div>
-            <% } %>
-        </div>
-    </div>
-
-    
-
-<!-- Booking Modal -->
-<div id="booking-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+  <!-- Booking Modal -->
+  <div
+    id="booking-modal"
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4"
+  >
     <div class="bg-white rounded-xl max-w-md w-full p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-semibold">Book Appointment</h3>
-            <button onclick="closeBookingModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold">Book Appointment</h3>
+        <button
+          onclick="closeBookingModal()"
+          class="text-gray-500 hover:text-gray-700"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form id="appointment-form">
+        <input type="hidden" id="therapist-id" value="" />
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-2">Preferred Date</label>
+            <input
+              type="date"
+              id="appointment-date"
+              class="form-input"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">Preferred Time</label>
+            <select id="appointment-time" class="form-input" required>
+              <option value="">Select time</option>
+              <option value="09:00">9:00 AM</option>
+              <option value="10:00">10:00 AM</option>
+              <option value="11:00">11:00 AM</option>
+              <option value="14:00">2:00 PM</option>
+              <option value="15:00">3:00 PM</option>
+              <option value="16:00">4:00 PM</option>
+              <option value="17:00">5:00 PM</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">Session Type</label>
+            <select id="session-type" class="form-input" required>
+              <option value="">Select session type</option>
+              <option value="video">Video Call</option>
+              <option value="phone">Phone Call</option>
+              <option value="in-person">In-Person</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2"
+              >Notes (Optional)</label
+            >
+            <textarea
+              id="appointment-notes"
+              class="form-input"
+              rows="3"
+              placeholder="Any specific concerns or preferences..."
+            ></textarea>
+          </div>
         </div>
-        
-        <form id="appointment-form">
-            <input type="hidden" id="therapist-id" value="">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2">Preferred Date</label>
-                    <input type="date" id="appointment-date" class="form-input" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Preferred Time</label>
-                    <select id="appointment-time" class="form-input" required>
-                        <option value="">Select time</option>
-                        <option value="09:00">9:00 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="14:00">2:00 PM</option>
-                        <option value="15:00">3:00 PM</option>
-                        <option value="16:00">4:00 PM</option>
-                        <option value="17:00">5:00 PM</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Session Type</label>
-                    <select id="session-type" class="form-input" required>
-                        <option value="">Select session type</option>
-                        <option value="video">Video Call</option>
-                        <option value="phone">Phone Call</option>
-                        <option value="in-person">In-Person</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Notes (Optional)</label>
-                    <textarea id="appointment-notes" class="form-input" rows="3"
-                             placeholder="Any specific concerns or preferences..."></textarea>
-                </div>
-            </div>
-            
-            <div class="flex space-x-3 mt-6">
-                <button type="button" onclick="closeBookingModal()" class="btn-secondary flex-1">
-                    Cancel
-                </button>
-                <button type="submit" class="btn-primary flex-1">
-                    Book Appointment
-                </button>
-            </div>
-        </form>
+
+        <div class="flex space-x-3 mt-6">
+          <button
+            type="button"
+            onclick="closeBookingModal()"
+            class="btn-secondary flex-1"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn-primary flex-1">
+            Book Appointment
+          </button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
 
-<script>
-// Set minimum date to today
-document.addEventListener('DOMContentLoaded', function() {
-    const dateInput = document.getElementById('appointment-date');
-    if (dateInput) {
-        const today = new Date().toISOString().split('T')[0];
+  <script>
+    // Set minimum date to today
+    document.addEventListener("DOMContentLoaded", function () {
+      const dateInput = document.getElementById("appointment-date");
+      if (dateInput) {
+        const today = new Date().toISOString().split("T")[0];
         dateInput.min = today;
-    }
-    
-    // Initialize filters
-    document.getElementById('therapist-search').addEventListener('input', filterTherapists);
-    document.getElementById('specialty-filter').addEventListener('change', filterTherapists);
-    document.getElementById('experience-filter').addEventListener('change', filterTherapists);
-    
-    // Handle appointment booking
-    document.getElementById('appointment-form').addEventListener('submit', bookAppointment);
-});
+      }
 
-function filterTherapists() {
-    const search = document.getElementById('therapist-search').value.toLowerCase();
-    const specialty = document.getElementById('specialty-filter').value;
-    const experience = document.getElementById('experience-filter').value;
-    const therapistCards = document.querySelectorAll('#therapists-grid [data-specialty]');
-    let visibleCount = 0;
+      // Initialize filters
+      document
+        .getElementById("therapist-search")
+        .addEventListener("input", filterTherapists);
+      document
+        .getElementById("specialty-filter")
+        .addEventListener("change", filterTherapists);
+      document
+        .getElementById("experience-filter")
+        .addEventListener("change", filterTherapists);
 
-    therapistCards.forEach(card => {
+      // Handle appointment booking
+      document
+        .getElementById("appointment-form")
+        .addEventListener("submit", bookAppointment);
+    });
+
+    function filterTherapists() {
+      const search = document
+        .getElementById("therapist-search")
+        .value.toLowerCase();
+      const specialty = document.getElementById("specialty-filter").value;
+      const experience = document.getElementById("experience-filter").value;
+      const therapistCards = document.querySelectorAll(
+        "#therapists-grid [data-specialty]"
+      );
+      let visibleCount = 0;
+
+      therapistCards.forEach((card) => {
         const cardSpecialty = card.dataset.specialty;
         const cardExperience = card.dataset.experience;
         const cardName = card.dataset.name;
-        
+
         const matchesSearch = !search || cardName.includes(search);
         const matchesSpecialty = !specialty || cardSpecialty === specialty;
         const matchesExperience = !experience || cardExperience === experience;
-        
+
         if (matchesSearch && matchesSpecialty && matchesExperience) {
-            card.style.display = 'block';
-            visibleCount++;
+          card.style.display = "block";
+          visibleCount++;
         } else {
-            card.style.display = 'none';
+          card.style.display = "none";
         }
-    });
-    
-    document.getElementById('therapist-count').textContent = visibleCount;
-}
+      });
 
-// Schedule consultation function
-function scheduleConsultation(therapistId, therapistName) {
-    document.getElementById('therapist-id').value = therapistId;
-    const modal = document.getElementById('booking-modal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
+      document.getElementById("therapist-count").textContent = visibleCount;
+    }
 
-function closeBookingModal() {
-    const modal = document.getElementById('booking-modal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
+    // Schedule consultation function
+    function scheduleConsultation(therapistId, therapistName) {
+      document.getElementById("therapist-id").value = therapistId;
+      const modal = document.getElementById("booking-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
 
-// Handle appointment booking
-async function bookAppointment(e) {
-    e.preventDefault();
-    
-    const formData = {
-        therapistId: document.getElementById('therapist-id').value,
-        preferredDate: document.getElementById('appointment-date').value,
-        preferredTime: document.getElementById('appointment-time').value,
-        sessionType: document.getElementById('session-type').value,
-        notes: document.getElementById('appointment-notes').value
-    };
-    
-    try {
+    function closeBookingModal() {
+      const modal = document.getElementById("booking-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    // Handle appointment booking
+    async function bookAppointment(e) {
+      e.preventDefault();
+
+      // Check if user is authenticated before making request
+      const isAuthenticated = document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true';
+
+      if (!isAuthenticated) {
+        alert("Please login to book appointments with therapists.");
+        window.location.href = "/login";
+        return;
+      }
+
+      // Additional session validation
+      const sessionValid = await checkSessionValidity();
+      if (!sessionValid) {
+        alert("Your session has expired. Please login again.");
+        window.location.href = "/login";
+        return;
+      }
+
+      const formData = {
+        therapistId: document.getElementById("therapist-id").value,
+        preferredDate: document.getElementById("appointment-date").value,
+        preferredTime: document.getElementById("appointment-time").value,
+        sessionType: document.getElementById("session-type").value,
+        notes: document.getElementById("appointment-notes").value,
+      };
+
+      try {
+        console.log("Booking appointment with data:", formData);
+
         // Changed from '/api/appointments/book' to '/appointments/book'
-        const response = await fetch('/appointments/book', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
+        const response = await fetch("/appointments/book", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
         });
-        
+
+        console.log("Appointment booking response status:", response.status);
+
         // Add better error handling
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+          if (response.status === 401) {
+            console.error("Authentication failed - redirecting to login");
+            alert("Your session has expired. Please login again.");
+            window.location.href = "/login";
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('Received non-JSON response:', text);
-            throw new Error('Server returned HTML instead of JSON. Check server logs.');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            alert('Appointment request sent successfully! You\'ll be notified when the therapist confirms.');
-            closeBookingModal();
-            document.getElementById('appointment-form').reset();
-        } else {
-            alert(data.error || 'Failed to book appointment');
-        }
-    } catch (error) {
-        console.error('Error booking appointment:', error);
-        alert('Failed to book appointment. Please try again.');
-    }
-}
 
-// Start chat function
-async function startChat(therapistId, therapistName) {
-    try {
-        // Changed from '/api/appointments/chat/start' to '/appointments/chat/start'
-        const response = await fetch('/appointments/chat/start', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ therapistId })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error("Received non-JSON response:", text);
+          throw new Error(
+            "Server returned HTML instead of JSON. Check server logs."
+          );
         }
-        
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server returned HTML instead of JSON');
-        }
-        
+
         const data = await response.json();
-        
+        console.log("Appointment booking response data:", data);
+
         if (data.success) {
-            window.location.href = `/appointments/chat/${data.conversationId}`;
+          alert(
+            "Appointment request sent successfully! You'll be notified when the therapist confirms."
+          );
+          closeBookingModal();
+          document.getElementById("appointment-form").reset();
         } else {
-            alert(data.error || 'Failed to start chat');
+          alert(data.error || "Failed to book appointment");
         }
-    } catch (error) {
-        console.error('Error starting chat:', error);
-        alert('Failed to start chat. Please try again.');
+      } catch (error) {
+        console.error("Error booking appointment:", error);
+        alert("Failed to book appointment. Please try again.");
+      }
     }
-}
-</script>
+
+    // Mark notification as read
+    async function markNotificationRead(notificationId) {
+      try {
+        const response = await fetch("/notifications/read", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ notificationId }),
+        });
+
+        if (response.ok) {
+          // Update UI
+          const notificationDiv = document
+            .querySelector(
+              `[onclick="markNotificationRead(${notificationId})"]`
+            )
+            .closest("div");
+          notificationDiv.classList.remove(
+            "bg-blue-50",
+            "border-l-4",
+            "border-l-blue-500"
+          );
+          notificationDiv.classList.add("bg-gray-50");
+          notificationDiv.querySelector("button").remove();
+
+          // Update badge
+          const unreadCount = document.querySelector(".bg-blue-500.text-white");
+          if (unreadCount) {
+            let count = parseInt(unreadCount.textContent);
+            count--;
+            if (count > 0) {
+              unreadCount.textContent = count;
+            } else {
+              unreadCount.remove();
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    }
+
+    // Check session validity
+    async function checkSessionValidity() {
+      try {
+        const response = await fetch("/api/session/validate", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return data.success;
+        } else {
+          return false;
+        }
+      } catch (error) {
+        console.error("Error checking session validity:", error);
+        return false;
+      }
+    }
+
+    // Start chat function - now works with assigned therapist
+    async function startChat(therapistId, therapistName) {
+      try {
+        // Check if user is authenticated before making request
+        const isAuthenticated = document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true';
+
+        if (!isAuthenticated) {
+          alert("Please login to start a chat with therapists.");
+          window.location.href = "/login";
+          return;
+        }
+
+        // Additional session validation
+        const sessionValid = await checkSessionValidity();
+        if (!sessionValid) {
+          alert("Your session has expired. Please login again.");
+          window.location.href = "/login";
+          return;
+        }
+
+        console.log("Starting chat with therapist:", therapistId);
+
+        // Use the chat controller endpoint instead of appointments
+        const response = await fetch("/chat/start", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ therapistId }),
+        });
+
+        console.log("Chat start response status:", response.status);
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error("Authentication failed - redirecting to login");
+            alert("Your session has expired. Please login again.");
+            window.location.href = "/login";
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server returned HTML instead of JSON");
+        }
+
+        const data = await response.json();
+        console.log("Chat start response data:", data);
+
+        if (data.success) {
+          console.log("Chat started successfully, redirecting to:", data.conversationId);
+          window.location.href = `/chat/${data.conversationId}`;
+        } else {
+          alert(data.error || "Failed to start chat");
+        }
+      } catch (error) {
+        console.error("Error starting chat:", error);
+        alert("Failed to start chat. Please try again.");
+      }
+    }
+
+    // Select therapist function - immediately assign therapist
+    async function selectTherapist(buttonElement) {
+      const therapistId = buttonElement.dataset.therapistId;
+      const card = buttonElement.closest('[data-therapist-id]');
+      const therapistName = card.dataset.therapistName;
+
+      // Disable button immediately
+      buttonElement.disabled = true;
+      buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Selecting...';
+
+      try {
+        // Check if user is authenticated
+        const isAuthenticated = document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true';
+        if (!isAuthenticated) {
+          alert("Please login to select a therapist.");
+          window.location.href = "/login";
+          return;
+        }
+
+        // Check session validity
+        const sessionValid = await checkSessionValidity();
+        if (!sessionValid) {
+          alert("Your session has expired. Please login again.");
+          window.location.href = "/login";
+          return;
+        }
+
+        // Make API call to select therapist
+        const response = await fetch('/select-therapist', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ therapistId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update button to show success state
+          buttonElement.innerHTML = '<i class="fas fa-check mr-2"></i>Your Therapist';
+          buttonElement.classList.remove('btn-primary');
+          buttonElement.classList.add('btn-success');
+
+          // Show success message
+          showTempMessage(`${therapistName} is now your personal therapist!`, 'success');
+
+          // Update navbar to show therapist is selected
+          updateNavbarTherapistStatus(true);
+
+          // Disable all other therapist selection buttons
+          document.querySelectorAll('.therapist-select-btn').forEach(btn => {
+            if (btn !== buttonElement) {
+              btn.disabled = true;
+              btn.innerHTML = '<i class="fas fa-times mr-2"></i>Therapist Selected';
+              btn.classList.remove('btn-primary');
+              btn.classList.add('btn-secondary');
+            }
+          });
+
+        } else {
+          // Re-enable button on error
+          buttonElement.disabled = false;
+          buttonElement.innerHTML = '<i class="fas fa-user-md mr-2"></i>Make Your Therapist';
+
+          alert(data.error || 'Failed to select therapist. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error selecting therapist:', error);
+
+        // Re-enable button on error
+        buttonElement.disabled = false;
+        buttonElement.innerHTML = '<i class="fas fa-user-md mr-2"></i>Make Your Therapist';
+
+        alert('Failed to select therapist. Please try again.');
+      }
+    }
+
+    // Show temporary message
+    function showTempMessage(message, type = 'info') {
+      let msgDiv = document.getElementById('temp-message');
+      if (!msgDiv) {
+        msgDiv = document.createElement('div');
+        msgDiv.id = 'temp-message';
+        msgDiv.className = 'fixed top-16 right-4 z-50';
+        document.body.appendChild(msgDiv);
+      }
+
+      const colors = {
+        info: 'bg-blue-100 border-blue-500 text-blue-700',
+        success: 'bg-green-100 border-green-500 text-green-700',
+        warning: 'bg-yellow-100 border-yellow-500 text-yellow-700',
+        error: 'bg-red-100 border-red-500 text-red-700'
+      };
+
+      msgDiv.innerHTML = `
+        <div class="p-3 border-l-4 rounded shadow-lg max-w-sm ${colors[type] || colors.info}">
+          ${message}
+        </div>
+      `;
+      msgDiv.style.display = 'block';
+
+      setTimeout(() => {
+        msgDiv.style.display = 'none';
+      }, 4000);
+    }
+
+    // Update navbar to show therapist selection status
+    function updateNavbarTherapistStatus(hasTherapist) {
+      // This function can be used to update navbar if needed
+      console.log('Therapist selection status updated:', hasTherapist);
+    }
+  </script>
+</div>

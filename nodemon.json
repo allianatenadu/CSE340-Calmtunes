@@ -1,0 +1,15 @@
+{
+  "watch": ["server.js", "routes/**/*.js", "controllers/**/*.js", "middleware/**/*.js"],
+  "ignore": ["public/**/*", "node_modules/**/*", "uploads/**/*", "views/**/*"],
+  "delay": 2000,
+  "ext": "js,json,ejs",
+  "verbose": false,
+  "restartable": "rs",
+  "colours": true,
+  "execMap": {
+    "js": "node"
+  },
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

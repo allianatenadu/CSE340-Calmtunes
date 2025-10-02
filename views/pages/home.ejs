@@ -1,126 +1,80 @@
 <!-- Hero Section -->
-<section class="gradient-bg text-white py-20">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-    <h1 class="text-4xl md:text-6xl font-bold mb-6">Welcome to CalmTunes</h1>
-    <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
-      Your mental health companion offering music therapy, art expression, mood
-      tracking, and professional support
-    </p>
-    <div class="space-x-4">
+<section class="relative py-16 sm:py-20 md:py-24 lg:py-32">
+  <div class="absolute inset-0 bg-cover bg-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuDufdQTgIsnrv_zndI7C_W9u5_o-nosv2qE8M6WZol0_pdrvh3-Q9P9el-YtAxtI8Oz02G_tQ_TXzKn8NsF8O372_Zr5EYwzScIvR7rgOF0azEkrBF1N_UUFF53p-9x12TfxSE_aRnnUVu-1pOFmQ4sjzgJr9X0drHej9s-nuK_sEmdhHMC43RlVeBl4FUwHkheFH-TaFn6No3bEmaLAWGrwklG06SBN-nDPVxw5qXQkSZrkoQ_IYQXHL9kArLr0Jc1Hj4WwLyRD7s");'></div>
+  <div class="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+    <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight animate-fade-in-down leading-tight">Welcome to CalmTunes</h1>
+    <p class="mt-4 sm:mt-6 max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-gray-200 animate-fade-in-up px-2">Your mental health companion for overall well-being and stress reduction.</p>
+    <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 px-2">
       <% if (user) { %>
-      <a
-        href="/dashboard"
-        class="inline-block bg-white text-primary hover:bg-gray-100 font-bold py-3 px-8 rounded-lg text-lg transition-colors duration-200"
-      >
-        Go to Dashboard
-      </a>
+      <a href="/dashboard" class="w-full sm:w-auto rounded-full bg-primary px-6 sm:px-8 py-3 text-sm sm:text-base font-bold text-white shadow-lg transition-transform hover:scale-105 animate-fade-in text-center">Go to Dashboard</a>
       <% } else { %>
-      <a
-        href="/signup"
-        class="inline-block bg-white text-primary hover:bg-gray-100 font-bold py-3 px-8 rounded-lg text-lg transition-colors duration-200"
-      >
-        Get Started
-      </a>
-      <a
-        href="/about"
-        class="inline-block border-2 border-white text-white hover:bg-white hover:text-primary font-bold py-3 px-8 rounded-lg text-lg transition-all duration-200"
-      >
-        Learn More
-      </a>
+      <a href="/signup" class="w-full sm:w-auto rounded-full bg-primary px-6 sm:px-8 py-3 text-sm sm:text-base font-bold text-white shadow-lg transition-transform hover:scale-105 animate-fade-in text-center">Get Started</a>
+      <a href="/about" class="w-full sm:w-auto rounded-full bg-background-light/20 dark:bg-background-dark/30 backdrop-blur-sm px-6 sm:px-8 py-3 text-sm sm:text-base font-bold text-white transition-transform hover:scale-105 animate-fade-in text-center">Learn More</a>
       <% } %>
     </div>
   </div>
 </section>
 
 <!-- Features Section -->
-<section class="py-16 bg-white">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-        Tools for Your Mental Wellness
-      </h2>
-      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-        Discover a comprehensive suite of evidence-based tools designed to
-        support your mental health journey
-      </p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-      <div
-        class="card text-center group hover:transform hover:scale-105 transition-transform duration-300"
-      >
-        <div
-          class="text-4xl mb-4 text-primary group-hover:text-accent transition-colors duration-300"
-        >
-          <i class="fas fa-music"></i>
+<section class="py-12 sm:py-16 md:py-20 lg:py-24">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <h2 class="text-center text-2xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">Explore Our Features</h2>
+    <div class="mt-8 sm:mt-12 grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="group flex flex-col overflow-hidden rounded-xl bg-white/5 dark:bg-black/10 shadow-lg transition-shadow hover:shadow-primary/20">
+        <div class="relative h-48 sm:h-52 md:h-56 w-full group-hover-animate transition-transform duration-300">
+          <div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCEs6yYLvC0cuCvZxYkvECPW_hlfLHu2Um4T1A7E7AFM9kIo1GrF7HbqZwjkha9KoQKVpyEuzuFn97icJpjocjBTe8Li1U8g6Uyp7VzeeIY_hp4kkGoYRI8gw8G8iiKXGX6LlpxtSHb-l_qp_WG4lLcRmH9iVGISp_6GLpp6LqlF_OSOgsEX-XBo3bwry8ydeCDsSXkCntXxa7BOjWypdi50re72sPbI2U2r-03q0U9K1nVsRaSxHUFGjoFXB6H9NbxUMCo8owkp7c");'></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         </div>
-        <h3 class="text-xl font-semibold text-textMain mb-2">Music Therapy</h3>
-        <p class="text-gray-600">
-          Curated playlists designed to calm anxiety, boost mood, and promote
-          relaxation
-        </p>
+        <div class="p-4 sm:p-6">
+          <h3 class="text-base sm:text-lg font-bold text-gray-900 ">Music Therapy</h3>
+          <p class="mt-2 text-xs sm:text-sm text-gray-600">Immerse yourself in calming melodies designed to reduce stress and promote relaxation.</p>
+        </div>
       </div>
 
-      <div
-        class="card text-center group hover:transform hover:scale-105 transition-transform duration-300"
-      >
-        <div
-          class="text-4xl mb-4 text-secondary group-hover:text-accent transition-colors duration-300"
-        >
-          <i class="fas fa-palette"></i>
+      <div class="group flex flex-col overflow-hidden rounded-xl bg-white/5 dark:bg-black/10 shadow-lg transition-shadow hover:shadow-primary/20">
+        <div class="relative h-48 sm:h-52 md:h-56 w-full group-hover-animate transition-transform duration-300">
+          <div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAlAoGUnt5bo-B2DcGZHe1wfsuoWemKPaBQ2vvMEHbYQ9aXMKnlBKUUzO6L3ORDQJzGnKaxm4mbLMVqCwcyARBV38uKWZIQqF4UksDOfdPjQ2PbVVoegDLin70GxRw49x5ZcoxRpRxxbeZQonzhgRb-e1F95qB4TzcxpDlU1DaXmIHpwONCL0MuOnnvVeFNqLGuKt0aN8kO4tgcQo5WyB6MNoDiRvY1ixnjGM8Q-2pJDy0iwKYSUbuIkQ6WtQa_s13dQfKkznSKCn4");'></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         </div>
-        <h3 class="text-xl font-semibold text-textMain mb-2">Art Therapy</h3>
-        <p class="text-gray-600">
-          Express yourself through digital drawing and creative expression
-        </p>
+        <div class="p-4 sm:p-6">
+          <h3 class="text-base sm:text-lg font-bold text-gray-900">Art Therapy</h3>
+          <p class="mt-2 text-xs sm:text-sm text-gray-600">Express your emotions through creative art exercises, fostering self-discovery and healing.</p>
+        </div>
       </div>
 
-      <div
-        class="card text-center group hover:transform hover:scale-105 transition-transform duration-300"
-      >
-        <div
-          class="text-4xl mb-4 text-accent group-hover:text-primary transition-colors duration-300"
-        >
-          <i class="fas fa-heart"></i>
+      <div class="group flex flex-col overflow-hidden rounded-xl bg-white/5 dark:bg-black/10 shadow-lg transition-shadow hover:shadow-primary/20">
+        <div class="relative h-48 sm:h-52 md:h-56 w-full group-hover-animate transition-transform duration-300">
+          <div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuApKUMC53d3QgFh98QB9pszV_WDzb36fLSRq8n41bsjD1OUowixPnhBDyo7KN-lL1o5czHkg_OBIlN7mNfO-ltPIQmxmx9FhfJRLG_YtvmZxL7W9wntb29FmcMidbXSc1XEJG9KBntXjI77x3IOABmmD9MtcyjTMLxSOOCeVp9kloFgxalI39SJJuMShtD-dVb_aGDBryHqFMcsIi7NWkj8Y_ztXXFyRXHrgERfVVADorGC99kzJCPnXvlsSYt3Yr-u35WuelHpWRA");'></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         </div>
-        <h3 class="text-xl font-semibold text-textMain mb-2">Mood Tracking</h3>
-        <p class="text-gray-600">
-          Monitor your emotional patterns and identify triggers
-        </p>
+        <div class="p-4 sm:p-6">
+          <h3 class="text-base sm:text-lg font-bold text-gray-900 ">Mood Tracking</h3>
+          <p class="mt-2 text-xs sm:text-sm text-gray-600">Monitor your emotional state with our intuitive mood tracker, gaining insights into your mental health patterns.</p>
+        </div>
       </div>
 
-      <div
-        class="card text-center group hover:transform hover:scale-105 transition-transform duration-300"
-      >
-        <div
-          class="text-4xl mb-4 text-primary group-hover:text-secondary transition-colors duration-300"
-        >
-          <i class="fas fa-user-md"></i>
+      <div class="group flex flex-col overflow-hidden rounded-xl bg-white/5 dark:bg-black/10 shadow-lg transition-shadow hover:shadow-primary/20">
+        <div class="relative h-48 sm:h-52 md:h-56 w-full group-hover-animate transition-transform duration-300">
+          <div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAuptitKskntMuRNdWuOC1rB6xTTAOLygcmY37OY7xLj708-_4C7kT4l9ilLP1mbKOLPZy9edfWxvF1Mt5RgpCc3fdQj9VssfyJ0KbJBMW-Wg073d34e1Pl9VTu_hEiu6pQywlTPQyfQaClSewNnwsLrBtEoLAHhWAA6nEZ4mQnWRzf-s3iw62hEZWlmOjbbNRDH5RObvkGS9oq5XzmLmQZLkW3q684NKGomic9MsNXGMRWLlpvE-5NU1GZ8eYpm9UXA_RWCUnC4xs");'></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         </div>
-        <h3 class="text-xl font-semibold text-textMain mb-2">
-          Professional Support
-        </h3>
-        <p class="text-gray-600">
-          Connect with licensed therapists and mental health professionals
-        </p>
+        <div class="p-4 sm:p-6">
+          <h3 class="text-base sm:text-lg font-bold text-gray-900 ">Professional Support</h3>
+          <p class="mt-2 text-xs sm:text-sm text-gray-600">Connect with licensed therapists for personalized guidance and support on your wellness journey.</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Call to Action -->
-<section class="py-16 bg-gray-50">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-    <h2 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-      Start Your Wellness Journey Today
-    </h2>
-    <p class="text-xl text-gray-600 mb-8">
-      Join thousands of users who have found peace and balance with CalmTunes
-    </p>
-    <% if (!user) { %>
-    <a href="/signup" class="btn-primary text-lg py-3 px-8">
-      Create Free Account
-    </a>
-    <% } %>
+<!-- Call to Action Section -->
+<section class="bg-primary/10 dark:bg-primary/20 py-12 sm:py-16 md:py-20 lg:py-24">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">Start Your Wellness Journey Today</h2>
+    <div class="mt-6 sm:mt-8 flex justify-center">
+      <% if (!user) { %>
+      <a href="/signup" class="w-full sm:w-auto rounded-full bg-primary px-6 sm:px-8 py-3 text-sm sm:text-base font-bold text-white shadow-lg transition-transform hover:scale-105 text-center">Sign Up Now</a>
+      <% } %>
+    </div>
   </div>
 </section>

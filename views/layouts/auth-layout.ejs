@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link href="/css/output.css" rel="stylesheet" />
+
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Custom styles for animations and effects -->
+    <style>
+      .group:hover .group-hover-animate {
+        transform: translateY(-4px);
+      }
+
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-fade-in-down {
+        animation: fadeInDown 0.8s ease-out;
+      }
+
+      .animate-fade-in-up {
+        animation: fadeInUp 0.8s ease-out;
+      }
+
+      .animate-fade-in {
+        animation: fadeInUp 0.6s ease-out;
+      }
+    </style>
+
+  </head>
+  <body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <%- include('../partials/navbar') %>
+
+    <!-- Flash Messages Container -->
+    <div id="flash-container" class="relative z-40 px-4">
+      <% if (success && success.length > 0) { %>
+      <div
+        class="flash-message bg-green-100 border border-green-400 text-green-700 px-4 py-3 mx-auto max-w-4xl rounded relative mb-2 shadow-sm"
+        data-type="success"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span><%= success %></span>
+          </div>
+          <button class="flash-close text-green-700 hover:text-green-900 ml-4">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      <% } %>
+
+      <% if (error && error.length > 0) { %>
+      <div
+        class="flash-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 mx-auto max-w-4xl rounded relative mb-2 shadow-sm"
+        data-type="error"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span><%= error %></span>
+          </div>
+          <button class="flash-close text-red-700 hover:text-red-900 ml-4">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1"><%- body -%></main>
+
+    <!-- Global scripts -->
+
+    <script src="/js/main.js" defer></script>
+
+    <!-- Mobile menu toggle script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileMenuButton && mobileMenu) {
+          mobileMenuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+          });
+        }
+      });
+    </script>
+    <script src="/js/music.js" defer></script>
+    <script src="/js/drawing.js" defer></script>
+    <script src="/js/account.js" defer></script>
+    <script src="/js/panic.js" defer></script>
+    <script src="/js/quotes.js" defer></script>
+
+    <!-- Global session management -->
+    <script>
+      // Global session validation function
+      async function validateSession() {
+        try {
+          const response = await fetch('/api/session/validate', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            return data.success;
+          } else {
+            return false;
+          }
+        } catch (error) {
+          console.error('Error validating session:', error);
+          return false;
+        }
+      }
+
+      // Global function to handle session expiry
+      async function handleSessionExpiry() {
+        // Clear any existing user data
+        localStorage.removeItem('user');
+        sessionStorage.clear();
+
+        // Show user-friendly message
+        const message = 'Your session has expired. Please login again to continue.';
+
+        // Check if we're on a page that needs authentication
+        if (document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true') {
+          alert(message);
+          window.location.href = '/login';
+        } else {
+          // Show a subtle notification for non-critical pages
+          console.warn('Session expired:', message);
+        }
+      }
+
+      // Global error handler for fetch requests
+      window.addEventListener('unhandledrejection', async function(event) {
+        if (event.reason && event.reason.message && event.reason.message.includes('401')) {
+          console.error('Authentication error detected:', event.reason);
+          await handleSessionExpiry();
+        }
+      });
+
+      // Periodic session check (every 5 minutes)
+      setInterval(async function() {
+        if (document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true') {
+          const isValid = await validateSession();
+          if (!isValid) {
+            console.warn('Session validation failed during periodic check');
+            await handleSessionExpiry();
+          }
+        }
+      }, 5 * 60 * 1000); // 5 minutes
+    </script>
+
+  </body>
+</html>

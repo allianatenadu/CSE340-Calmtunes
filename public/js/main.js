@@ -8,24 +8,15 @@
         mobileMenuButton.addEventListener('click', () => {
           mobileMenu.classList.toggle('hidden');
           
-          // Animate hamburger icon
-          const icon = mobileMenuButton.querySelector('i');
-          if (mobileMenu.classList.contains('hidden')) {
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
-          } else {
-            icon.classList.remove('fa-bars');
-            icon.classList.add('fa-times');
-          }
+          // Animate hamburger icon - SVG doesn't need class changes
+          // The SVG icon is static and doesn't need animation
         });
 
         // Close mobile menu when clicking outside
         document.addEventListener('click', (e) => {
           if (!mobileMenuButton.contains(e.target) && !mobileMenu.contains(e.target)) {
             mobileMenu.classList.add('hidden');
-            const icon = mobileMenuButton.querySelector('i');
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
+            // SVG icon doesn't need class changes
           }
         });
       }
