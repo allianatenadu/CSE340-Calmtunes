@@ -2438,6 +2438,11 @@ video {
   fill: currentColor;
 }
 
+.object-contain {
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+
 .object-cover {
   -o-object-fit: cover;
      object-fit: cover;
@@ -4070,6 +4075,11 @@ video {
     color: rgb(255 255 255 / var(--tw-text-opacity, 1));
   }
 
+  .dark\:text-gray-900 {
+    --tw-text-opacity: 1;
+    color: rgb(17 24 39 / var(--tw-text-opacity, 1));
+  }
+
   .dark\:placeholder-gray-900::-moz-placeholder {
     --tw-placeholder-opacity: 1;
     color: rgb(17 24 39 / var(--tw-placeholder-opacity, 1));
@@ -4088,6 +4098,16 @@ video {
   .dark\:placeholder-gray-950::placeholder {
     --tw-placeholder-opacity: 1;
     color: rgb(3 7 18 / var(--tw-placeholder-opacity, 1));
+  }
+
+  .dark\:placeholder-gray-400::-moz-placeholder {
+    --tw-placeholder-opacity: 1;
+    color: rgb(156 163 175 / var(--tw-placeholder-opacity, 1));
+  }
+
+  .dark\:placeholder-gray-400::placeholder {
+    --tw-placeholder-opacity: 1;
+    color: rgb(156 163 175 / var(--tw-placeholder-opacity, 1));
   }
 
   .dark\:hover\:bg-primary\/10:hover {
