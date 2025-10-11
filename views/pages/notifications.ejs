@@ -1,4 +1,24 @@
-<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- Main Layout Container -->
+<div class="min-h-screen bg-gray-50">
+  <!-- Header with Back Button -->
+  <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-center justify-between">
+        <button
+          onclick="window.location.href='/dashboard'"
+          class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+        >
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to Dashboard</span>
+        </button>
+        <h1 class="text-xl font-semibold text-gray-900">Notifications</h1>
+        <div class="w-32"></div> <!-- Spacer for centering -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <!-- Header -->
   <div class="mb-8">
     <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
@@ -100,6 +120,7 @@
         </button>
       </div>
     </div>
+  </div>
   </div>
 </div>
 

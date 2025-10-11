@@ -1,0 +1,361 @@
+<!-- Sidebar Navigation -->
+<aside
+  id="sidebar"
+  class="w-64 bg-white flex flex-col shadow-lg transition-all duration-300 ease-in-out h-screen"
+>
+  <!-- Logo Section -->
+  <div
+    id="logo-section"
+    class="flex items-center justify-center gap-2 p-3 border-b border-gray-100 cursor-pointer hover:bg-purple-50 transition-all duration-200 relative group"
+    onclick="toggleSidebar()"
+  >
+    <div
+      class="flex items-center justify-center transition-transform duration-200 hover:scale-105"
+    >
+      <img
+        src="/images/logo.png"
+        alt="Calmtunes Logo"
+        class="w-8 h-8 transition-all duration-200 hover:brightness-110"
+      />
+    </div>
+    <span
+      id="logo-text"
+      class="text-base font-bold text-gray-800 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent"
+      >Calmtunes</span
+    >
+    <!-- Enhanced Tooltip -->
+    <div
+      class="absolute left-full ml-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-50 shadow-lg"
+    >
+      <div class="flex items-center gap-2">
+        <i class="fas fa-expand-arrows-alt text-purple-300"></i>
+        <span>Click to toggle sidebar</span>
+      </div>
+      <div
+        class="absolute -left-1 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"
+      ></div>
+    </div>
+    <!-- Toggle State Indicator -->
+    <div
+      id="toggle-indicator"
+      class="ml-auto text-purple-500 opacity-50 group-hover:opacity-100 transition-opacity duration-200"
+    >
+      <i class="fas fa-chevron-left text-sm"></i>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav id="nav-menu" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" style="display: block; visibility: visible; min-height: 400px;">
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/dashboard"
+      data-page="dashboard"
+    >
+      <i class="fas fa-home text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Dashboard</span>
+    </a>
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/music"
+      data-page="music"
+    >
+      <i class="fas fa-music text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Music Library</span>
+    </a>
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/mood-tracker"
+      data-page="mood-tracker"
+    >
+      <i class="fas fa-chart-bar text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Mood Tracking</span>
+    </a>
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/drawing"
+      data-page="drawing"
+    >
+      <i class="fas fa-palette text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Art Work</span>
+    </a>
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/panic"
+      data-page="panic"
+    >
+      <i class="fas fa-shield-alt text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Panic Relief</span>
+    </a>
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/find-therapist"
+      data-page="find-therapist"
+    >
+      <i class="fas fa-search text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Find Therapist</span>
+    </a>
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/chat"
+      data-page="chat"
+    >
+      <i class="fas fa-comments text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Messages</span>
+    </a>
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/book-session"
+      data-page="sessions"
+    >
+      <i class="fas fa-calendar-plus text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Sessions</span>
+    </a>
+
+
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 trnsition-colors nav-item"
+      href="/notifications"
+      data-page="notifications"
+    >
+      <i class="fas fa-bell text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Notifications</span>
+    </a>
+  </nav>
+
+  <!-- Bottom Actions -->
+  <div class="p-3 border-t border-gray-100 space-y-1">
+    <a
+      class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors nav-item"
+      href="/account"
+      data-page="account"
+    >
+      <i class="fas fa-cog text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Settings</span>
+    </a>
+    <a
+      class="flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors nav-item"
+      href="/logout"
+    >
+      <i class="fas fa-sign-out-alt text-sm nav-icon"></i>
+      <span class="nav-text text-sm">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- Sidebar Toggle JavaScript -->
+<script>
+  // Sidebar state management
+  let sidebarCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
+
+  // Initialize sidebar state on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    // Force navigation to be visible
+    const navMenu = document.getElementById("nav-menu");
+    if (navMenu) {
+      navMenu.style.display = "block";
+      navMenu.style.visibility = "visible";
+      navMenu.classList.add("nav-menu-visible");
+    }
+
+    // Reset sidebar collapsed state for book-session page
+    sidebarCollapsed = false;
+    localStorage.setItem("sidebarCollapsed", "false");
+
+    // Apply sidebar state
+    applySidebarState();
+  });
+
+  function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+
+    // Add visual feedback during transition
+    const logoSection = document.getElementById("logo-section");
+    if (logoSection) {
+      logoSection.style.transform = "scale(0.95)";
+      setTimeout(() => {
+        logoSection.style.transform = "scale(1)";
+      }, 150);
+    }
+
+    applySidebarState();
+
+    // Save state to localStorage
+    localStorage.setItem("sidebarCollapsed", sidebarCollapsed.toString());
+
+    // Show brief feedback
+    showToggleFeedback();
+  }
+
+  function showToggleFeedback() {
+    // Remove existing feedback
+    const existingFeedback = document.querySelector(".toggle-feedback");
+    if (existingFeedback) {
+      existingFeedback.remove();
+    }
+
+    // Create feedback element
+    const feedback = document.createElement("div");
+    feedback.className =
+      "toggle-feedback fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-4 bg-purple-600 text-white text-sm rounded-lg shadow-lg z-50 transition-all duration-300";
+    feedback.textContent = sidebarCollapsed
+      ? "Sidebar Collapsed"
+      : "Sidebar Expanded";
+
+    document.body.appendChild(feedback);
+
+    // Animate in
+    setTimeout(() => {
+      feedback.style.opacity = "1";
+      feedback.style.transform = "translateX(-50%) translateY(0)";
+    }, 10);
+
+    // Remove after animation
+    setTimeout(() => {
+      feedback.style.opacity = "0";
+      feedback.style.transform = "translateX(-50%) translateY(-10px)";
+      setTimeout(() => {
+        if (feedback.parentNode) {
+          feedback.parentNode.removeChild(feedback);
+        }
+      }, 300);
+    }, 1500);
+  }
+
+  function applySidebarState() {
+    const sidebar = document.getElementById("sidebar");
+    const logoText = document.getElementById("logo-text");
+    const navMenu = document.getElementById("nav-menu");
+    const navItems = document.querySelectorAll(".nav-item");
+    const navTexts = document.querySelectorAll(".nav-text");
+    const navIcons = document.querySelectorAll(".nav-icon");
+    const toggleIndicator = document.getElementById("toggle-indicator");
+
+    if (sidebarCollapsed) {
+       // Collapsed state - show only icons with increased height
+       sidebar.className =
+         "w-16 bg-white flex flex-col shadow-lg transition-all duration-300";
+
+       if (logoText) {
+         logoText.style.display = "none";
+       }
+
+       // Center the logo section in collapsed state
+       const logoSection = document.getElementById("logo-section");
+       if (logoSection) {
+         logoSection.className =
+           "flex items-center justify-center gap-2 p-3 border-b border-gray-100 cursor-pointer hover:bg-purple-50 transition-all duration-200 relative group";
+       }
+
+       // Sidebar collapsed state logic (original)
+
+       navItems.forEach((item) => {
+         item.className = item.className
+           .replace(/gap-\d+/g, "justify-center")
+           .replace(/px-\d+/g, "px-2");
+       });
+
+       navTexts.forEach((text) => {
+         text.style.display = "none";
+       });
+
+       // Keep icons visible and centered
+       navIcons.forEach((icon) => {
+         icon.className =
+           icon.className.replace(/\s*mx-auto\s*/g, "") + " mx-auto";
+       });
+
+       // Update toggle indicator
+       if (toggleIndicator) {
+         toggleIndicator.innerHTML =
+           '<i class="fas fa-chevron-right text-sm"></i>';
+         toggleIndicator.className =
+           "ml-auto text-purple-500 opacity-50 group-hover:opacity-100 transition-all duration-200";
+       }
+    } else {
+      // Expanded state - show full sidebar
+      sidebar.className =
+        "w-64 bg-white flex flex-col shadow-lg transition-all duration-300";
+
+      if (logoText) {
+        logoText.style.display = "block";
+      }
+
+      // Sidebar expanded state logic (original)
+
+      // Restore normal logo section layout
+      const logoSection = document.getElementById("logo-section");
+      if (logoSection) {
+        logoSection.className =
+          "flex items-center justify-center gap-2 p-3 border-b border-gray-100 cursor-pointer hover:bg-purple-50 transition-all duration-200 relative group";
+      }
+
+      navItems.forEach((item) => {
+        item.className = item.className
+          .replace(/justify-center/g, "gap-3")
+          .replace(/px-2/g, "px-3");
+      });
+
+      navTexts.forEach((text) => {
+        text.style.display = "block";
+      });
+
+      navIcons.forEach((icon) => {
+        icon.className = icon.className.replace(/\s*mx-auto\s*/g, "");
+      });
+
+      // Update toggle indicator
+      if (toggleIndicator) {
+        toggleIndicator.innerHTML =
+          '<i class="fas fa-chevron-left text-sm"></i>';
+        toggleIndicator.className =
+          "ml-auto text-purple-500 opacity-50 group-hover:opacity-100 transition-all duration-200";
+      }
+    }
+  }
+
+  // Optional: Add keyboard shortcut (Ctrl + B) to toggle sidebar
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && e.key === "b") {
+      e.preventDefault();
+      toggleSidebar();
+    }
+  });
+
+  // Set active navigation link based on current page
+  function setActiveNavLink() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll(".nav-link");
+
+    navLinks.forEach((link) => {
+      // Remove active classes from all links
+      link.classList.remove("bg-purple-100", "text-purple-700", "font-medium");
+      link.classList.add("text-gray-600", "hover:text-gray-900");
+
+      // Check if this link matches the current page
+      const linkHref = link.getAttribute("href");
+      const linkPage = link.getAttribute("data-page");
+
+      // Check for exact match or if current path contains the page identifier
+      if (
+        currentPath === linkHref ||
+        (linkPage && currentPath.includes(linkPage)) ||
+        (linkPage === "sessions" && (currentPath.includes("book-session") || currentPath.includes("my-session"))) ||
+        (linkPage === "dashboard" && currentPath === "/") ||
+        (linkPage === "find-therapist" && currentPath === "/find-therapist") ||
+        (linkPage === "chat" && (currentPath === "/chat" || currentPath.includes("/chat"))) ||
+        (linkPage === "my-therapist" && currentPath === "/my-therapist") ||
+        (linkPage === "notifications" && currentPath === "/notifications") ||
+        (linkPage === "account" && currentPath === "/account")
+      ) {
+        // Apply active styling
+        link.classList.remove("text-gray-600", "hover:text-gray-900");
+        link.classList.add("bg-purple-100", "text-purple-700", "font-medium");
+      }
+    });
+  }
+
+  // Set active link on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    setActiveNavLink();
+  });
+</script>

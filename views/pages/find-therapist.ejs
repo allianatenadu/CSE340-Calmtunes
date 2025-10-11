@@ -1,80 +1,86 @@
-<div
-  class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-  data-user-authenticated="<%= user ? 'true' : 'false' %>"
->
+<div class="flex-1 p-4 md:p-8" data-user-authenticated="<%= user ? 'true' : 'false' %>">
+  <div class="max-w-7xl mx-auto">
   <!-- Header -->
-  <div class="mb-8">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-          👩‍⚕️ Find a Therapist
-        </h1>
-        <p class="text-xl text-gray-600">
-          Connect with licensed mental health professionals who understand your
-          needs
-        </p>
-      </div>
+  <div class="flex flex-wrap justify-between gap-3 p-4 mb-6">
+    <div class="flex min-w-72 flex-col gap-3">
+      <p class="text-[#111718] tracking-light text-[32px] font-bold leading-tight">Find a Therapist</p>
+      <p class="text-[#618389] text-sm font-normal leading-normal">Browse our network of licensed therapists to find the right fit for you.</p>
+    </div>
 
-      <!-- Quick Access Links -->
-      <div class="flex flex-col sm:flex-row gap-3">
-        <a href="/notifications" class="btn-outline">
-          <i class="fas fa-bell mr-2"></i>Notifications
-        </a>
-        <a href="/dashboard" class="btn-secondary">
-          <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-        </a>
+    <!-- My Therapist Button - Only show if user has an assigned therapist -->
+    <% if (userTherapist) { %>
+    <div class="flex items-center gap-3">
+      <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="flex-shrink-0">
+            <% if (userTherapist.therapist_image) { %>
+            <img
+              src="<%= userTherapist.therapist_image.startsWith('/') ? userTherapist.therapist_image : `/uploads/${userTherapist.therapist_image}` %>"
+              alt="<%= userTherapist.therapist_name %>"
+              class="w-10 h-10 rounded-full object-cover"
+            />
+            <% } else { %>
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <i class="fas fa-user-md text-primary"></i>
+            </div>
+            <% } %>
+          </div>
+          <div class="flex flex-col">
+            <p class="text-sm font-semibold text-gray-900">My Therapist</p>
+            <p class="text-xs text-gray-600">Dr. <%= userTherapist.therapist_name %></p>
+          </div>
+          <div class="flex gap-2 ml-2">
+            <button
+              onclick="startChatWithTherapist('<%= userTherapist.therapist_id %>', '<%= userTherapist.therapist_name %>')"
+              class="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors"
+              title="Chat with therapist"
+            >
+              <i class="fas fa-comments text-xs"></i>
+            </button>
+            <button
+              onclick="bookSessionWithTherapist('<%= userTherapist.therapist_id %>', '<%= userTherapist.therapist_name %>')"
+              class="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-white hover:bg-secondary/90 transition-colors"
+              title="Book session"
+            >
+              <i class="fas fa-calendar-plus text-xs"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+    <% } %>
   </div>
 
   <!-- Search and Filters -->
-  <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-textMain mb-2"
-          >Search</label
-        >
+  <div class="px-4 py-3 mb-6">
+    <label class="flex flex-col min-w-40 h-12 w-full">
+      <div class="flex w-full flex-1 items-stretch rounded-xl h-full">
+        <div class="text-[#618389] flex border-none bg-[#f0f4f4] items-center justify-center pl-4 rounded-l-xl border-r-0">
+          <i class="fas fa-search"></i>
+        </div>
         <input
           type="text"
-          placeholder="Name or specialty..."
-          class="form-input"
+          placeholder="Search by name or specialization"
+          class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#111718] focus:outline-0 focus:ring-0 border-none bg-[#f0f4f4] focus:border-none h-full placeholder:text-[#618389] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
           id="therapist-search"
         />
       </div>
-      <div>
-        <label class="block text-sm font-medium text-textMain mb-2"
-          >Specialty</label
-        >
-        <select class="form-input" id="specialty-filter">
-          <option value="">All Specialties</option>
-          <option value="anxiety">Anxiety & Depression</option>
-          <option value="cbt">Cognitive Behavioral Therapy</option>
-          <option value="trauma">Trauma & PTSD</option>
-          <option value="couples">Couples Therapy</option>
-          <option value="family">Family Therapy</option>
-          <option value="addiction">Addiction Counseling</option>
-          <option value="child">Child Psychology</option>
-          <option value="grief">Grief Counseling</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-textMain mb-2"
-          >Experience</label
-        >
-        <select class="form-input" id="experience-filter">
-          <option value="">Any Experience</option>
-          <option value="1-3">1-3 years</option>
-          <option value="4-7">4-7 years</option>
-          <option value="8-15">8-15 years</option>
-          <option value="15+">15+ years</option>
-        </select>
-      </div>
-      <div class="flex items-end">
-        <button class="btn-primary w-full" onclick="filterTherapists()">
-          <i class="fas fa-search mr-2"></i>Find Therapists
-        </button>
-      </div>
-    </div>
+    </label>
+  </div>
+
+  <div class="flex gap-3 p-3 flex-wrap pr-4 mb-6">
+    <button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-[#f0f4f4] pl-4 pr-2 filter-btn" data-filter="specialization">
+      <p class="text-[#111718] text-sm font-medium leading-normal">Specialization</p>
+      <i class="fas fa-chevron-down text-[#111718]"></i>
+    </button>
+    <button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-[#f0f4f4] pl-4 pr-2 filter-btn" data-filter="gender">
+      <p class="text-[#111718] text-sm font-medium leading-normal">Gender</p>
+      <i class="fas fa-chevron-down text-[#111718]"></i>
+    </button>
+    <button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-[#f0f4f4] pl-4 pr-2 filter-btn" data-filter="availability">
+      <p class="text-[#111718] text-sm font-medium leading-normal">Availability</p>
+      <i class="fas fa-chevron-down text-[#111718]"></i>
+    </button>
   </div>
 
   <!-- Therapist Directory -->
@@ -87,131 +93,64 @@
       </div>
     </div>
 
-    <div
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      id="therapists-grid"
-    >
-      <% if (approvedTherapists && approvedTherapists.length > 0) { %> <%
-      approvedTherapists.forEach(therapist => { %>
-      <div
-        class="card relative"
-        data-specialty="<%= therapist.specialty %>"
-        data-experience="<%= therapist.experience %>"
-        data-name="<%= therapist.name.toLowerCase() %>"
-        data-therapist-id="<%= therapist.id %>"
-        data-bio="<%= (therapist.bio || 'No bio available').replace(/'/g, "\\'").replace(/"/g, '"') %>"
-        data-therapist-name="<%= therapist.name %>"
-      >
-        <div class="text-center mb-4">
-          <% let profileImageUrl = null; if (therapist.profile_image) {
-          profileImageUrl = therapist.profile_image.startsWith('/') ?
-          therapist.profile_image : `/uploads/${therapist.profile_image}`; } %>
-          <% if (profileImageUrl) { %>
-          <img
-            src="<%= profileImageUrl %>"
-            alt="<%= therapist.name %>"
-            class="w-24 h-24 rounded-full mx-auto mb-4 object-cover shadow-md border-2 border-primary/20"
-          />
-          <% } else { %>
-          <div
-            class="w-24 h-24 rounded-full mx-auto mb-4 bg-primary/10 flex items-center justify-center shadow-md"
-          >
-            <i class="fas fa-user-md text-2xl text-primary"></i>
-          </div>
-          <% } %>
-
-          <h3 class="text-xl font-bold text-textMain mb-1">
-            <%= therapist.name %>
-          </h3>
-          <p class="text-primary font-medium mb-2 capitalize">
-            <%= therapist.specialty ? therapist.specialty.replace('-', ' & ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Practice' %>
-          </p>
-
-          <div class="flex items-center justify-center mb-3">
-            <div class="flex items-center">
-              <% for (let i = 0; i < 5; i++) { %>
-              <i class="fas fa-star text-yellow-400 text-sm"></i>
+    <div class="space-y-4" id="therapists-grid">
+      <% if (approvedTherapists && approvedTherapists.length > 0) { %>
+        <% approvedTherapists.forEach(therapist => { %>
+        <div
+          class="therapist-card flex items-stretch justify-between gap-4 rounded-xl p-4"
+          data-specialty="<%= therapist.specialty %>"
+          data-experience="<%= therapist.experience %>"
+          data-name="<%= therapist.name.toLowerCase() %>"
+          data-therapist-id="<%= therapist.id %>"
+          data-bio="<%= (therapist.bio || 'No bio available').replace(/'/g, "\\'").replace(/"/g, '"') %>"
+          data-therapist-name="<%= therapist.name %>"
+        >
+          <div class="flex flex-[2_2_0px] flex-col gap-4">
+            <div class="flex flex-col gap-1">
+              <p class="text-[#111718] text-base font-bold leading-tight"><%= therapist.name %></p>
+              <p class="text-[#618389] text-sm font-normal leading-normal">
+                <%= therapist.specialty ? therapist.specialty.replace('-', ' & ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Practice' %>. <%= therapist.bio ? therapist.bio.substring(0, 100) + '...' : 'Experienced mental health professional dedicated to helping clients achieve their wellness goals.' %>
+              </p>
+            </div>
+            <div class="flex gap-3">
+              <% if (user) { %>
+              <button
+                onclick="viewTherapistProfile('<%= therapist.id %>')"
+                class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-8 px-4 flex-row-reverse bg-[#f0f4f4] text-[#111718] text-sm font-medium leading-normal w-fit"
+              >
+                <span class="truncate">View Profile</span>
+              </button>
+              <% } else { %>
+              <a
+                href="/login"
+                class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-8 px-4 flex-row-reverse bg-[#f0f4f4] text-[#111718] text-sm font-medium leading-normal w-fit"
+              >
+                <span class="truncate">Login to View</span>
+              </a>
               <% } %>
             </div>
-            <span class="ml-2 text-sm text-gray-600">5.0</span>
+          </div>
+          <div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl flex-1">
+            <% let profileImageUrl = null; if (therapist.profile_image) {
+              profileImageUrl = therapist.profile_image.startsWith('/') ?
+              therapist.profile_image : `/uploads/${therapist.profile_image}`; } %>
+            <% if (profileImageUrl) { %>
+            <img
+              src="<%= profileImageUrl %>"
+              alt="<%= therapist.name %>"
+              class="w-full h-full object-cover rounded-xl"
+            />
+            <% } else { %>
+            <div class="w-full h-full bg-gradient-to-br from-[#f0f4f4] to-[#e0e7e7] rounded-xl flex items-center justify-center">
+              <div class="text-6xl text-[#618389]">
+                <%= therapist.name ? therapist.name.charAt(0).toUpperCase() : 'T' %>
+              </div>
+            </div>
+            <% } %>
           </div>
         </div>
-
-        <div class="space-y-2 mb-6">
-          <div class="flex items-center text-sm text-gray-600">
-            <i class="fas fa-graduation-cap text-primary mr-2"></i>
-            <span
-              ><%= therapist.experience || 'Professional' %> experience</span
-            >
-          </div>
-          <div class="flex items-center text-sm text-gray-600">
-            <i class="fas fa-video text-primary mr-2"></i>
-            <span>Video & In-person sessions</span>
-          </div>
-          <div class="flex items-center text-sm text-gray-600">
-            <i class="fas fa-certificate text-primary mr-2"></i>
-            <span>Licensed Professional</span>
-          </div>
-          <div class="flex items-center text-sm text-gray-600">
-            <i class="fas fa-clock text-primary mr-2"></i>
-            <span>Available today</span>
-          </div>
-        </div>
-
-        <!-- Bio Preview -->
-        <% if (therapist.bio) { %>
-        <div class="mb-4">
-          <p class="text-sm text-gray-600 line-clamp-3">
-            <%= therapist.bio.substring(0, 120) %><%= therapist.bio.length > 120
-            ? '...' : '' %>
-          </p>
-        </div>
-        <% } %>
-
-        <div class="space-y-3">
-           <% if (user) { %>
-           <button
-             onclick="selectTherapist(this)"
-             class="w-full btn-primary therapist-select-btn"
-             data-therapist-id="<%= therapist.id %>"
-           >
-             <i class="fas fa-user-md mr-2"></i>Make Your Therapist
-           </button>
-           <button
-             onclick="scheduleConsultation('<%= therapist.id %>', '<%= therapist.name %>')"
-             class="w-full btn-secondary"
-           >
-             <i class="fas fa-calendar mr-2"></i>Schedule Consultation
-           </button>
-           <button
-             onclick="startChat('<%= therapist.id %>', '<%= therapist.name %>')"
-             class="w-full btn-outline"
-           >
-             <i class="fas fa-comments mr-2"></i>Start Chat
-           </button>
-           <% } else { %>
-           <a
-             href="/login"
-             class="w-full btn-primary block text-center"
-           >
-             <i class="fas fa-user-md mr-2"></i>Login to Connect
-           </a>
-           <a
-             href="/login"
-             class="w-full btn-secondary block text-center"
-           >
-             <i class="fas fa-calendar mr-2"></i>Login to Schedule
-           </a>
-           <a
-             href="/login"
-             class="w-full btn-outline block text-center"
-           >
-             <i class="fas fa-comments mr-2"></i>Login to Chat
-           </a>
-           <% } %>
-         </div>
-      </div>
-      <% }) %> <% } else { %>
+        <% }) %>
+      <% } else { %>
       <div class="col-span-full text-center py-12">
         <div
           class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center"
@@ -306,6 +245,21 @@
         </div>
       </form>
     </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-center p-4">
+      <a href="#" class="flex size-10 items-center justify-center">
+        <i class="fas fa-chevron-left text-[#111718]"></i>
+      </a>
+      <a class="text-sm font-bold leading-normal tracking-[0.015em] flex size-10 items-center justify-center text-[#111718] rounded-full bg-[#f0f4f4]" href="#">1</a>
+      <a class="text-sm font-normal leading-normal flex size-10 items-center justify-center text-[#111718] rounded-full" href="#">2</a>
+      <a class="text-sm font-normal leading-normal flex size-10 items-center justify-center text-[#111718] rounded-full" href="#">3</a>
+      <span class="text-sm font-normal leading-normal flex size-10 items-center justify-center text-[#111718] rounded-full">...</span>
+      <a class="text-sm font-normal leading-normal flex size-10 items-center justify-center text-[#111718] rounded-full" href="#">10</a>
+      <a href="#" class="flex size-10 items-center justify-center">
+        <i class="fas fa-chevron-right text-[#111718]"></i>
+      </a>
+    </div>
   </div>
 
   <script>
@@ -321,12 +275,14 @@
       document
         .getElementById("therapist-search")
         .addEventListener("input", filterTherapists);
-      document
-        .getElementById("specialty-filter")
-        .addEventListener("change", filterTherapists);
-      document
-        .getElementById("experience-filter")
-        .addEventListener("change", filterTherapists);
+
+      // Add event listeners for filter buttons
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Toggle dropdown (placeholder for future implementation)
+          console.log('Filter clicked:', this.dataset.filter);
+        });
+      });
 
       // Handle appointment booking
       document
@@ -335,35 +291,36 @@
     });
 
     function filterTherapists() {
-      const search = document
-        .getElementById("therapist-search")
-        .value.toLowerCase();
-      const specialty = document.getElementById("specialty-filter").value;
-      const experience = document.getElementById("experience-filter").value;
-      const therapistCards = document.querySelectorAll(
-        "#therapists-grid [data-specialty]"
-      );
-      let visibleCount = 0;
+       const search = document
+         .getElementById("therapist-search")
+         .value.toLowerCase();
+       const therapistCards = document.querySelectorAll(
+         "#therapists-grid [data-specialty]"
+       );
+       let visibleCount = 0;
 
-      therapistCards.forEach((card) => {
-        const cardSpecialty = card.dataset.specialty;
-        const cardExperience = card.dataset.experience;
-        const cardName = card.dataset.name;
+       therapistCards.forEach((card) => {
+         const cardName = card.dataset.name;
+         const cardBio = (card.dataset.bio || '').toLowerCase();
 
-        const matchesSearch = !search || cardName.includes(search);
-        const matchesSpecialty = !specialty || cardSpecialty === specialty;
-        const matchesExperience = !experience || cardExperience === experience;
+         const matchesSearch = !search ||
+           cardName.includes(search) ||
+           cardBio.includes(search);
 
-        if (matchesSearch && matchesSpecialty && matchesExperience) {
-          card.style.display = "block";
-          visibleCount++;
-        } else {
-          card.style.display = "none";
-        }
-      });
+         if (matchesSearch) {
+           card.style.display = "flex";
+           visibleCount++;
+         } else {
+           card.style.display = "none";
+         }
+       });
 
-      document.getElementById("therapist-count").textContent = visibleCount;
-    }
+       // Update count if element exists
+       const countElement = document.getElementById("therapist-count");
+       if (countElement) {
+         countElement.textContent = visibleCount;
+       }
+     }
 
     // Schedule consultation function
     function scheduleConsultation(therapistId, therapistName) {
@@ -547,8 +504,8 @@
 
         console.log("Starting chat with therapist:", therapistId);
 
-        // Use the chat controller endpoint instead of appointments
-        const response = await fetch("/chat/start", {
+        // Use the chat controller endpoint
+        const response = await fetch("/appointments/chat/start", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -577,9 +534,9 @@
         console.log("Chat start response data:", data);
 
         if (data.success) {
-          console.log("Chat started successfully, redirecting to:", data.conversationId);
-          window.location.href = `/chat/${data.conversationId}`;
-        } else {
+           console.log("Chat started successfully, redirecting to:", data.conversationId);
+           window.location.href = `/appointments/chat/${data.conversationId}`;
+         } else {
           alert(data.error || "Failed to start chat");
         }
       } catch (error) {
@@ -699,6 +656,117 @@
     function updateNavbarTherapistStatus(hasTherapist) {
       // This function can be used to update navbar if needed
       console.log('Therapist selection status updated:', hasTherapist);
+    }
+
+    // View therapist profile function
+    function viewTherapistProfile(therapistId) {
+      // Check if user is authenticated
+      const isAuthenticated = document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true';
+
+      if (!isAuthenticated) {
+        alert("Please login to view therapist profiles.");
+        window.location.href = "/login";
+        return;
+      }
+
+      // Check session validity
+      checkSessionValidity().then(sessionValid => {
+        if (!sessionValid) {
+          alert("Your session has expired. Please login again.");
+          window.location.href = "/login";
+          return;
+        }
+
+        // Redirect to therapist profile page
+        window.location.href = `/therapist/profile/${therapistId}`;
+      });
+    }
+
+    // Start chat with assigned therapist
+    async function startChatWithTherapist(therapistId, therapistName) {
+      try {
+        // Check if user is authenticated
+        const isAuthenticated = document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true';
+
+        if (!isAuthenticated) {
+          alert("Please login to start a chat with your therapist.");
+          window.location.href = "/login";
+          return;
+        }
+
+        // Check session validity
+        const sessionValid = await checkSessionValidity();
+        if (!sessionValid) {
+          alert("Your session has expired. Please login again.");
+          window.location.href = "/login";
+          return;
+        }
+
+        console.log("Starting chat with assigned therapist:", therapistId);
+
+        // Use the chat controller endpoint
+        const response = await fetch("/appointments/chat/start", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ therapistId }),
+        });
+
+        console.log("Chat start response status:", response.status);
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error("Authentication failed - redirecting to login");
+            alert("Your session has expired. Please login again.");
+            window.location.href = "/login";
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server returned HTML instead of JSON");
+        }
+
+        const data = await response.json();
+        console.log("Chat start response data:", data);
+
+        if (data.success) {
+           console.log("Chat started successfully, redirecting to:", data.conversationId);
+           window.location.href = `/appointments/chat/${data.conversationId}`;
+         } else {
+          alert(data.error || "Failed to start chat");
+        }
+      } catch (error) {
+        console.error("Error starting chat with therapist:", error);
+        alert("Failed to start chat. Please try again.");
+      }
+    }
+
+    // Book session with assigned therapist
+    function bookSessionWithTherapist(therapistId, therapistName) {
+      // Check if user is authenticated
+      const isAuthenticated = document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true';
+
+      if (!isAuthenticated) {
+        alert("Please login to book sessions with your therapist.");
+        window.location.href = "/login";
+        return;
+      }
+
+      // Check session validity
+      checkSessionValidity().then(sessionValid => {
+        if (!sessionValid) {
+          alert("Your session has expired. Please login again.");
+          window.location.href = "/login";
+          return;
+        }
+
+        // Redirect to book session page with pre-selected therapist
+        window.location.href = `/book-session?therapistId=${therapistId}`;
+      });
     }
   </script>
 </div>

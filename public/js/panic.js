@@ -1,3 +1,8 @@
+// Check if user is authenticated before enabling panic detection
+const isAuthenticated = document.querySelector('meta[name="user-authenticated"]')?.getAttribute('content') === 'true' ||
+                       document.querySelector('.user-nav') !== null ||
+                       document.querySelector('[data-user]') !== null;
+
 console.log("🚨 Enhanced Automatic Panic Support with Audio Recording loaded");
 
 // Audio recording variables
@@ -29,25 +34,34 @@ const CONTACTS_STORAGE_KEY = 'calmtunes_personal_contacts';
 const PANIC_SESSIONS_KEY = 'calmtunes_panic_sessions';
 const AUDIO_CONSENT_KEY = 'calmtunes_audio_consent';
 
-// Initialize panic session with automatic recording
-function initializePanicSession(triggerMethod = 'manual') {
-  sessionData.sessionId = 'panic_' + Date.now();
+// FIXED: Start recording immediately when session begins
+async function initializePanicSession(triggerMethod = 'manual') {
+  // Prevent multiple initializations
+  if (sessionData.sessionId) {
+    console.log("🚨 Panic session already active:", sessionData.sessionId);
+    return;
+  }
+
+  sessionData.sessionId = 'panic_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   sessionData.startTime = new Date().toISOString();
   sessionData.triggerMethod = triggerMethod;
-  
+
   console.log("🚨 Panic session initialized:", sessionData.sessionId, "Trigger:", triggerMethod);
-  
-  // Mark active session in localStorage for recovery
+
+  // Mark active session
   localStorage.setItem('active_panic_session', sessionData.startTime);
-  
-  // Automatically start recording if consent is given
-  checkAndStartAutoRecording();
-  
+
+  // IMMEDIATELY start recording - no consent check, just record
+  await startImmediateRecording();
+
   // Show session info
   updateSessionUI();
-  
-  // Show panic session banner
-  showPanicSessionBanner();
+  startSessionUIUpdates();
+
+  // Show recording controls
+  showRecordingControls();
+
+  showTempMessage('Session started - Recording audio automatically', 'success');
 }
 
 // Check consent and automatically start recording
@@ -71,6 +85,80 @@ async function checkAndStartAutoRecording() {
       localStorage.setItem(AUDIO_CONSENT_KEY, 'denied');
       showTempMessage("Session tracking enabled without audio recording.", "info");
     }
+  }
+}
+
+// FIXED: Start recording immediately without asking
+async function startImmediateRecording() {
+  try {
+    console.log("🎙️ Starting immediate audio recording...");
+
+    // Request microphone access
+    recordingStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 44100
+      }
+    });
+
+    // Create MediaRecorder with optimal settings
+    const options = {
+      mimeType: 'audio/webm;codecs=opus',
+      audioBitsPerSecond: 128000
+    };
+
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      options.mimeType = 'audio/webm';
+    }
+
+    mediaRecorder = new MediaRecorder(recordingStream, options);
+    audioChunks = []; // Reset chunks
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        audioChunks.push(event.data);
+        console.log("📦 Audio chunk received:", event.data.size, "bytes", "Total chunks:", audioChunks.length);
+      } else {
+        console.log("⚠️ Empty audio chunk received");
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      console.log("⏹️ MediaRecorder stopped, saving recording...");
+      saveAudioRecording();
+    };
+
+    mediaRecorder.onerror = (error) => {
+      console.error("❌ MediaRecorder error:", error);
+      showTempMessage("Recording error: " + error.message, "error");
+    };
+
+    // Start recording with 10-second chunks
+    mediaRecorder.start(10000);
+    isRecording = true;
+    recordingStartTime = Date.now();
+
+    // Update UI
+    updateRecordingUI(true);
+    console.log("✅ Recording started successfully");
+
+  } catch (error) {
+    console.error("❌ Error starting recording:", error);
+
+    let errorMessage = "Could not start recording: ";
+    if (error.name === 'NotAllowedError') {
+      errorMessage += "Microphone access denied. Please allow microphone access.";
+    } else if (error.name === 'NotFoundError') {
+      errorMessage += "No microphone found.";
+    } else {
+      errorMessage += error.message;
+    }
+
+    showTempMessage(errorMessage, "error");
+
+    // Continue session without recording
+    sessionData.recordingFailed = true;
   }
 }
 
@@ -197,15 +285,20 @@ function startAudioRecording() {
 // Enhanced breathing exercise with automatic session tracking
 function startBreathing() {
   if (isBreathing) return;
-  
+
   console.log("🫁 Starting breathing exercise");
-  
+
   // Start session if not already started
   if (!sessionData.sessionId) {
     initializePanicSession('breathing_exercise');
   }
-  
+
   sessionData.breathingUsed = true;
+
+  // Start recording when breathing begins
+  if (!isRecording) {
+    checkAndStartAutoRecording();
+  }
   
   // Original breathing logic
   isBreathing = true;
@@ -219,7 +312,12 @@ function startBreathing() {
   const phaseDisplay = document.getElementById('phase-display');
   const timerDisplay = document.getElementById('timer-display');
   const stopBtn = document.getElementById('stop-btn');
-  
+
+  // Add breathing animation class
+  if (circle) {
+    circle.classList.add('breathing');
+  }
+
   if (stopBtn) stopBtn.classList.remove('hidden');
   if (text) text.textContent = 'Inhale';
   if (instruction) instruction.textContent = 'Inhale deeply through your nose';
@@ -365,7 +463,148 @@ function showSessionContinueDialog() {
   };
 }
 
-// Show panic session banner
+// Show recording controls in the session panel
+function showRecordingControls() {
+  // Update the session recording controls section
+  const startButton = document.querySelector('.session-recording-controls .bg-green-600');
+  const stopButton = document.getElementById('stop-recording-btn');
+
+  if (startButton) startButton.classList.add('hidden');
+  if (stopButton) stopButton.classList.remove('hidden');
+
+  // Show recording status
+  updateRecordingStatus();
+
+  // Start panic attack audio if available
+  startPanicAttackAudio();
+}
+
+// Global function to start panic attack audio (can be called from onclick)
+function startPanicAttackAudioGuide() {
+  if (!sessionData.sessionId) {
+    initializePanicSession('panic_audio_guide');
+  }
+  startPanicAttackAudio();
+  showRecordingControls();
+}
+
+// Panic attack audio variables
+let panicAttackAudio = null;
+let patientRecordingAudio = null;
+
+// Start panic attack audio with female voice guidance
+function startPanicAttackAudio() {
+  try {
+    // Create audio context for patient recording
+    patientRecordingAudio = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Use the dedicated panic attack audio file
+    const panicAudio = document.getElementById('panic-attack-audio');
+    if (panicAudio) {
+      panicAudio.volume = 0.4; // Moderate volume for guidance
+      panicAudio.play().catch(e => {
+        console.log('Panic attack audio play failed:', e);
+        // Fallback to ambient audio if panic audio fails
+        const ambientAudio = document.getElementById('ambient-sound');
+        if (ambientAudio) {
+          ambientAudio.volume = 0.3;
+          ambientAudio.play().catch(e2 => console.log('Ambient audio fallback failed:', e2));
+        }
+      });
+    } else {
+      // Fallback to ambient audio
+      const ambientAudio = document.getElementById('ambient-sound');
+      if (ambientAudio) {
+        ambientAudio.volume = 0.3;
+        ambientAudio.play().catch(e => console.log('Ambient audio play failed:', e));
+      }
+    }
+
+    // Start recording patient audio simultaneously
+    startPatientAudioRecording();
+
+    console.log("🎵 Panic attack audio started with patient recording");
+  } catch (error) {
+    console.error("Error starting panic attack audio:", error);
+  }
+}
+
+// Record patient audio during panic attack
+async function startPatientAudioRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 44100
+      }
+    });
+
+    // Create a gain node to monitor audio levels
+    const source = patientRecordingAudio.createMediaStreamSource(stream);
+    const analyser = patientRecordingAudio.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+
+    // Monitor audio levels to detect when patient is speaking
+    monitorPatientAudio(analyser);
+
+    console.log("🎙️ Patient audio recording started");
+  } catch (error) {
+    console.error("Error starting patient audio recording:", error);
+  }
+}
+
+// Monitor patient audio levels
+function monitorPatientAudio(analyser) {
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  function checkAudioLevels() {
+    if (!sessionData.sessionId) return; // Stop if session ended
+
+    analyser.getByteFrequencyData(dataArray);
+
+    // Calculate average volume
+    const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+
+    // If patient is speaking (volume > threshold), show visual feedback
+    if (average > 10) {
+      showPatientSpeakingIndicator();
+    }
+
+    requestAnimationFrame(checkAudioLevels);
+  }
+
+  checkAudioLevels();
+}
+
+// Show visual indicator when patient is speaking
+function showPatientSpeakingIndicator() {
+  let indicator = document.getElementById('patient-speaking-indicator');
+
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'patient-speaking-indicator';
+    indicator.className = 'fixed bottom-20 left-4 bg-green-100 text-green-700 px-3 py-2 rounded-lg shadow-lg z-40';
+    indicator.innerHTML = `
+      <div class="flex items-center">
+        <div class="w-3 h-3 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+        <span class="text-sm font-medium">Recording your voice...</span>
+      </div>
+    `;
+    document.body.appendChild(indicator);
+  }
+
+  // Auto-hide after 3 seconds of no speech
+  setTimeout(() => {
+    if (indicator && document.body.contains(indicator)) {
+      document.body.removeChild(indicator);
+    }
+  }, 3000);
+}
+
+// Show panic session banner (legacy function - keeping for compatibility)
 function showPanicSessionBanner() {
   const banner = document.createElement('div');
   banner.id = 'panic-session-banner';
@@ -387,25 +626,7 @@ function showPanicSessionBanner() {
   
   document.body.appendChild(banner);
   
-  // Update timer every second
-  const updateTimer = () => {
-    if (!sessionData.startTime) return;
-    
-    const elapsed = Math.floor((Date.now() - new Date(sessionData.startTime).getTime()) / 1000);
-    const minutes = Math.floor(elapsed / 60);
-    const seconds = elapsed % 60;
-    
-    const timerElement = document.getElementById('session-timer');
-    if (timerElement) {
-      timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-    
-    if (document.getElementById('panic-session-banner')) {
-      setTimeout(updateTimer, 1000);
-    }
-  };
-  
-  updateTimer();
+  // Timer functionality moved to updateSessionUI() in panic.ejs
 }
 
 // Show emergency call banner
@@ -453,6 +674,56 @@ function stopAudioRecording() {
   }
 }
 
+// FIXED: Save audio recording with proper blob conversion
+function saveAudioRecording() {
+  if (audioChunks.length === 0) {
+    console.log("⚠️ No audio chunks to save");
+    return;
+  }
+
+  console.log("💾 Saving audio recording with", audioChunks.length, "chunks");
+
+  try {
+    // Create proper blob from audio chunks
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const duration = Date.now() - recordingStartTime;
+
+    const recording = {
+      id: 'recording_' + Date.now(),
+      sessionId: sessionData.sessionId,
+      blob: audioBlob,
+      url: audioUrl,
+      duration: duration,
+      timestamp: new Date().toISOString(),
+      size: audioBlob.size,
+      triggerMethod: sessionData.triggerMethod,
+      breathingUsed: sessionData.breathingUsed,
+      emergencyContactsCount: sessionData.emergencyContactsUsed.length
+    };
+
+    sessionData.audioRecordings.push(recording);
+
+    console.log("✅ Audio recording saved:", {
+      id: recording.id,
+      duration: Math.round(duration/1000) + "s",
+      size: Math.round(audioBlob.size/1024) + "KB",
+      chunks: audioChunks.length,
+      blobType: audioBlob.type,
+      blobSize: audioBlob.size
+    });
+
+    // Show in UI immediately
+    displayRecordingInUI(recording);
+
+    // Reset for next recording
+    audioChunks = [];
+  } catch (error) {
+    console.error("❌ Error creating audio blob:", error);
+    showTempMessage("Error saving audio recording", "error");
+  }
+}
+
 // Save audio recording with session context
 function saveAudioRecording() {
   if (audioChunks.length === 0) return;
@@ -479,6 +750,81 @@ function saveAudioRecording() {
   console.log("💾 Audio recording saved:", recording.id, "Duration:", Math.round(duration/1000) + "s");
 }
 
+// FIXED: Enhanced end session with proper recording stop
+function endPanicSession() {
+  console.log("🏁 Ending panic session:", sessionData.sessionId);
+
+  // Stop recording if active
+  if (isRecording && mediaRecorder) {
+    console.log("⏹️ Stopping active recording...");
+    mediaRecorder.stop();
+    isRecording = false;
+
+    // Stop the stream
+    if (recordingStream) {
+      recordingStream.getTracks().forEach(track => {
+        track.stop();
+        console.log("   Stopped track:", track.kind);
+      });
+      recordingStream = null;
+    }
+  }
+
+  // Stop breathing exercise if active
+  if (isBreathing) {
+    stopBreathing();
+  }
+
+  // Stop audio guides
+  const panicAudio = document.getElementById('panic-attack-audio');
+  if (panicAudio) {
+    panicAudio.pause();
+    panicAudio.currentTime = 0;
+  }
+
+  const ambientAudio = document.getElementById('ambient-sound');
+  if (ambientAudio) {
+    ambientAudio.pause();
+    ambientAudio.currentTime = 0;
+  }
+
+  // Calculate total duration
+  sessionData.duration = Date.now() - new Date(sessionData.startTime).getTime();
+
+  console.log("📊 Session summary:", {
+    duration: Math.round(sessionData.duration / 1000) + "s",
+    recordings: sessionData.audioRecordings.length,
+    breathing: sessionData.breathingUsed,
+    emergencyContacts: sessionData.emergencyContactsUsed.length
+  });
+
+  // Wait a moment for final recording to be saved
+  setTimeout(() => {
+    // Upload to server
+    uploadSessionToServer(sessionData);
+
+    // NO MODAL - Just show a simple success message
+    showTempMessage(`Session ended! ${sessionData.audioRecordings.length} recording(s) saved`, 'success');
+
+    // Hide recording controls
+    hideRecordingControls();
+
+    // Clean up
+    localStorage.removeItem('active_panic_session');
+
+    // Reset session data
+    resetSessionData();
+
+    // Stop duration updates
+    stopDurationUpdates();
+
+    // Refresh recordings list after 2 seconds
+    setTimeout(() => {
+      loadSessionRecordings();
+    }, 2000);
+  }, 1000);
+}
+
 // End panic session with comprehensive save
 function endPanicSession() {
   console.log("🏁 Ending panic session:", sessionData.sessionId);
@@ -499,15 +845,15 @@ function endPanicSession() {
   // Save session data
   savePanicSession();
   
-  // Remove session banner
-  const banner = document.getElementById('panic-session-banner');
-  if (banner) {
-    document.body.removeChild(banner);
-  }
+  // Hide recording panel
+  hideRecordingPanel();
   
   // Show session summary
   showSessionSummary();
-  
+
+  // Stop duration updates
+  stopDurationUpdates();
+
   // Clean up
   localStorage.removeItem('active_panic_session');
   resetSessionData();
@@ -772,14 +1118,163 @@ async function uploadSessionToServer(sessionData) {
   }
 }
 
-// Helper function to convert blob to base64
+// FIXED: Convert blob to base64 for server upload
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
+    try {
+      // Ensure it's a proper blob
+      if (!(blob instanceof Blob)) {
+        console.error("Invalid blob object:", blob);
+        reject(new Error("Invalid blob object"));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("Failed to read blob"));
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error("Blob conversion error:", error);
+      reject(error);
+    }
   });
+}
+
+// FIXED: Upload session to server with audio data
+async function uploadSessionToServer(sessionData) {
+  try {
+    console.log("📤 Uploading session to server:", sessionData.sessionId);
+    console.log("   Audio recordings:", sessionData.audioRecordings.length);
+
+    // Convert audio recordings to base64
+    const processedAudioRecordings = await Promise.all(
+      sessionData.audioRecordings.map(async (recording) => {
+        let audioData = null;
+
+        if (recording.blob) {
+          try {
+            console.log("   Processing recording blob:", {
+              type: recording.blob.type,
+              size: recording.blob.size,
+              isBlob: recording.blob instanceof Blob
+            });
+
+            // Convert blob to base64
+            const base64String = await blobToBase64(recording.blob);
+
+            if (base64String && base64String.includes(',')) {
+              // Remove data URL prefix (data:audio/webm;base64,)
+              audioData = base64String.split(',')[1];
+              console.log("   Converted recording to base64:", Math.round(audioData.length / 1024), "KB");
+            } else {
+              console.error("   Invalid base64 string format:", base64String?.substring(0, 50));
+            }
+          } catch (error) {
+            console.error("   Error converting audio to base64:", error);
+            console.error("   Blob details:", {
+              type: recording.blob?.type,
+              size: recording.blob?.size,
+              constructor: recording.blob?.constructor?.name
+            });
+          }
+        } else {
+          console.log("   No blob data for recording:", recording.id);
+        }
+
+        return {
+          id: recording.id,
+          duration: recording.duration,
+          timestamp: recording.timestamp,
+          size: recording.size,
+          triggerMethod: recording.triggerMethod,
+          breathingUsed: recording.breathingUsed,
+          emergencyContactsCount: recording.emergencyContactsCount,
+          audioData: audioData
+        };
+      })
+    );
+
+    // Filter out recordings that failed to convert
+    const validAudioRecordings = processedAudioRecordings.filter(rec => rec.audioData !== null);
+    const failedCount = processedAudioRecordings.length - validAudioRecordings.length;
+
+    if (failedCount > 0) {
+      console.log(`⚠️ ${failedCount} audio recording(s) failed to convert, saving session without them`);
+    }
+
+    // Prepare session data
+    const serverData = {
+      sessionId: sessionData.sessionId,
+      startTime: sessionData.startTime,
+      endTime: new Date().toISOString(),
+      duration: sessionData.duration,
+      breathingUsed: sessionData.breathingUsed,
+      emergencyContactsUsed: sessionData.emergencyContactsUsed,
+      triggerMethod: sessionData.triggerMethod,
+      audioRecordings: validAudioRecordings,
+      sessionNotes: `Session completed. Trigger: ${sessionData.triggerMethod}. Breathing: ${sessionData.breathingUsed}. Emergency contacts: ${sessionData.emergencyContactsUsed.length}. Audio recordings: ${validAudioRecordings.length}/${processedAudioRecordings.length} successful.`
+    };
+
+    console.log("📤 Sending to server:", {
+      sessionId: serverData.sessionId,
+      audioCount: processedAudioRecordings.length,
+      totalSize: processedAudioRecordings.reduce((sum, rec) => sum + (rec.size || 0), 0)
+    });
+
+    const response = await fetch('/panic/save-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(serverData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log("✅ Session uploaded successfully:", result.sessionId);
+      console.log("   Audio files processed:", result.audioFilesProcessed);
+
+      // Clear any failed sessions from localStorage
+      try {
+        const sessions = JSON.parse(localStorage.getItem(PANIC_SESSIONS_KEY) || '[]');
+        const updatedSessions = sessions.filter(session => session.sessionId !== sessionData.sessionId);
+        localStorage.setItem(PANIC_SESSIONS_KEY, JSON.stringify(updatedSessions));
+      } catch (e) {
+        console.log("Could not clean localStorage");
+      }
+
+      showTempMessage(`Session saved! ${result.audioFilesProcessed} audio file(s) uploaded`, 'success');
+
+      // Reload recordings list after a short delay
+      setTimeout(() => {
+        loadSessionRecordings();
+      }, 1000);
+    } else {
+      console.error("❌ Server upload failed:", result.error);
+      showTempMessage('Session saved locally. Server sync failed.', 'warning');
+    }
+  } catch (error) {
+    console.error("❌ Upload error:", error);
+    showTempMessage('Session saved locally. Will retry upload later.', 'warning');
+
+    // Save to localStorage as backup
+    try {
+      const sessions = JSON.parse(localStorage.getItem(PANIC_SESSIONS_KEY) || '[]');
+      sessions.push({
+        ...sessionData,
+        needsSync: true,
+        uploadError: error.message
+      });
+      localStorage.setItem(PANIC_SESSIONS_KEY, JSON.stringify(sessions));
+    } catch (localError) {
+      console.error("Failed to save locally:", localError);
+    }
+  }
 }
 
 // Enhanced save audio recording to include blob data
@@ -857,24 +1352,52 @@ function stopBreathing() {
   if (stopBtn) stopBtn.classList.add('hidden');
   if (progress) progress.style.width = '0%';
   
-  // Reset circle appearance
+  // Reset circle appearance and remove breathing animation
   if (circle) {
+    circle.classList.remove('breathing');
     circle.style.transform = 'scale(1)';
     circle.style.transition = 'transform 0.3s ease';
+  }
+}
+
+// Update recording status in the session panel
+function updateRecordingStatus() {
+  const statusElement = document.getElementById('recording-status');
+  const durationElement = document.getElementById('session-duration');
+
+  if (statusElement) {
+    statusElement.textContent = isRecording ? 'Recording' : 'Ready';
+    statusElement.className = isRecording
+      ? 'text-2xl font-bold text-red-600 recording-pulse'
+      : 'text-2xl font-bold text-green-600';
+  }
+
+  if (durationElement && sessionData.startTime) {
+    const elapsed = Math.floor((Date.now() - new Date(sessionData.startTime).getTime()) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    durationElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 }
 
 // Update recording UI indicator
 function updateRecordingUI(recording) {
   let indicator = document.getElementById('recording-indicator');
-  
+
   if (!indicator) {
     indicator = document.createElement('div');
     indicator.id = 'recording-indicator';
     indicator.className = 'fixed top-4 left-4 z-40';
     document.body.appendChild(indicator);
   }
-  
+
+  // Update recording status display
+  const recordingStatusEl = document.getElementById('recording-status');
+  if (recordingStatusEl) {
+    recordingStatusEl.textContent = recording ? 'Recording' : 'Ready';
+    recordingStatusEl.className = recording ? 'text-2xl font-bold text-red-600 recording-pulse' : 'text-2xl font-bold text-green-600';
+  }
+
   if (recording) {
     indicator.innerHTML = `
       <div class="flex items-center bg-red-100 text-red-700 px-3 py-2 rounded-lg shadow-lg">
@@ -887,6 +1410,108 @@ function updateRecordingUI(recording) {
     indicator.classList.add('hidden');
   }
 }
+
+// Update session duration display
+function updateSessionDuration() {
+  const durationEl = document.getElementById('session-duration');
+  if (!durationEl || !sessionData.startTime || !sessionData.sessionId) return;
+
+  const elapsed = Math.floor((Date.now() - new Date(sessionData.startTime).getTime()) / 1000);
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+  durationEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// FIXED: Display recording in UI with proper audio player
+function displayRecordingInUI(recording) {
+  const recordingsList = document.getElementById("session-recordings");
+  const placeholder = document.getElementById("no-recordings-placeholder");
+
+  if (!recordingsList) return;
+
+  // Hide placeholder
+  if (placeholder) {
+    placeholder.style.display = "none";
+  }
+
+  const recordingElement = document.createElement("div");
+  recordingElement.className = "bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3";
+  recordingElement.innerHTML = `
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center flex-1">
+        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+          <i class="fas fa-microphone text-blue-600"></i>
+        </div>
+        <div class="flex-1">
+          <p class="font-semibold text-gray-800">Recording ${sessionData.audioRecordings.length}</p>
+          <p class="text-sm text-gray-600">
+            ${Math.round(recording.duration / 1000)}s •
+            ${Math.round(recording.size / 1024)}KB •
+            ${new Date(recording.timestamp).toLocaleTimeString()}
+          </p>
+        </div>
+      </div>
+      <div class="flex space-x-2">
+        <button onclick="togglePlayRecording('${recording.id}')"
+                class="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm">
+          <i class="fas fa-play mr-1"></i>Play
+        </button>
+      </div>
+    </div>
+    <audio id="audio-${recording.id}" class="w-full mt-2" controls style="height: 40px;">
+      <source src="${recording.url}" type="audio/webm">
+    </audio>
+  `;
+
+  recordingsList.insertBefore(recordingElement, recordingsList.firstChild);
+}
+
+// FIXED: Toggle play recording
+function togglePlayRecording(recordingId) {
+  const audio = document.getElementById(`audio-${recordingId}`);
+  if (audio) {
+    if (audio.paused) {
+      audio.play();
+    } else {
+      audio.pause();
+    }
+  }
+}
+
+// Add this helper function to stop duration updates
+function stopDurationUpdates() {
+  if (window.durationInterval) {
+    clearInterval(window.durationInterval);
+    window.durationInterval = null;
+  }
+}
+
+// REMOVE/DISABLE the session summary modal completely
+// Override the showSessionSummary function to do nothing
+function showSessionSummary() {
+  // DO NOTHING - Modal removed
+  console.log("Session summary disabled - no modal will appear");
+  return;
+}
+
+// Also remove any existing modals if they're already on the page
+function removeExistingModals() {
+  // Remove any existing session summary modals
+  const modals = document.querySelectorAll('[class*="fixed inset-0 bg-black bg-opacity"]');
+  modals.forEach(modal => {
+    if (modal.textContent.includes('Session Complete') ||
+        modal.textContent.includes('Session Summary')) {
+      modal.remove();
+      console.log("Removed existing session modal");
+    }
+  });
+}
+
+// Call this when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+  removeExistingModals();
+  console.log("Session summary modals disabled");
+});
 
 // Reset session data
 function resetSessionData() {
@@ -1038,17 +1663,12 @@ function detectPanicIndicators() {
   }
 
   // Track keyboard patterns that might indicate distress (ONLY for authenticated users)
-  let keyPressCount = 0;
-  let lastKeyTime = 0;
-  let repeatedKeys = 0;
-  let lastKey = '';
+   let keyPressCount = 0;
+   let lastKeyTime = 0;
+   let repeatedKeys = 0;
+   let lastKey = '';
 
-  // Check if user is authenticated before enabling panic detection
-  const isAuthenticated = document.querySelector('meta[name="user-authenticated"]')?.getAttribute('content') === 'true' ||
-                         document.querySelector('.user-nav') !== null ||
-                         document.querySelector('[data-user]') !== null;
-
-  if (isAuthenticated) {
+   if (isAuthenticated) {
     document.addEventListener('keydown', (event) => {
       const now = Date.now();
 
@@ -1126,8 +1746,26 @@ function scrollToEmergency() {
 
 // Update session UI (placeholder for any session UI updates)
 function updateSessionUI() {
-  // Can be used to update any session-related UI elements
+  // Only update if we have an active session
+  if (!sessionData.sessionId) {
+    console.log("Session UI updated for: null (no active session)");
+    return;
+  }
+
+  // Update session duration every second
+  updateSessionDuration();
+
+  // Update recording status
+  updateRecordingUI(isRecording);
+
   console.log("Session UI updated for:", sessionData.sessionId);
+}
+
+// Start periodic UI updates when session is active
+function startSessionUIUpdates() {
+  if (sessionData.sessionId) {
+    setInterval(updateSessionUI, 1000);
+  }
 }
 
 // Sync failed sessions to server
@@ -1190,17 +1828,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Add sync button to panic page if there are failed sessions
+  // Log failed sessions to console instead of showing on page
   const sessions = JSON.parse(localStorage.getItem(PANIC_SESSIONS_KEY) || '[]');
   const failedSessions = sessions.filter(session => session.needsSync);
 
   if (failedSessions.length > 0) {
-    const syncButton = document.createElement('button');
-    syncButton.innerHTML = `<i class="fas fa-sync mr-2"></i>Sync ${failedSessions.length} Failed Session${failedSessions.length !== 1 ? 's' : ''}`;
-    syncButton.className = 'bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg hover:bg-orange-700 transition-all fixed bottom-4 left-4 z-40';
-    syncButton.onclick = syncFailedSessions;
+    console.log(`⚠️ Found ${failedSessions.length} failed session(s) that need syncing:`, failedSessions.map(s => s.sessionId));
+    console.log('💡 Sessions will be synced automatically in the background');
 
-    document.body.appendChild(syncButton);
+    // Auto-sync failed sessions in background (don't show UI)
+    setTimeout(() => {
+      syncFailedSessions();
+    }, 5000); // Sync after 5 seconds
   }
 
   console.log("✅ Enhanced automatic panic support ready");

@@ -351,6 +351,7 @@ module.exports.getMusicPage = async (req, res) => {
       spotifyToken: userSpotifyToken, // User's access token for full playback
       hasSpotifyToken: hasSpotifyToken,
       tokenType: hasSpotifyToken ? "user" : "client",
+      layout: "layouts/patient",
     });
   } catch (err) {
     console.error("Error in getMusicPage:", err);
@@ -363,6 +364,7 @@ module.exports.getMusicPage = async (req, res) => {
       spotifyToken: null,
       hasSpotifyToken: false,
       tokenType: "none",
+      layout: "layouts/patient",
     });
   }
 };

@@ -397,6 +397,8 @@ router.get("/chat/:conversationId", requireAuth, async (req, res) => {
     title: "Chat",
     user: req.session.user,
     conversationId: conversationId,
+    currentPage: "chat",
+    layout: "layouts/patient", // Use patient layout (hides navbar/footer for chat pages)
   });
 });
 
@@ -418,15 +420,15 @@ router.get("/chat", requireAuth, (req, res) => {
     user: req.session.user,
     conversationId: null, // Set to null when showing conversation list
     showAdminChat: showAdminChat, // Pass admin chat flag to template
+    currentPage: "chat",
+    layout: "layouts/patient", // Use patient layout (hides navbar/footer for chat pages)
   });
 });
 
 router.get("/appointments", requireAuth, (req, res) => {
   console.log("Appointments route accessed by user:", req.session?.user?.id);
-  res.render("pages/appointments", {
-    title: "My Appointments",
-    user: req.session.user,
-  });
+  // Redirect to book session page since we removed the old appointments page
+  res.redirect("/book-session");
 });
 
 module.exports = router;

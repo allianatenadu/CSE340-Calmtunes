@@ -2,6 +2,211 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Enhanced Chat UI Custom Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom animations for chat interface */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced button hover effects */
+.btn-hover-effect {
+  transition: all 0.2s ease;
+  transform: translateY(0);
+}
+
+.btn-hover-effect:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Message bubble animations */
+.message-bubble {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* File upload drag and drop zone */
+.file-drop-zone {
+  transition: all 0.3s ease;
+}
+
+.file-drop-zone.drag-over {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
+  transform: scale(1.02);
+}
+
+/* Custom scrollbar for chat messages */
+.messages-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.messages-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.messages-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Emoji picker animations */
+.emoji-picker-enter {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Status indicator animations */
+.status-indicator {
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.status-indicator.disconnected {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+/* Enhanced focus states */
+.focus-ring {
+  transition: all 0.2s ease;
+}
+
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Loading spinner enhancements */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Hover effects for interactive elements */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* Gradient text effects */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Notification badge pulse */
+.notification-badge {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Chat interface responsive styles */
+@media (max-width: 1023px) {
+  .chat-sidebar-mobile {
+    z-index: 50;
+  }
+
+  .chat-overlay-mobile {
+    z-index: 40;
+  }
+}
+
+/* Improved scrolling for conversations */
+.conversations-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.conversations-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.conversations-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conversations-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.conversations-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Chat message bubbles */
+.chat-message-bubble {
+  word-wrap: break-word;
+  max-width: 85%;
+}
+
 /* Custom mental health themed styles */
 @layer components {
   .btn-primary {
@@ -34,6 +239,11 @@
 }
 
 /* Breathing animation for panic relief */
+@keyframes breathing {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
 .breathing-circle {
   animation: breathing 6s ease-in-out infinite;
 }

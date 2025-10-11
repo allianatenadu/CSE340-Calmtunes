@@ -6,9 +6,10 @@ exports.renderDrawingPage = (req, res) => {
   const userId = req.session?.user?.id;
   
   if (!userId) {
-    return res.render("pages/drawing", { 
-      title: "Drawing Studio", 
-      artworks: [] 
+    return res.render("pages/drawing", {
+      title: "Drawing Studio",
+      artworks: [],
+      layout: "layouts/patient"
     });
   }
 
@@ -18,16 +19,18 @@ exports.renderDrawingPage = (req, res) => {
   db.query(query, [userId], (err, results) => {
     if (err) {
       console.error("DB fetch error:", err);
-      return res.render("pages/drawing", { 
-        title: "Drawing Studio", 
-        artworks: [] 
+      return res.render("pages/drawing", {
+        title: "Drawing Studio",
+        artworks: [],
+        layout: "layouts/patient"
       });
     }
 
     // In Postgres, results are inside results.rows
     res.render("pages/drawing", {
       title: "Drawing Studio",
-      artworks: results.rows || []
+      artworks: results.rows || [],
+      layout: "layouts/patient"
     });
   });
 };

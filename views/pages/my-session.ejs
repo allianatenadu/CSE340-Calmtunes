@@ -1,0 +1,734 @@
+<style>
+  .sessions-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .sessions-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+  }
+
+  .sessions-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    visibility: visible;
+  }
+
+  .session-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    display: block;
+    visibility: visible;
+    width: 100%;
+  }
+
+  .session-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  }
+
+  .session-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .session-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #8b5cf6;
+  }
+
+  .session-avatar-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 600;
+    border: 3px solid #8b5cf6;
+  }
+
+  .session-therapist-info h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .session-specialty {
+    font-size: 0.875rem;
+    color: #7c3aed;
+    font-weight: 500;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .session-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .status-confirmed {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+
+  .status-pending {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+
+  .status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  .status-rejected {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  .session-details .detail-item + .detail-item {
+    margin-top: 1rem;
+  }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .detail-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+  }
+
+  .detail-content {
+    flex: 1;
+  }
+
+  .detail-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .detail-value {
+    font-size: 0.875rem;
+    color: #1f2937;
+    font-weight: 500;
+  }
+
+  .session-actions {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .session-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: white;
+    color: #6b7280;
+    border: 2px solid #e5e7eb;
+  }
+
+  .btn-secondary:hover {
+    background: #f8f9fa;
+    border-color: #d1d5db;
+    color: #374151;
+  }
+
+  .btn-danger {
+    background: #ef4444;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+  }
+
+  .no-sessions {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+  }
+
+  .no-sessions-icon {
+    width: 80px;
+    height: 80px;
+    background: #f3f4f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    color: #d1d5db;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 4rem;
+  }
+
+  .spinner {
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #8b5cf6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid #3b82f6;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 1000;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 400px;
+  }
+
+  .notification.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .notification.success {
+    border-left-color: #10b981;
+  }
+
+  .notification.error {
+    border-left-color: #ef4444;
+  }
+
+  .notification.warning {
+    border-left-color: #f59e0b;
+  }
+
+  @media (max-width: 768px) {
+    .sessions-container {
+      padding: 1rem;
+    }
+
+    .sessions-header {
+      padding: 1.5rem;
+    }
+
+    .sessions-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .session-card {
+      padding: 1.5rem;
+    }
+  }
+</style>
+
+<div class="sessions-container">
+  <!-- Header -->
+  <div class="sessions-header">
+    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+      📅
+    </div>
+    <div>
+      <h1 style="font-size: 2rem; font-weight: 700; color: #1f2937; margin: 0;">
+        My Sessions
+      </h1>
+      <p style="color: #6b7280; font-size: 1rem; margin: 0.25rem 0 0 0;">
+        View and manage your upcoming therapy sessions
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loading-state" class="loading">
+    <div class="spinner"></div>
+    <p>Loading your sessions...</p>
+  </div>
+
+  <!-- Sessions Grid -->
+  <div id="sessions-grid" class="sessions-grid" style="display: none;">
+    <!-- Sessions will be populated by JavaScript -->
+  </div>
+
+  <!-- No Sessions State -->
+  <div id="no-sessions-state" class="no-sessions" style="display: none;">
+    <div class="no-sessions-icon">📅</div>
+    <h3 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin: 0 0 0.5rem 0;">
+      No Sessions Found
+    </h3>
+    <p style="font-size: 1rem; color: #6b7280; margin: 0 0 2rem 0; max-width: 400px; margin-left: auto; margin-right: auto;">
+      You haven't booked any sessions yet. Visit the booking page to schedule your first therapy session.
+    </p>
+    <a href="/book-session" class="session-btn btn-primary">
+      <i class="fas fa-calendar-plus"></i>
+      <span>Book a Session</span>
+    </a>
+  </div>
+</div>
+
+<script>
+  // State management
+  let userSessions = [];
+
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('My Sessions page loaded - initializing...');
+    loadUserSessions();
+  });
+
+  // Load user sessions from API
+  async function loadUserSessions() {
+    const loadingState = document.getElementById('loading-state');
+    const sessionsGrid = document.getElementById('sessions-grid');
+    const noSessionsState = document.getElementById('no-sessions-state');
+
+    try {
+      console.log('Loading user sessions from backend...');
+      const response = await fetch('/api/user/sessions');
+      const data = await response.json();
+
+      console.log('Sessions API Response:', data);
+
+      if (data.success && data.appointments && data.appointments.length > 0) {
+        userSessions = data.appointments; // API returns 'appointments', not 'sessions'
+        console.log('Loaded sessions:', userSessions);
+        console.log('Sample session data:', userSessions[0]); // Debug first session
+        console.log('Total sessions loaded:', userSessions.length);
+        renderSessions();
+        if (typeof showNotification === 'function') {
+          showNotification(`Found ${userSessions.length} session(s)`, 'success');
+        }
+      } else {
+        console.log('No sessions found or API error:', data);
+        console.log('Response data keys:', Object.keys(data)); // Debug response structure
+        console.log('Response data:', data); // Debug the full response
+        showNoSessionsState();
+      }
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+      showNotification('Network error loading sessions. Please try again.', 'error');
+      showNoSessionsState();
+    } finally {
+      if (loadingState) {
+        loadingState.style.display = 'none';
+      }
+    }
+  }
+
+  // Render sessions
+  function renderSessions() {
+    console.log('=== RENDER SESSIONS CALLED ===');
+    console.log('Total sessions to render:', userSessions.length);
+
+    if (userSessions.length > 0) {
+      console.log('First session sample:', {
+        id: userSessions[0].id,
+        date: userSessions[0].appointment_date,
+        status: userSessions[0].status,
+        therapist: userSessions[0].therapist_name
+      });
+    }
+
+    const sessionsGrid = document.getElementById('sessions-grid');
+    const noSessionsState = document.getElementById('no-sessions-state');
+
+    if (!sessionsGrid || !noSessionsState) {
+      console.error('Sessions grid or no-sessions state elements not found');
+      return;
+    }
+
+    if (userSessions.length === 0) {
+      console.log('No sessions to render, showing no sessions state');
+      showNoSessionsState();
+      return;
+    }
+
+    console.log('Rendering sessions grid with data');
+    console.log('Sessions grid element found:', !!sessionsGrid);
+    console.log('No sessions state element found:', !!noSessionsState);
+
+    // Force visibility
+    sessionsGrid.style.display = 'grid';
+    sessionsGrid.style.visibility = 'visible';
+    sessionsGrid.classList.add('sessions-visible');
+    noSessionsState.style.display = 'none';
+
+    console.log('After setting styles - Grid display:', sessionsGrid.style.display);
+    console.log('After setting styles - No sessions display:', noSessionsState.style.display);
+
+    // Additional debugging for CSS classes and computed styles
+    console.log('Sessions grid classes:', sessionsGrid.className);
+    console.log('Grid computed display:', window.getComputedStyle(sessionsGrid).display);
+
+    sessionsGrid.innerHTML = userSessions.map((session, index) => {
+      console.log(`Processing session ${index + 1}:`, {
+        id: session.id,
+        date: session.appointment_date,
+        time: session.appointment_time,
+        status: session.status,
+        therapist: session.therapist_name
+      });
+
+      // Use correct field names from database
+      const sessionDate = new Date(session.appointment_date + 'T' + session.appointment_time);
+      const formattedDate = sessionDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const formattedTime = formatTimeDisplay(session.appointment_time);
+
+      // Determine status
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const sessionDateOnly = new Date(session.appointment_date);
+      sessionDateOnly.setHours(0, 0, 0, 0);
+
+      let status = session.status || 'confirmed'; // Use actual status from database
+      let statusText = status.charAt(0).toUpperCase() + status.slice(1); // Capitalize first letter
+
+      // Override status text for better readability
+      if (status === 'confirmed') {
+        statusText = 'Confirmed';
+      } else if (status === 'pending') {
+        statusText = 'Pending Approval';
+      } else if (status === 'rejected') {
+        statusText = 'Rejected';
+      } else if (status === 'cancelled') {
+        statusText = 'Cancelled';
+      }
+
+      // Check if session is in the past
+      if (sessionDateOnly < today && status === 'confirmed') {
+        status = 'completed';
+        statusText = 'Completed';
+      }
+
+      console.log('Rendering session:', {
+        id: session.id,
+        date: session.appointment_date,
+        status: session.status,
+        determinedStatus: status,
+        statusText: statusText
+      });
+
+      return `
+        <div class="session-card">
+          <div class="session-header">
+            ${session.therapist_image ?
+              `<img src="/uploads/${session.therapist_image}" alt="${session.therapist_name}" class="session-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` :
+              ''
+            }
+            <div class="session-avatar-placeholder" style="display: ${session.therapist_image ? 'none' : 'flex'};">
+              ${session.therapist_name ? session.therapist_name.charAt(0).toUpperCase() : 'T'}
+            </div>
+            <div class="session-therapist-info">
+              <h3>${session.therapist_name || 'Therapist'}</h3>
+              <p class="session-specialty">${session.specialty || 'Licensed Therapist'}</p>
+              <div class="session-status status-${status}">
+                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
+                <span>${statusText}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="session-details">
+            <div class="detail-item">
+              <div class="detail-icon">📅</div>
+              <div class="detail-content">
+                <div class="detail-label">Date</div>
+                <div class="detail-value">${formattedDate}</div>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-icon">🕐</div>
+              <div class="detail-content">
+                <div class="detail-label">Time</div>
+                <div class="detail-value">${formattedTime}</div>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-icon">📋</div>
+              <div class="detail-content">
+                <div class="detail-label">Session Type</div>
+                <div class="detail-value">
+                  ${session.session_type === 'video' ? 'Video Call' :
+                    session.session_type === 'phone' ? 'Phone Call' :
+                    session.session_type === 'chat' ? 'Chat Session' : 'Video Call'} (50 minutes)
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-icon">💬</div>
+              <div class="detail-content">
+                <div class="detail-label">Chat</div>
+                <div class="detail-value">
+                  ${session.conversation_id ?
+                    `<a href="/appointments/chat/${session.conversation_id}" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.75rem; text-decoration: none;">Open Chat</a>` :
+                    `<a href="/appointments/chat/new?therapistId=${session.therapist_id}" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.75rem; text-decoration: none;">Start Chat</a>`
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="session-actions">
+            ${status === 'confirmed' && sessionDate > new Date() ?
+              `<button onclick="rescheduleSession(${session.id})" class="session-btn btn-secondary">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Reschedule</span>
+              </button>
+              <button onclick="cancelSession(${session.id})" class="session-btn btn-danger">
+                <i class="fas fa-times"></i>
+                <span>Cancel</span>
+              </button>` :
+              status === 'pending' ?
+              `<div class="session-btn" style="background: #f3f4f6; color: #6b7280; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; text-align: center;">
+                <i class="fas fa-clock"></i>
+                <span>Waiting for therapist approval</span>
+              </div>` :
+              (status === 'cancelled' || status === 'rejected') ?
+              `<a href="/book-session" class="session-btn btn-primary" style="text-decoration: none; justify-content: center;">
+                <i class="fas fa-calendar-plus"></i>
+                <span>Book New Session</span>
+              </a>` :
+              ''
+            }
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    console.log('Generated HTML length:', sessionsGrid.innerHTML.length);
+    console.log('Sessions grid display style:', sessionsGrid.style.display);
+    console.log('No sessions state display style:', noSessionsState.style.display);
+
+    if (sessionsGrid.innerHTML.length > 0) {
+      console.log('✅ HTML generated successfully');
+      console.log('First 300 characters:', sessionsGrid.innerHTML.substring(0, 300));
+
+      // Count session cards
+      const sessionCards = sessionsGrid.querySelectorAll('.session-card');
+      console.log('Number of session cards found:', sessionCards.length);
+
+      // Force visibility check
+      setTimeout(() => {
+        console.log('After timeout - Grid visibility:', {
+          display: sessionsGrid.style.display,
+          visibility: sessionsGrid.style.visibility,
+          innerHTMLLength: sessionsGrid.innerHTML.length,
+          offsetHeight: sessionsGrid.offsetHeight,
+          offsetWidth: sessionsGrid.offsetWidth,
+          childElementCount: sessionsGrid.childElementCount
+        });
+
+        // Check each session card
+        sessionCards.forEach((card, index) => {
+          console.log(`Session card ${index}:`, {
+            offsetHeight: card.offsetHeight,
+            offsetWidth: card.offsetWidth,
+            display: card.style.display,
+            visibility: card.style.visibility
+          });
+        });
+      }, 100);
+    } else {
+      console.log('❌ No HTML generated');
+    }
+  }
+
+  // Show no sessions state
+  function showNoSessionsState() {
+    const sessionsGrid = document.getElementById('sessions-grid');
+    const noSessionsState = document.getElementById('no-sessions-state');
+
+    sessionsGrid.style.display = 'none';
+    noSessionsState.style.display = 'block';
+  }
+
+  // Format time display
+  function formatTimeDisplay(time24) {
+    if (!time24) return 'TBD';
+    const [hour, minute] = time24.split(':');
+    const hour12 = hour % 12 || 12;
+    const ampm = hour < 12 ? 'AM' : 'PM';
+    return `${hour12}:${minute} ${ampm}`;
+  }
+
+  // Reschedule session
+  function rescheduleSession(sessionId) {
+    showNotification('Redirecting to booking page...', 'info');
+    setTimeout(() => {
+      window.location.href = '/book-session';
+    }, 1000);
+  }
+
+  // Cancel session
+  async function cancelSession(sessionId) {
+    if (!confirm('Are you sure you want to cancel this session? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showNotification('Session cancelled successfully', 'success');
+        // Reload sessions after short delay
+        setTimeout(() => {
+          loadUserSessions();
+        }, 1000);
+      } else {
+        showNotification(data.error || 'Failed to cancel session', 'error');
+      }
+    } catch (error) {
+      console.error('Error cancelling session:', error);
+      showNotification('Network error. Please try again.', 'error');
+    }
+  }
+
+  // Show notification
+  function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelector('.notification');
+    if (existing) {
+      existing.remove();
+    }
+
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+
+    const icon = type === 'success' ? 'check-circle' :
+                 type === 'error' ? 'exclamation-circle' :
+                 type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+
+    notification.innerHTML = `
+      <i class="fas fa-${icon}" style="font-size: 1.25rem; color: ${
+        type === 'success' ? '#10b981' :
+        type === 'error' ? '#ef4444' :
+        type === 'warning' ? '#f59e0b' : '#3b82f6'
+      };"></i>
+      <span style="color: #1f2937; font-weight: 500;">${message}</span>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.classList.add('show');
+    }, 100);
+
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }, 4000);
+  }
+</script>

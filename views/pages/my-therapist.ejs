@@ -1,4 +1,10 @@
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- Main Layout Container -->
+<div class="flex">
+  <%- include('../partials/sidebar') %>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <!-- Header -->
   <div class="mb-8">
     <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
@@ -184,7 +190,9 @@
   <% } %>
 
   <% } %>
-</div>
+    </div>
+  </div>
+ </div>
 
 <!-- Appointment Modal -->
 <div id="appointment-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">

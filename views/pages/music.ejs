@@ -1,11 +1,12 @@
-<!-- Music Therapy Page Content -->
-<div class="max-w-6xl mx-auto px-4 py-8">
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col overflow-hidden">
+   <div class="max-w-6xl mx-auto px-4 py-8">
   <!-- Page Header -->
-  <div class="mb-8">
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">🎧 Music Therapy</h1>
-        <p class="text-gray-600 text-lg">
+  <div class="mb-6 sm:mb-8">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+      <div class="flex-1">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">🎧 Music Therapy</h1>
+        <p class="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
           Browse calming playlists and therapeutic sounds designed to support
           your mental wellbeing
         </p>
@@ -16,39 +17,39 @@
     <!-- Player Status Display -->
     <div id="player-status" class="mt-4">
       <% if (!hasSpotifyToken) { %>
-      <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-blue-800 font-medium flex items-center">
+      <div class="p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="flex-1">
+            <p class="text-blue-800 font-medium flex items-center text-sm sm:text-base">
               <i class="fas fa-music mr-2"></i> Enhanced Music Experience
             </p>
-            <p class="text-sm text-blue-600 mt-1">
+            <p class="text-xs sm:text-sm text-blue-600 mt-1">
               Listen to available 30s previews. Connect Spotify for personalized recommendations and seamless full-track access in the app.
             </p>
           </div>
           <a
             href="/spotify/login"
-            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center"
+            class="px-4 sm:px-6 py-2 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center justify-center text-sm sm:text-base w-full sm:w-auto"
           >
             <i class="fab fa-spotify mr-2"></i> Connect Spotify
           </a>
         </div>
       </div>
       <% } else { %>
-      <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-green-800 font-medium flex items-center">
+      <div class="p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="flex-1">
+            <p class="text-green-800 font-medium flex items-center text-sm sm:text-base">
               <i class="fas fa-check-circle mr-2"></i> Spotify Connected
             </p>
-            <p class="text-sm text-green-600 mt-1">
+            <p class="text-xs sm:text-sm text-green-600 mt-1">
               Enjoy available previews and open full tracks in Spotify. Note: Not all songs have 30s previews due to Spotify's API.
             </p>
           </div>
           <div class="flex space-x-2">
             <a
               href="/spotify/logout"
-              class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+              class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-xs sm:text-sm whitespace-nowrap"
             >
               <i class="fas fa-unlink mr-1"></i> Disconnect
             </a>
@@ -63,7 +64,7 @@
     <h2 class="text-2xl font-semibold text-gray-800 mb-6">
       Therapy Categories
     </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       <% categories.forEach((cat, index) => { %>
       <div
         class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group transform hover:-translate-y-1"
@@ -180,14 +181,14 @@
       </div>
     </div>
   </div>
-</div>
+
 <!-- Enhanced Modal -->
 <div
   id="categoryModal"
   class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 p-4"
 >
   <div
-    class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+    class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden mx-4"
   >
     <!-- Modal Header -->
     <div

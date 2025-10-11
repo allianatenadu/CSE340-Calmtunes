@@ -1,9 +1,185 @@
+<!-- Patient info page content for therapist layout - Simplified Version -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<style>
+  .artwork-container {
+    text-align: center;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .artwork-image {
+    max-width: 100%;
+    max-height: 400px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .artwork-placeholder {
+    text-align: center;
+    color: #9ca3af;
+    padding: 2rem;
+  }
+
+  .artwork-placeholder i {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Cute & Compact Artwork Display */
+  .artwork-display-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fef7ff 0%, #f0f9ff 100%);
+    border-radius: 16px;
+    border: 2px solid #e0c3fc;
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 4px 15px rgba(224, 195, 252, 0.3);
+  }
+
+  .artwork-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .artwork-image-full {
+    max-width: 100%;
+    max-height: 350px;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 3px solid #ffffff;
+  }
+
+  .artwork-image-full:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.35);
+  }
+
+  .artwork-error {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+    border-radius: 12px;
+    border: 2px solid #fbbf24;
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.2);
+  }
+
+  .error-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .artwork-info {
+    text-align: center;
+    max-width: 100%;
+  }
+
+  .artwork-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #7c3aed;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 1px 2px rgba(124, 58, 237, 0.1);
+  }
+
+  .artwork-date {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    display: inline-block;
+  }
+
+  .artwork-type {
+    font-size: 0.8rem;
+    color: #059669;
+    font-weight: 500;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    display: inline-block;
+  }
+
+  .no-artwork-container {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 16px;
+    border: 2px dashed #cbd5e1;
+    max-width: 500px;
+    margin: 0 auto;
+    box-shadow: 0 4px 15px rgba(203, 213, 225, 0.3);
+  }
+
+  .no-artwork-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .no-artwork-content i {
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+
+  .no-artwork-content p {
+    margin: 0.5rem 0;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .artwork-display-container {
+      padding: 1.5rem;
+    }
+
+    .artwork-image-full {
+      max-height: 300px;
+    }
+
+    .artwork-title {
+      font-size: 1.125rem;
+    }
+  }
+
+  /* Print styles */
+  @media print {
+    .artwork-image-full {
+      max-height: 400px;
+      page-break-inside: avoid;
+    }
+
+    .artwork-display-container {
+      break-inside: avoid;
+    }
+  }
+</style>
   <!-- Header -->
   <div class="mb-8">
     <div class="flex items-center justify-between">
       <div class="flex items-center">
-        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mr-4">
+        <div
+          class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mr-4"
+        >
           <i class="fas fa-user text-white text-2xl"></i>
         </div>
         <div>
@@ -12,247 +188,319 @@
         </div>
       </div>
       <div class="flex space-x-3">
-        <a href="/therapist/patients" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <a
+          href="/therapist/patients"
+          class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
           <i class="fas fa-arrow-left mr-2"></i>Back to Patients
         </a>
-        <a href="/appointments/chat?patient=<%= patient.id %>" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <a
+          href="/appointments/chat?patient=<%= patient.id %>"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
           <i class="fas fa-comments mr-2"></i>Chat
         </a>
-        <a href="/therapist/schedule?patient=<%= patient.id %>" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <a
+          href="/therapist/schedule?patient=<%= patient.id %>"
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
           <i class="fas fa-calendar-plus mr-2"></i>Schedule
         </a>
       </div>
     </div>
   </div>
 
-  <!-- Patient Overview Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-center mb-4">
-        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-          <i class="fas fa-calendar text-blue-600"></i>
-        </div>
-        <div>
-          <h3 class="font-semibold text-gray-900"><%= appointments.length %></h3>
-          <p class="text-sm text-gray-600">Total Sessions</p>
+  <!-- Tab Navigation -->
+  <div class="mb-8">
+    <div class="border-b border-gray-200">
+      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        <button onclick="showTab('overview')" id="overview-tab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-blue-500 text-blue-600">
+          <i class="fas fa-user mr-2"></i>Overview
+        </button>
+        <button onclick="showTab('sessions')" id="sessions-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          <i class="fas fa-calendar mr-2"></i>Session Log
+        </button>
+        <button onclick="showTab('mood')" id="mood-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          <i class="fas fa-heart mr-2"></i>Mood Tracking
+        </button>
+        <button onclick="showTab('activities')" id="activities-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          <i class="fas fa-palette mr-2"></i>Therapy Activities
+        </button>
+        <button onclick="showTab('panic')" id="panic-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Panic Sessions
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Tab Content -->
+  <div id="overview-cards-content" class="tab-content">
+    <!-- Patient Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-center mb-4">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+            <i class="fas fa-calendar text-blue-600"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-gray-900"><%= appointments.length %></h3>
+            <p class="text-sm text-gray-600">Total Sessions</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-center mb-4">
-        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-          <i class="fas fa-star text-green-600"></i>
-        </div>
-        <div>
-          <h3 class="font-semibold text-gray-900"><%= upcomingAppointments %></h3>
-          <p class="text-sm text-gray-600">Upcoming</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-center mb-4">
-        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-          <i class="fas fa-chart-line text-orange-600"></i>
-        </div>
-        <div>
-          <h3 class="font-semibold text-gray-900"><%= moodEntries.length %></h3>
-          <p class="text-sm text-gray-600">Mood Entries</p>
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-center mb-4">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+            <i class="fas fa-star text-green-600"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-gray-900"><%= upcomingAppointments %></h3>
+            <p class="text-sm text-gray-600">Upcoming Appointments</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Appointments Section -->
-  <section class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-    <div class="p-6 border-b border-gray-200">
-      <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-        <i class="fas fa-calendar mr-2 text-blue-500"></i>
-        Appointment History
-      </h2>
-    </div>
-    <div class="p-6">
-      <% if (appointments.length > 0) { %>
+  <!-- Session Log Tab -->
+  <div id="sessions-content" class="tab-content" style="display: none;">
+    <section class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+          <i class="fas fa-calendar mr-2 text-blue-500"></i>
+          Appointment History
+        </h2>
+      </div>
+      <div class="p-6">
+        <% if (appointments.length > 0) { %>
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Date</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Time</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Notes</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <% appointments.forEach(appointment => { %>
-                <tr>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <%= new Date(appointment.appointment_date).toLocaleDateString() %>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <%= new Date('2000-01-01 ' + appointment.appointment_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= appointment.session_type === 'video' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' %>">
-                      <%= appointment.session_type %>
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
-                      <%= appointment.status %>
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 text-sm text-gray-900">
-                    <%= appointment.notes || 'No notes' %>
-                  </td>
-                </tr>
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <%= new Date(appointment.appointment_date).toLocaleDateString() %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <%= new Date('2000-01-01 ' + appointment.appointment_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= appointment.session_type === 'video' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' %>">
+                    <%= appointment.session_type %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                    <%= appointment.status %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                  <%= appointment.notes || 'No notes' %>
+                </td>
+              </tr>
               <% }); %>
             </tbody>
           </table>
         </div>
-      <% } else { %>
+        <% } else { %>
         <div class="text-center py-8">
           <i class="fas fa-calendar-times text-gray-400 text-4xl mb-4"></i>
           <p class="text-gray-600">No appointments yet</p>
         </div>
-      <% } %>
-    </div>
-  </section>
+        <% } %>
+      </div>
+    </section>
+  </div>
 
-  <!-- Mood Tracker Section -->
-  <section class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-    <div class="p-6 border-b border-gray-200">
-      <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-        <i class="fas fa-mood-bad mr-2 text-purple-500"></i>
-        Mood Tracker
-      </h2>
-    </div>
-    <div class="p-6">
-      <% if (moodEntries.length > 0) { %>
+  <!-- Mood Tracking Tab -->
+  <div id="mood-content" class="tab-content" style="display: none;">
+    <section class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+          <i class="fas fa-heart mr-2 text-purple-500"></i>
+          Mood Tracking
+        </h2>
+      </div>
+      <div class="p-6">
+        <% if (typeof moodEntries !== 'undefined' && moodEntries.length > 0) { %>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <% moodEntries.forEach(entry => { %>
-            <div class="bg-purple-50 rounded-lg p-4">
-              <div class="text-sm text-purple-800 font-medium"><%= new Date(entry.date).toLocaleDateString() %></div>
-              <div class="text-2xl font-bold text-purple-600"><%= entry.mood %></div>
-              <div class="text-xs text-purple-700 mt-1"><%= entry.notes || 'No notes' %></div>
+          <div class="bg-purple-50 rounded-lg p-4">
+            <div class="text-sm text-purple-800 font-medium">
+              <%= new Date(entry.entry_date).toLocaleDateString() %>
             </div>
+            <div class="text-2xl font-bold text-purple-600">
+              <%= entry.mood %>
+            </div>
+            <div class="text-xs text-purple-700 mt-1">
+              <%= entry.note || 'No notes' %>
+            </div>
+          </div>
           <% }); %>
         </div>
-      <% } else { %>
+        <% } else { %>
         <div class="text-center py-8">
           <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
           <p class="text-gray-600">No mood entries yet</p>
+          <p class="text-sm text-gray-500 mt-2">Mood tracking data not available</p>
         </div>
-      <% } %>
-    </div>
-  </section>
-
-  <!-- Fixed Drawings Section -->
-<section class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-  <div class="p-6 border-b border-gray-200">
-    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-      <i class="fas fa-paint-brush mr-2 text-red-500"></i>
-      Art Therapy Drawings
-    </h2>
-  </div>
-  <div class="p-6">
-    <% if (drawings.length > 0) { %>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <% drawings.forEach(drawing => { %>
-          <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
-            <img src="data:image/png;base64,<%= drawing.image_data %>" 
-                 alt="Patient artwork" 
-                 class="w-full h-full object-cover">
-            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
-              <div class="text-xs">
-                <%= new Date(drawing.created_at).toLocaleDateString() %>
-              </div>
-            </div>
-          </div>
-        <% }); %>
+        <% } %>
       </div>
-    <% } else { %>
-      <div class="text-center py-8">
-        <i class="fas fa-paint-brush text-gray-400 text-4xl mb-4"></i>
-        <p class="text-gray-600">No drawings yet</p>
-      </div>
-    <% } %>
+    </section>
   </div>
-</section>
 
-  <!-- Music Preferences Section -->
-<section class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-  <div class="p-6 border-b border-gray-200">
-    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-      <i class="fas fa-music mr-2 text-green-500"></i>
-      Music Therapy Preferences
-    </h2>
-  </div>
-  <div class="p-6">
-    <% if (musicPreferences && musicPreferences.length > 0) { %>
-      <div class="space-y-4">
-        <% musicPreferences.forEach((pref, index) => { %>
-          <div class="flex items-center justify-between bg-green-50 rounded-lg p-4">
-            <div class="flex items-center">
-              <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center mr-3 text-sm font-bold">
-                <%= index + 1 %>
-              </div>
-              <div>
-                <div class="font-medium text-green-800 capitalize"><%= pref.category.replace('_', ' ') %></div>
-                <div class="text-sm text-green-600">
-                  Last played: <%= new Date(pref.last_played).toLocaleDateString() %>
+  <!-- Therapy Activities Tab -->
+  <div id="activities-content" class="tab-content" style="display: none;">
+    <div class="space-y-8">
+      <!-- Art Therapy Section -->
+      <section class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-paint-brush mr-2 text-yellow-500"></i>
+            Art Therapy (<%= typeof drawings !== 'undefined' ? drawings.length : 0 %> sessions)
+          </h2>
+        </div>
+        <div class="p-6">
+          <% if (typeof drawings !== 'undefined' && drawings.length > 0) { %>
+          <div class="space-y-6">
+            <% drawings.forEach((drawing, index) => { %>
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border border-purple-200">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-purple-500 text-white rounded-full flex items-center justify-center mr-3 text-sm font-bold">
+                    <%= index + 1 %>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900"><%= drawing.session_name || 'Art Session' %></h3>
+                    <p class="text-sm text-gray-600">
+                      <%= new Date(drawing.session_date).toLocaleDateString() %> •
+                      <%= drawing.duration ? drawing.duration + ' minutes' : 'Duration not recorded' %>
+                    </p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="px-2 py-1 text-xs rounded-full <%= drawing.is_completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                    <%= drawing.is_completed ? 'Completed' : 'In Progress' %>
+                  </span>
                 </div>
               </div>
-            </div>
-            <div class="text-right">
-              <div class="text-lg font-bold text-green-700"><%= pref.play_count %></div>
-              <div class="text-xs text-green-600">sessions</div>
-            </div>
-          </div>
-        <% }); %>
-      </div>
-      
-      <!-- Most Preferred Category Highlight -->
-      <% if (musicPreferences[0]) { %>
-        <div class="mt-6 p-4 bg-gradient-to-r from-green-100 to-blue-100 rounded-lg border border-green-200">
-          <h4 class="font-semibold text-green-800 mb-2 flex items-center">
-            <i class="fas fa-star mr-2"></i> Most Preferred Category
-          </h4>
-          <div class="text-lg font-bold text-green-700 capitalize">
-            <%= musicPreferences[0].category.replace('_', ' ') %>
-          </div>
-          <div class="text-sm text-green-600">
-            <%= musicPreferences[0].play_count %> listening sessions
-          </div>
-        </div>
-      <% } %>
-      
-    <% } else { %>
-      <div class="text-center py-8">
-        <i class="fas fa-headphones text-gray-400 text-4xl mb-4"></i>
-        <p class="text-gray-600">No music preferences recorded yet</p>
-        <p class="text-sm text-gray-500 mt-2">Patient hasn't used music therapy features</p>
-      </div>
-    <% } %>
-  </div>
-</section>`
 
-  <!-- Improved Panic Sessions Section -->
-<section class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-  <div class="p-6 border-b border-gray-200">
-    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-      <i class="fas fa-heartbeat mr-2 text-red-500"></i>
-      Panic Sessions
-    </h2>
+              <!-- Patient Artwork Display -->
+              <% if (drawing.image_data) { %>
+              <div class="artwork-display-container">
+                <div class="artwork-wrapper">
+                  <img src="<%= drawing.artwork_image %>"
+                       alt="Patient Artwork: <%= drawing.session_name || 'Art Therapy Session' %>"
+                       class="artwork-image-full"
+                       loading="lazy"
+                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';">
+                  <div class="artwork-error" style="display: none;">
+                    <div class="error-content">
+                      <i class="fas fa-exclamation-triangle text-yellow-500 text-3xl mb-2"></i>
+                      <p class="text-gray-600 font-medium">Unable to load artwork</p>
+                      <p class="text-gray-500 text-sm">The artwork data may be corrupted</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="artwork-info">
+                  <h4 class="artwork-title">Patient Artwork</h4>
+                  <p class="artwork-date">Created: <%= new Date(drawing.artwork_date).toLocaleDateString() %></p>
+                  <p class="artwork-type">Digital Art Session</p>
+                </div>
+              </div>
+              <% } else { %>
+              <div class="no-artwork-container">
+                <div class="no-artwork-content">
+                  <i class="fas fa-palette text-gray-400 text-4xl mb-3"></i>
+                  <p class="text-gray-600 font-medium">No patient artwork found</p>
+                  <p class="text-gray-500 text-sm">Patient hasn't created any artwork yet</p>
+                </div>
+              </div>
+              <% } %>
+            </div>
+            <% }); %>
+          </div>
+          <% } else { %>
+          <div class="text-center py-8">
+            <i class="fas fa-paint-brush text-gray-400 text-4xl mb-4"></i>
+            <p class="text-gray-600">No art therapy sessions yet</p>
+            <p class="text-sm text-gray-500 mt-2">Art therapy data will appear here when patient completes sessions</p>
+          </div>
+          <% } %>
+        </div>
+      </section>
+
+      <!-- Music Therapy Section -->
+      <section class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-music mr-2 text-green-500"></i>
+            Music Therapy
+          </h2>
+        </div>
+        <div class="p-6">
+          <% if (typeof musicPreferences !== 'undefined' && musicPreferences.length > 0) { %>
+          <div class="space-y-4">
+            <% musicPreferences.forEach((pref, index) => { %>
+            <div class="flex items-center justify-between bg-green-50 rounded-lg p-4">
+              <div class="flex items-center">
+                <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center mr-3 text-sm font-bold">
+                  <%= index + 1 %>
+                </div>
+                <div>
+                  <div class="font-medium text-green-800 capitalize">
+                    <%= pref.category ? pref.category.replace('_', ' ') : 'Music Session' %>
+                  </div>
+                  <div class="text-sm text-green-600">
+                    Last played: <%= new Date(pref.session_date).toLocaleDateString() %>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-lg font-bold text-green-700">
+                  <%= pref.play_count || 1 %>
+                </div>
+                <div class="text-xs text-green-600">sessions</div>
+              </div>
+            </div>
+            <% }); %>
+          </div>
+          <% } else { %>
+          <div class="text-center py-8">
+            <i class="fas fa-headphones text-gray-400 text-4xl mb-4"></i>
+            <p class="text-gray-600">No music preferences recorded yet</p>
+            <p class="text-sm text-gray-500 mt-2">Music therapy data not available</p>
+          </div>
+          <% } %>
+        </div>
+      </section>
+    </div>
   </div>
-  <div class="p-6">
-    <% if (panicSessions && panicSessions.length > 0) { %>
-      <div class="space-y-6">
-        <% panicSessions.forEach(session => { %>
+
+  <!-- Panic Sessions Tab -->
+  <div id="panic-content" class="tab-content" style="display: none;">
+    <section class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+          <i class="fas fa-heartbeat mr-2 text-red-500"></i>
+          Panic Sessions
+        </h2>
+      </div>
+      <div class="p-6">
+        <% if (typeof panicSessions !== 'undefined' && panicSessions.length > 0) { %>
+        <div class="space-y-6">
+          <% panicSessions.forEach(session => { %>
           <div class="bg-gray-50 rounded-lg p-6">
-            <!-- Session Header -->
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center">
                 <i class="fas fa-heartbeat text-red-500 mr-3 text-lg"></i>
@@ -261,10 +509,9 @@
                     Session <%= session.session_id ? session.session_id.slice(-8) : 'Unknown' %>
                   </h3>
                   <p class="text-sm text-gray-600">
-                    <%= new Date(session.start_time).toLocaleDateString() %> at <%= new Date(session.start_time).toLocaleTimeString() %>
-                    <% if (session.duration_formatted) { %>
-                      • <%= session.duration_formatted %>
-                    <% } %>
+                    <%= new Date(session.start_time).toLocaleDateString() %> at
+                    <%= new Date(session.start_time).toLocaleTimeString() %>
+                    <% if (session.duration_formatted) { %> • <%= session.duration_formatted %> <% } %>
                   </p>
                 </div>
               </div>
@@ -278,136 +525,208 @@
               </div>
             </div>
 
-            <!-- Session Notes -->
             <% if (session.session_notes) { %>
-              <div class="mb-4">
-                <h4 class="font-medium text-gray-800 mb-2">Session Notes:</h4>
-                <p class="text-sm text-gray-700 bg-white rounded p-3 border-l-4 border-blue-400">
-                  <%= session.session_notes %>
-                </p>
-              </div>
+            <div class="mb-4">
+              <h4 class="font-medium text-gray-800 mb-2">Session Notes:</h4>
+              <p class="text-sm text-gray-700 bg-white rounded p-3 border-l-4 border-blue-400">
+                <%= session.session_notes %>
+              </p>
+            </div>
             <% } %>
 
-            <!-- Emergency Contacts Used -->
             <% if (session.emergency_contacts_processed && session.emergency_contacts_processed.length > 0) { %>
-              <div class="mb-4">
-                <h4 class="font-medium text-gray-800 mb-2">Emergency Contacts Used:</h4>
-                <div class="flex flex-wrap gap-2">
-                  <% session.emergency_contacts_processed.forEach(contact => { %>
-                    <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                      <i class="fas fa-phone mr-1"></i><%= contact.name || contact.number %>
-                    </span>
-                  <% }); %>
-                </div>
+            <div class="mb-4">
+              <h4 class="font-medium text-gray-800 mb-2">Emergency Contacts Used:</h4>
+              <div class="flex flex-wrap gap-2">
+                <% session.emergency_contacts_processed.forEach(contact => { %>
+                <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                  <i class="fas fa-phone mr-1"></i><%= contact.name || contact.number %>
+                </span>
+                <% }); %>
               </div>
+            </div>
             <% } %>
 
-            <!-- Audio Recordings -->
             <% if (session.audio_recordings_processed && session.audio_recordings_processed.length > 0) { %>
-              <div class="bg-white rounded-lg p-4 mb-4">
-                <h4 class="font-medium text-gray-800 mb-3 flex items-center">
-                  <i class="fas fa-headphones mr-2 text-indigo-600"></i>
-                  Audio Recordings
-                  <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                    <%= session.audio_recordings_processed.length %> file<%= session.audio_recordings_processed.length !== 1 ? 's' : '' %>
-                  </span>
-                </h4>
-
-                <div class="space-y-3">
-                  <% session.audio_recordings_processed.forEach((recording, index) => { %>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                          <i class="fas fa-file-audio text-indigo-600 mr-3 text-lg"></i>
-                          <div>
-                            <p class="text-sm font-medium text-gray-800">
-                              Recording <%= index + 1 %>
-                            </p>
-                            <p class="text-xs text-gray-600">
-                              Duration: <%= recording.durationFormatted %> •
-                              Size: <%= Math.round(recording.size / 1024) %>KB •
-                              <%= new Date(recording.timestamp).toLocaleTimeString() %>
-                            </p>
-                          </div>
-                        </div>
-
-                        <% if (recording.url) { %>
-                          <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                            <i class="fas fa-check-circle mr-1"></i>Available
-                          </span>
-                        <% } else { %>
-                          <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>Processing
-                          </span>
-                        <% } %>
+            <div class="bg-white rounded-lg p-4 mb-4">
+              <h4 class="font-medium text-gray-800 mb-3 flex items-center">
+                <i class="fas fa-headphones mr-2 text-indigo-600"></i>
+                Audio Recordings
+                <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                  <%= session.audio_recordings_processed.length %> file<%= session.audio_recordings_processed.length !== 1 ? 's' : '' %>
+                </span>
+              </h4>
+              <div class="space-y-3">
+                <% session.audio_recordings_processed.forEach((recording, index) => { %>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center">
+                      <i class="fas fa-file-audio text-indigo-600 mr-3 text-lg"></i>
+                      <div>
+                        <p class="text-sm font-medium text-gray-800">Recording <%= index + 1 %></p>
+                        <p class="text-xs text-gray-600">
+                          Duration: <%= recording.durationFormatted %> • Size: <%= Math.round(recording.size / 1024) %>KB
+                        </p>
                       </div>
-
-                      <!-- Audio Player -->
-                      <% if (recording.url) { %>
-                        <div class="bg-white rounded border p-3">
-                          <audio controls preload="metadata" class="w-full">
-                            <source src="/panic<%= recording.url %>" type="audio/webm">
-                            <source src="/panic<%= recording.url %>" type="audio/mp4">
-                            Your browser does not support the audio element.
-                          </audio>
-                          <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-                            <span>Session: <%= recording.sessionId || session.session_id %></span>
-                            <span>Recording ID: <%= recording.id %></span>
-                          </div>
-                        </div>
-                      <% } else { %>
-                        <div class="bg-yellow-50 border border-yellow-200 rounded p-3 text-center">
-                          <i class="fas fa-hourglass-half text-yellow-600 mb-1"></i>
-                          <p class="text-sm text-yellow-800">Audio file not available</p>
-                          <p class="text-xs text-yellow-600">The recording may still be processing or was not properly saved</p>
-                        </div>
-                      <% } %>
                     </div>
-                  <% }); %>
-                </div>
-
-                <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <div class="flex items-start">
-                    <i class="fas fa-shield-alt text-blue-600 mr-2 mt-0.5"></i>
-                    <div class="text-sm">
-                      <p class="text-blue-800 font-medium">Privacy & Security:</p>
-                      <p class="text-blue-700">
-                        Audio recordings are stored securely and only accessible by the patient and their assigned therapist.
-                        These recordings help provide context for therapy sessions and track progress over time.
-                      </p>
-                    </div>
+                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      <i class="fas fa-check-circle mr-1"></i>Available
+                    </span>
                   </div>
                 </div>
+                <% }); %>
               </div>
+            </div>
             <% } %>
           </div>
-        <% }); %>
+          <% }); %>
+        </div>
+        <% } else { %>
+        <div class="text-center py-8">
+          <i class="fas fa-heartbeat text-gray-400 text-4xl mb-4"></i>
+          <p class="text-gray-600">No panic sessions recorded yet</p>
+          <p class="text-sm text-gray-500 mt-2">Panic session data not available</p>
+        </div>
+        <% } %>
       </div>
-    <% } else { %>
-      <div class="text-center py-8">
-        <i class="fas fa-heartbeat text-gray-400 text-4xl mb-4"></i>
-        <p class="text-gray-600">No panic sessions recorded yet</p>
-        <p class="text-sm text-gray-500 mt-2">Patient hasn't used panic support features</p>
-      </div>
-    <% } %>
+    </section>
   </div>
-</section>
+
+  <!-- Patient Summary (Overview Tab) -->
+  <div id="overview-content" class="tab-content">
+    <section class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+          <i class="fas fa-info-circle mr-2 text-gray-500"></i>
+          Patient Summary
+        </h2>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="font-medium text-gray-900 mb-2">Patient Information</h3>
+            <div class="space-y-2 text-sm">
+              <p><strong>Name:</strong> <%= patient.name %></p>
+              <p><strong>Email:</strong> <%= patient.email %></p>
+              <p><strong>Patient ID:</strong> <%= patient.id %></p>
+            </div>
+          </div>
+          <div>
+            <h3 class="font-medium text-gray-900 mb-2">Session Statistics</h3>
+            <div class="space-y-2 text-sm">
+              <p><strong>Total Sessions:</strong> <%= appointments.length %></p>
+              <p><strong>Upcoming Sessions:</strong> <%= upcomingAppointments %></p>
+              <p><strong>Status:</strong> <span class="text-green-600">Active Patient</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </div>
 
 <script>
-  // Load drawings on canvas
+  // Tab functionality
+  function showTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(content => {
+      content.style.display = 'none';
+    });
+
+    // Remove active class from all tabs
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+      button.classList.remove('border-blue-500', 'text-blue-600');
+      button.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected tab content
+    let selectedContent;
+    if (tabName === 'overview') {
+      // For overview tab, show both overview cards and patient summary
+      const overviewCardsContent = document.getElementById('overview-cards-content');
+      const overviewSummaryContent = document.getElementById('overview-content');
+      if (overviewCardsContent) overviewCardsContent.style.display = 'block';
+      if (overviewSummaryContent) overviewSummaryContent.style.display = 'block';
+    } else {
+      selectedContent = document.getElementById(tabName + '-content');
+      if (selectedContent) {
+        selectedContent.style.display = 'block';
+      }
+    }
+
+    // Add active class to selected tab
+    const selectedTab = document.getElementById(tabName + '-tab');
+    if (selectedTab) {
+      selectedTab.classList.remove('border-transparent', 'text-gray-500');
+      selectedTab.classList.add('border-blue-500', 'text-blue-600');
+    }
+  }
+
+  // Initialize page
   document.addEventListener('DOMContentLoaded', function() {
-    const canvases = document.querySelectorAll('canvas[data-drawing]');
-    canvases.forEach(canvas => {
-      const drawingData = canvas.dataset.drawing;
-      if (drawingData) {
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        };
-        img.src = drawingData;
+    console.log('Patient info page loaded successfully');
+    showTab('overview'); // Show overview tab by default
+
+    // Apply colors to color swatches
+    applyColorSwatches();
+  });
+
+  // Helper function to get mood color classes (client-side version for dynamic updates)
+  function getMoodColor(mood) {
+    if (!mood || mood === 'Not recorded') return 'bg-gray-100 text-gray-600';
+
+    const moodColors = {
+      'very_stressed': 'bg-red-100 text-red-800',
+      'stressed': 'bg-orange-100 text-orange-800',
+      'neutral': 'bg-yellow-100 text-yellow-800',
+      'calm': 'bg-green-100 text-green-800',
+      'very_calm': 'bg-blue-100 text-blue-800'
+    };
+
+    return moodColors[mood] || 'bg-gray-100 text-gray-600';
+  }
+
+  // Function to apply colors to color swatches
+  function applyColorSwatches() {
+    const colorPalettes = document.querySelectorAll('.color-palette');
+
+    colorPalettes.forEach(function(palette) {
+      const colorsData = palette.getAttribute('data-colors');
+      if (colorsData) {
+        try {
+          // Parse the colors data, handling escaped quotes
+          const colorsText = colorsData.replace(/"/g, '"');
+          const colors = JSON.parse(colorsText);
+
+          const swatches = palette.querySelectorAll('.color-swatch');
+          swatches.forEach(function(swatch, index) {
+            const colorValue = swatch.getAttribute('data-color-value');
+            const isInvalid = swatch.getAttribute('data-invalid');
+
+            if (colorValue && !isInvalid) {
+              // Validate and apply the color
+              const trimmedColor = colorValue.trim();
+              if (trimmedColor !== '' &&
+                  (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(trimmedColor) ||
+                   /^rgb[a]?\([^)]+\)$/.test(trimmedColor) ||
+                   /^hsl[a]?\([^)]+\)$/.test(trimmedColor))) {
+                swatch.style.backgroundColor = trimmedColor;
+                swatch.setAttribute('title', trimmedColor);
+              } else {
+                swatch.style.backgroundColor = '#e5e7eb'; // gray-200
+                swatch.setAttribute('title', trimmedColor + ' (invalid color)');
+              }
+            } else if (isInvalid) {
+              swatch.style.backgroundColor = '#e5e7eb'; // gray-200
+              swatch.setAttribute('title', colorValue + ' (invalid color)');
+            }
+          });
+        } catch (error) {
+          console.error('Error parsing color data:', error);
+        }
       }
     });
-  });
+  }
 </script>

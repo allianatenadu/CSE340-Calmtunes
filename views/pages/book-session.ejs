@@ -1,0 +1,1455 @@
+<!-- Enhanced Booking Content - Matches Design Requirements -->
+
+<style>
+  /* Ensure sidebar navigation is always visible */
+  #nav-menu {
+    display: block !important;
+    visibility: visible !important;
+    min-height: 400px !important;
+    flex: 1 !important;
+  }
+
+  .sidebar-collapsed #nav-menu {
+    display: block !important;
+    min-height: 400px !important;
+    flex: 1 !important;
+  }
+
+  #sidebar {
+    height: 100vh !important;
+    min-height: 100vh !important;
+  }
+
+  /* Booking Page Styles */
+  .booking-container {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    background: #f8f9fa;
+    min-height: 100vh;
+  }
+
+  .booking-header {
+    background: white;
+    padding: 2rem;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 0;
+  }
+
+  .booking-content {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .booking-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  @media (max-width: 1024px) {
+    .booking-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+
+  /* Calendar specific styles */
+  .calendar-grid {
+    min-height: 280px;
+  }
+
+  .calendar-day {
+    position: relative;
+    transition: all 0.2s ease;
+  }
+
+  .calendar-day:hover.available {
+    transform: scale(1.05);
+  }
+
+  .calendar-day.selected {
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+  }
+
+  /* Calendar Styles */
+  .calendar-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+  }
+
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  .calendar-nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 1rem;
+  }
+
+  .calendar-nav-btn:hover {
+    background: #f8f9fa;
+    border-color: #d1d5db;
+    color: #374151;
+  }
+
+  .calendar-month {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    min-width: 150px;
+    text-align: center;
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+
+  .calendar-day-header {
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #8b5cf6;
+    padding: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: #f8f9fa;
+    border: 1px solid #e5e7eb;
+  }
+
+  .calendar-day.other-month {
+    color: #d1d5db;
+    cursor: default;
+    background: transparent;
+    border: none;
+  }
+
+  .calendar-day.available {
+    color: #374151;
+    background: white;
+  }
+
+  .calendar-day.available:hover {
+    background: #f3e8ff;
+    color: #7c3aed;
+    border-color: #8b5cf6;
+  }
+
+  .calendar-day.selected {
+    background: #8b5cf6;
+    color: white;
+    font-weight: 600;
+    border-color: #8b5cf6;
+  }
+
+  .calendar-day.disabled {
+    color: #d1d5db;
+    cursor: not-allowed;
+    background: #f9fafb;
+    border-color: #f3f4f6;
+  }
+
+  .calendar-day.today {
+    border: 2px solid #8b5cf6;
+    font-weight: 600;
+  }
+
+  /* Therapist Selection */
+  .therapist-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+  }
+
+  .therapist-select {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #374151;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+  }
+
+  .therapist-select:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+
+  .therapist-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f3e8ff, #ede9fe);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .therapist-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #8b5cf6;
+  }
+
+  .therapist-avatar-placeholder {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border: 3px solid #8b5cf6;
+  }
+
+  .therapist-details h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .therapist-specialty {
+    font-size: 0.875rem;
+    color: #7c3aed;
+    font-weight: 500;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .therapist-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .stars {
+    color: #fbbf24;
+    display: flex;
+  }
+
+  /* Time Slots */
+  .time-slots-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+  }
+
+  .time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .time-slot-btn {
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+    color: #374151;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .time-slot-btn:hover:not(:disabled) {
+    border-color: #8b5cf6;
+    background: #f3e8ff;
+    color: #7c3aed;
+  }
+
+  .time-slot-btn.selected {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: white;
+  }
+
+  .time-slot-btn:disabled {
+    background: #f9fafb;
+    color: #d1d5db;
+    cursor: not-allowed;
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+
+  .time-slot-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .no-slots-message {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+  }
+
+  .no-slots-message i {
+    font-size: 2rem;
+    color: #d1d5db;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Booking Summary */
+  .booking-summary {
+    background: linear-gradient(135deg, #f3e8ff, #ede9fe);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+  }
+
+  .summary-therapist {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .summary-details {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    font-size: 1rem;
+  }
+
+  .detail-label {
+    color: #6b7280;
+  }
+
+  .detail-value {
+    color: #1f2937;
+    font-weight: 500;
+  }
+
+  .confirm-btn {
+    width: 100%;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .confirm-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+  }
+
+  .confirm-btn:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+    border: 1px solid #e5e7eb;
+  }
+
+  .modal-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    border: 4px solid #10b981;
+  }
+
+  .modal-icon i {
+    font-size: 2.5rem;
+    color: #10b981;
+  }
+
+  .modal-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #1f2937;
+    text-align: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .modal-message {
+    color: #6b7280;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.125rem;
+  }
+
+  .modal-details {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e5e7eb;
+  }
+
+  .modal-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .modal-btn {
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+  }
+
+  .modal-btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 2px solid #e5e7eb;
+  }
+
+  .modal-btn-secondary:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+  }
+
+  .modal-btn-primary {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+  }
+
+  .modal-btn-primary:hover {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    transform: translateY(-2px);
+  }
+
+  /* Loading State */
+  .spinner {
+    border: 2px solid #f3f4f6;
+    border-top: 2px solid #8b5cf6;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Notification */
+  .notification {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    padding: 1.25rem 1.75rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 2000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    border: 1px solid #e5e7eb;
+  }
+
+  .notification.show {
+    transform: translateX(0);
+  }
+
+  .notification.success {
+    background: white;
+    border-left: 5px solid #10b981;
+  }
+
+  .notification.error {
+    background: white;
+    border-left: 5px solid #ef4444;
+  }
+
+  .notification.warning {
+    background: white;
+    border-left: 5px solid #f59e0b;
+  }
+</style>
+
+<div class="booking-container">
+  <!-- Header -->
+  <div class="booking-header">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+          📅
+        </div>
+        <div>
+          <h1 style="font-size: 2rem; font-weight: 700; color: #1f2937; margin: 0;">
+            Book a Session
+          </h1>
+          <p style="color: #6b7280; font-size: 1rem; margin: 0.25rem 0 0 0;">
+            Choose a therapist and a time that works for you.
+          </p>
+        </div>
+      </div>
+
+      <!-- View My Sessions Button -->
+      <a href="/my-session" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.75rem 1.5rem; border-radius: 12px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; border: none; cursor: pointer;">
+        <i class="fas fa-calendar-check"></i>
+        <span>View My Sessions</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="booking-content">
+    <div class="booking-grid">
+    <!-- Left Column -->
+    <div>
+      <!-- Therapist Selection -->
+      <div class="therapist-card">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+            👤
+          </div>
+          <h2 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin: 0;">Select a Therapist</h2>
+        </div>
+
+        <select id="therapist-select" class="therapist-select">
+          <option value="">Choose a therapist...</option>
+        </select>
+
+        <div id="therapist-info" class="therapist-info" style="display: none;">
+          <img id="therapist-avatar" class="therapist-avatar" src="" alt="" style="display: none;">
+          <div id="therapist-avatar-placeholder" class="therapist-avatar-placeholder" style="display: none;"></div>
+          <div class="therapist-details">
+            <h4 id="therapist-name"></h4>
+            <p id="therapist-specialty" class="therapist-specialty"></p>
+            <div class="therapist-rating">
+              <div class="stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <span style="color: #6b7280;">5.0 (128 reviews)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <div class="calendar-card" style="margin-top: 2rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+            📅
+          </div>
+          <h2 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin: 0;">Select a Date</h2>
+        </div>
+
+        <div class="calendar-header">
+          <button class="calendar-nav-btn" id="prev-month">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="calendar-month" id="current-month">October 2023</div>
+          <button class="calendar-nav-btn" id="next-month">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <div class="calendar-grid" id="calendar-grid">
+          <div class="calendar-day-header">Sun</div>
+          <div class="calendar-day-header">Mon</div>
+          <div class="calendar-day-header">Tue</div>
+          <div class="calendar-day-header">Wed</div>
+          <div class="calendar-day-header">Thu</div>
+          <div class="calendar-day-header">Fri</div>
+          <div class="calendar-day-header">Sat</div>
+          <!-- Calendar days will be populated by JavaScript -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div>
+      <!-- Available Times -->
+      <div class="time-slots-card">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+            🕐
+          </div>
+          <h2 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin: 0;">Available Times</h2>
+        </div>
+
+        <div id="time-slots-container">
+          <div class="no-slots-message">
+            <div style="width: 64px; height: 64px; background: #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem; color: #d1d5db;">
+              📅
+            </div>
+            <p style="color: #6b7280; font-size: 1rem; margin: 0;">Please select a therapist and date first</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking Summary -->
+      <div id="booking-summary" class="booking-summary" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+            📋
+          </div>
+          <h2 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin: 0;">Booking Summary</h2>
+        </div>
+
+        <div class="summary-therapist">
+          <img id="summary-avatar" class="therapist-avatar" src="" alt="" style="display: none;">
+          <div id="summary-avatar-placeholder" class="therapist-avatar-placeholder" style="display: none;"></div>
+          <div style="flex: 1;">
+            <h4 id="summary-therapist-name" style="margin: 0 0 0.25rem 0; font-size: 1rem; font-weight: 600; color: #1f2937;">
+              Select a therapist
+            </h4>
+            <p id="summary-date-time" style="margin: 0 0 0.25rem 0; font-size: 0.875rem; color: #6b7280;">
+              Choose date and time
+            </p>
+            <p id="summary-session-type" style="margin: 0; font-size: 0.875rem; color: #7c3aed; font-weight: 500;">
+              <span id="summary-session-type-text">Video Call</span> Session (50 minutes)
+            </p>
+          </div>
+        </div>
+
+        <div class="summary-details">
+          <div class="detail-row">
+            <span class="detail-label">Session Duration:</span>
+            <span class="detail-value">50 minutes</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Session Type:</span>
+            <div style="display: flex; align-items: center; gap: 1rem; width: 100%;">
+              <select id="session-type-select" class="therapist-select" style="max-width: 150px; flex: 1;">
+                <option value="video">Video Call</option>
+                <option value="phone">Phone Call</option>
+                <option value="chat">Chat Session</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button id="confirm-booking-btn" class="confirm-btn" disabled>
+          <i class="fas fa-calendar-check"></i>
+          <span>Confirm Booking</span>
+        </button>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Booking Confirmation Modal -->
+<div id="booking-modal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-icon">
+      <i class="fas fa-check"></i>
+    </div>
+    <h3 class="modal-title">Booking Confirmed!</h3>
+    <p class="modal-message">Your appointment has been successfully scheduled.</p>
+
+    <div class="modal-details">
+      <div class="detail-row">
+        <span class="detail-label">Therapist:</span>
+        <span id="modal-therapist-name" class="detail-value"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Date & Time:</span>
+        <span id="modal-date-time" class="detail-value"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Session Type:</span>
+        <span id="modal-session-type" class="detail-value">Video Call</span>
+      </div>
+    </div>
+
+    <div class="modal-buttons">
+       <a href="/book-session" class="modal-btn modal-btn-secondary">
+         <i class="fas fa-calendar-plus"></i>
+         <span>Book Another</span>
+       </a>
+       <a href="/my-session" class="modal-btn modal-btn-primary">
+         <i class="fas fa-calendar-check"></i>
+         <span>View My Sessions</span>
+       </a>
+     </div>
+  </div>
+</div>
+
+<script>
+  // State management
+  let currentDate = new Date();
+  let selectedDate = null;
+  let selectedTime = null;
+  let selectedTherapist = null;
+  let selectedSessionType = 'video';
+  let therapists = [];
+
+  // Initialize on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("Book session page loaded - initializing...");
+    initializeCalendar();
+    loadTherapists();
+    setupEventListeners();
+  });
+
+  // Initialize calendar
+  function initializeCalendar() {
+    updateCalendarHeader();
+    renderCalendar();
+  }
+
+  // Update calendar header
+  function updateCalendarHeader() {
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    document.getElementById("current-month").textContent = 
+      `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+  }
+
+  // Render calendar
+  function renderCalendar() {
+    const calendarGrid = document.getElementById("calendar-grid");
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    // Clear existing calendar days (but keep the headers)
+    const existingDays = calendarGrid.querySelectorAll(".calendar-day");
+    existingDays.forEach(day => day.remove());
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      const emptyDay = document.createElement("div");
+      emptyDay.className = "calendar-day other-month";
+      const prevMonthDay = new Date(year, month, -startingDayOfWeek + i + 1).getDate();
+      emptyDay.textContent = prevMonthDay;
+      calendarGrid.appendChild(emptyDay);
+    }
+
+    // Add days of current month
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayElement = document.createElement("div");
+      const dayDate = new Date(year, month, day);
+      dayDate.setHours(0, 0, 0, 0);
+
+      dayElement.className = "calendar-day";
+      dayElement.textContent = day;
+
+      // Mark today
+      if (dayDate.getTime() === today.getTime()) {
+        dayElement.classList.add("today");
+      }
+
+      // Disable past dates
+      if (dayDate < today) {
+        dayElement.classList.add("disabled");
+      } else {
+        dayElement.classList.add("available");
+        dayElement.addEventListener("click", () => selectDate(day));
+      }
+
+      calendarGrid.appendChild(dayElement);
+    }
+
+    // Fill remaining cells to complete the 6-week grid (42 cells total)
+    const currentCellCount = calendarGrid.children.length - 7; // Subtract 7 for the day headers
+    const remainingCells = 42 - currentCellCount;
+    for (let day = 1; day <= remainingCells && currentCellCount + day <= 42; day++) {
+      const nextMonthDay = document.createElement("div");
+      nextMonthDay.className = "calendar-day other-month";
+      nextMonthDay.textContent = day;
+      calendarGrid.appendChild(nextMonthDay);
+    }
+  }
+
+  // Select date
+  function selectDate(day) {
+    if (!selectedTherapist) {
+      showNotification("Please select a therapist first", "warning");
+      return;
+    }
+
+    // Null check for event target
+    if (!event || !event.target) {
+      console.error("Event target not found");
+      return;
+    }
+
+    document.querySelectorAll(".calendar-day.selected").forEach(el => {
+      el.classList.remove("selected");
+    });
+
+    event.target.classList.add("selected");
+    selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+
+    updateTimeSlots();
+    updateBookingSummary();
+    if (selectedTherapist) {
+      showNotification(`Date selected - Now choose your preferred time with ${selectedTherapist.name}`, "success");
+    }
+  }
+
+  // Change month
+  function changeMonth(direction) {
+    if (direction === "prev") {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+    } else {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+
+    updateCalendarHeader();
+    renderCalendar();
+    selectedDate = null;
+    selectedTime = null;
+    updateTimeSlots();
+    updateBookingSummary();
+  }
+
+  // Load therapists from API
+  async function loadTherapists() {
+    try {
+      console.log("Loading therapists from backend...");
+      const response = await fetch("/therapist/api/approved");
+      const data = await response.json();
+
+      console.log("Therapist API Response:", data);
+
+      if (data.success && data.therapists && data.therapists.length > 0) {
+        therapists = data.therapists;
+        console.log("Loaded therapists:", therapists);
+        populateTherapistSelect();
+        showNotification(`Found ${therapists.length} therapists available`, "success");
+      } else {
+        console.error("No therapists found or API error:", data);
+        showNotification("No therapists available at the moment", "warning");
+        // Add some sample therapists for testing
+        therapists = [
+          { id: 1, name: "Dr. Sarah Johnson", specialty: "Clinical Psychology", profile_image: "" },
+          { id: 2, name: "Dr. Michael Chen", specialty: "Marriage Counseling", profile_image: "" }
+        ];
+        populateTherapistSelect();
+      }
+    } catch (error) {
+      console.error("Error loading therapists:", error);
+      showNotification("Network error loading therapists. Using sample data.", "warning");
+
+      // Fallback to sample data
+      therapists = [
+        { id: 1, name: "Dr. Sarah Johnson", specialty: "Clinical Psychology", profile_image: "" },
+        { id: 2, name: "Dr. Michael Chen", specialty: "Marriage Counseling", profile_image: "" }
+      ];
+      populateTherapistSelect();
+    }
+  }
+
+  // Populate therapist dropdown
+  function populateTherapistSelect() {
+    const select = document.getElementById("therapist-select");
+    select.innerHTML = '<option value="">Choose a therapist...</option>';
+
+    therapists.forEach(therapist => {
+      const option = document.createElement("option");
+      option.value = therapist.id;
+      option.textContent = therapist.name;
+      option.dataset.specialty = therapist.specialty || "General Practice";
+      option.dataset.image = therapist.profile_image || "";
+      select.appendChild(option);
+    });
+  }
+
+  // Setup event listeners
+  function setupEventListeners() {
+    document.getElementById("prev-month").addEventListener("click", () => changeMonth("prev"));
+    document.getElementById("next-month").addEventListener("click", () => changeMonth("next"));
+
+    document.getElementById("therapist-select").addEventListener("change", function() {
+      if (this.value) {
+        selectedTherapist = therapists.find(t => t.id == this.value);
+        const selectedOption = this.options[this.selectedIndex];
+        showTherapistInfo(selectedTherapist, selectedOption);
+        updateTimeSlots();
+        updateBookingSummary();
+      } else {
+        selectedTherapist = null;
+        hideTherapistInfo();
+        updateTimeSlots();
+        updateBookingSummary();
+      }
+    });
+
+    document.getElementById("session-type-select").addEventListener("change", function() {
+      selectedSessionType = this.value;
+      updateSessionTypeDescription();
+      updateBookingSummary();
+    });
+
+    document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
+  }
+
+  // Show therapist info
+  function showTherapistInfo(therapist, option) {
+    if (!therapist || !option) {
+      console.error("Therapist or option data not provided");
+      return;
+    }
+
+    const infoDiv = document.getElementById("therapist-info");
+    const avatar = document.getElementById("therapist-avatar");
+    const placeholder = document.getElementById("therapist-avatar-placeholder");
+    const therapistNameEl = document.getElementById("therapist-name");
+    const therapistSpecialtyEl = document.getElementById("therapist-specialty");
+
+    if (!infoDiv || !avatar || !placeholder) {
+      console.error("Therapist info elements not found");
+      return;
+    }
+
+    const imagePath = option.dataset.image;
+
+    // Handle avatar display
+    if (imagePath && imagePath.trim() !== '' && imagePath !== 'null') {
+      avatar.src = `/uploads/${imagePath}`;
+      avatar.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+      avatar.onerror = function() {
+        this.style.display = 'none';
+        if (placeholder) {
+          placeholder.textContent = therapist.name.charAt(0).toUpperCase();
+          placeholder.style.display = 'flex';
+        }
+      };
+    } else {
+      if (avatar) avatar.style.display = 'none';
+      if (placeholder) {
+        placeholder.textContent = therapist.name.charAt(0).toUpperCase();
+        placeholder.style.display = 'flex';
+      }
+    }
+
+    if (therapistNameEl) therapistNameEl.textContent = therapist.name;
+    if (therapistSpecialtyEl) therapistSpecialtyEl.textContent = option.dataset.specialty;
+
+    infoDiv.style.display = 'flex';
+    showNotification(`Selected ${therapist.name} - Now select your preferred date`, "success");
+  }
+
+  // Hide therapist info
+  function hideTherapistInfo() {
+    const infoDiv = document.getElementById("therapist-info");
+    if (infoDiv) {
+      infoDiv.style.display = 'none';
+    }
+  }
+
+  // Update session type description
+  function updateSessionTypeDescription() {
+    const sessionTypeDescriptions = {
+      'video': 'Video call sessions allow face-to-face interaction through your browser.',
+      'phone': 'Phone call sessions provide direct voice communication with your therapist.',
+      'chat': 'Chat sessions offer text-based communication for flexible, on-demand support.'
+    };
+
+    const description = sessionTypeDescriptions[selectedSessionType] || sessionTypeDescriptions['video'];
+    const descriptionElement = document.getElementById("session-type-description");
+    if (descriptionElement) {
+      descriptionElement.textContent = description;
+    }
+  }
+
+  // Update time slots
+  async function updateTimeSlots() {
+    const container = document.getElementById("time-slots-container");
+
+    if (!selectedTherapist) {
+      container.innerHTML = `
+        <div class="no-slots-message">
+          <i class="fas fa-user-md"></i>
+          <p>Please select a therapist first</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (!selectedDate) {
+      container.innerHTML = `
+        <div class="no-slots-message">
+          <i class="fas fa-calendar"></i>
+          <p>Please select a date first</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Show loading
+    container.innerHTML = `
+      <div class="no-slots-message">
+        <div class="spinner"></div>
+        <p>Loading available times...</p>
+      </div>
+    `;
+
+    try {
+      // Fetch available slots from server
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      console.log(`Fetching availability for therapist ${selectedTherapist.id} on ${dateStr}`);
+
+      const response = await fetch(`/therapist/api/${selectedTherapist.id}/availability?date=${dateStr}`);
+      const data = await response.json();
+
+      console.log("Availability API Response:", data);
+
+      if (data.success) {
+        const allSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+        const bookedSlots = data.bookedSlots || [];
+
+        const slotsHTML = `
+          <div class="time-slots-grid">
+            ${allSlots.map(time => {
+              const isBooked = bookedSlots.includes(time);
+              return `
+                <button
+                  class="time-slot-btn ${isBooked ? 'disabled' : ''}"
+                  data-time="${time}"
+                  ${isBooked ? 'disabled' : ''}
+                  onclick="${isBooked ? '' : `selectTime('${time}')`}"
+                  title="${isBooked ? 'Already booked' : `Available at ${formatTimeDisplay(time)}`}"
+                >
+                  ${formatTimeDisplay(time)}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        `;
+
+        container.innerHTML = slotsHTML;
+        showNotification(`Found ${allSlots.length - bookedSlots.length} available time slots`, "success");
+      } else {
+        throw new Error(data.error || "Failed to fetch availability");
+      }
+    } catch (error) {
+      console.error("Error fetching time slots:", error);
+      showNotification("Using default availability", "warning");
+
+      // Fallback to default slots (all available for demo)
+      const allSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+      const slotsHTML = `
+        <div class="time-slots-grid">
+          ${allSlots.map(time => `
+            <button
+              class="time-slot-btn"
+              data-time="${time}"
+              onclick="selectTime('${time}')"
+              title="Available at ${formatTimeDisplay(time)}"
+            >
+              ${formatTimeDisplay(time)}
+            </button>
+          `).join('')}
+        </div>
+      `;
+      container.innerHTML = slotsHTML;
+    }
+  }
+
+  // Select time slot
+  function selectTime(time) {
+    // Null check for event target
+    if (!event || !event.target) {
+      console.error("Event target not found");
+      return;
+    }
+
+    document.querySelectorAll(".time-slot-btn").forEach(btn => {
+      btn.classList.remove("selected");
+    });
+
+    event.target.classList.add("selected");
+    selectedTime = time;
+
+    updateBookingSummary();
+
+    if (selectedTherapist && selectedDate) {
+      showNotification(`Time selected! Ready to book with ${selectedTherapist.name}`, "success");
+    }
+  }
+
+  // Format time display
+  function formatTimeDisplay(time24) {
+    const [hour, minute] = time24.split(':');
+    const hour12 = hour % 12 || 12;
+    const ampm = hour < 12 ? 'AM' : 'PM';
+    return `${hour12}:${minute} ${ampm}`;
+  }
+
+  // Update booking summary
+  function updateBookingSummary() {
+    const summary = document.getElementById("booking-summary");
+    const confirmBtn = document.getElementById("confirm-booking-btn");
+
+    if (!summary || !confirmBtn) {
+      console.error("Booking summary elements not found");
+      return;
+    }
+
+    if (selectedDate && selectedTime && selectedTherapist) {
+      // Update summary avatar
+      const summaryAvatar = document.getElementById("summary-avatar");
+      const summaryPlaceholder = document.getElementById("summary-avatar-placeholder");
+      const select = document.getElementById("therapist-select");
+
+      if (summaryAvatar && summaryPlaceholder && select) {
+        const option = select.options[select.selectedIndex];
+        const imagePath = option ? option.dataset.image : '';
+
+        if (imagePath && imagePath.trim() !== '' && imagePath !== 'null') {
+          summaryAvatar.src = `/uploads/${imagePath}`;
+          summaryAvatar.style.display = 'block';
+          summaryPlaceholder.style.display = 'none';
+          summaryAvatar.onerror = function() {
+            this.style.display = 'none';
+            if (summaryPlaceholder) {
+              summaryPlaceholder.textContent = selectedTherapist.name.charAt(0).toUpperCase();
+              summaryPlaceholder.style.display = 'flex';
+            }
+          };
+        } else {
+          summaryAvatar.style.display = 'none';
+          if (summaryPlaceholder) {
+            summaryPlaceholder.textContent = selectedTherapist.name.charAt(0).toUpperCase();
+            summaryPlaceholder.style.display = 'flex';
+          }
+        }
+      }
+
+      // Update text elements with null checks
+      const therapistNameEl = document.getElementById("summary-therapist-name");
+      const dateTimeEl = document.getElementById("summary-date-time");
+      const sessionTypeTextEl = document.getElementById("summary-session-type-text");
+      const sessionDetailTypeEl = document.getElementById("summary-detail-session-type");
+
+      if (therapistNameEl) therapistNameEl.textContent = selectedTherapist.name;
+
+      if (dateTimeEl) {
+        const dateStr = selectedDate.toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        });
+        dateTimeEl.textContent = `${dateStr} at ${formatTimeDisplay(selectedTime)}`;
+      }
+
+      // Update session type display
+      if (sessionTypeTextEl || sessionDetailTypeEl) {
+        const sessionTypeNames = {
+          'video': 'Video Call',
+          'phone': 'Phone Call',
+          'chat': 'Chat'
+        };
+        const sessionTypeName = sessionTypeNames[selectedSessionType] || 'Video Call';
+
+        if (sessionTypeTextEl) sessionTypeTextEl.textContent = sessionTypeName;
+        if (sessionDetailTypeEl) sessionDetailTypeEl.textContent = sessionTypeName;
+      }
+
+      summary.style.display = 'block';
+      confirmBtn.disabled = false;
+    } else {
+      // Update default text with null checks
+      const therapistNameEl = document.getElementById("summary-therapist-name");
+      const dateTimeEl = document.getElementById("summary-date-time");
+
+      if (therapistNameEl) therapistNameEl.textContent = "Select a therapist";
+      if (dateTimeEl) dateTimeEl.textContent = "Choose date and time";
+      if (confirmBtn) confirmBtn.disabled = true;
+
+      if (selectedTherapist || selectedDate || selectedTime) {
+        if (summary) summary.style.display = 'block';
+      } else {
+        if (summary) summary.style.display = 'none';
+      }
+    }
+  }
+
+  // Confirm booking
+  async function confirmBooking() {
+    if (!selectedDate || !selectedTime || !selectedTherapist) {
+      showNotification("Please select a date, time, and therapist", "error");
+      return;
+    }
+
+    const confirmBtn = document.getElementById("confirm-booking-btn");
+    const originalHTML = confirmBtn.innerHTML;
+
+    // Show loading state
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<div class="spinner"></div><span>Booking...</span>';
+
+    try {
+      const sessionTypeNames = {
+        'video': 'Video Call',
+        'phone': 'Phone Call',
+        'chat': 'Chat Session'
+      };
+
+      const bookingData = {
+        therapistId: selectedTherapist.id,
+        preferredDate: selectedDate.toISOString().split("T")[0],
+        preferredTime: selectedTime,
+        sessionType: selectedSessionType
+      };
+
+      const response = await fetch("/appointments/book", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(bookingData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showBookingModal();
+        showNotification("Appointment booked successfully!", "success");
+        
+        // Reset form after short delay
+        setTimeout(() => {
+          resetBookingForm();
+        }, 1000);
+      } else {
+        showNotification(data.error || "Failed to book appointment", "error");
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalHTML;
+      }
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      showNotification("Network error. Please try again.", "error");
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = originalHTML;
+    }
+  }
+
+  // Show booking modal
+  function showBookingModal() {
+    // Check if elements exist before setting content
+    const modalTherapistName = document.getElementById("modal-therapist-name");
+    const modalDateTime = document.getElementById("modal-date-time");
+    const modalSessionType = document.getElementById("modal-session-type");
+    const bookingModal = document.getElementById("booking-modal");
+
+    if (!modalTherapistName || !modalDateTime || !modalSessionType || !bookingModal) {
+      console.error("Modal elements not found");
+      return;
+    }
+
+    modalTherapistName.textContent = selectedTherapist ? selectedTherapist.name : 'Therapist';
+
+    const dateStr = selectedDate ? selectedDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    }) : 'Date not selected';
+
+    modalDateTime.textContent = `${dateStr} at ${formatTimeDisplay(selectedTime)}`;
+
+    // Update session type in modal
+    const sessionTypeNames = {
+      'video': 'Video Call',
+      'phone': 'Phone Call',
+      'chat': 'Chat Session'
+    };
+    modalSessionType.textContent = sessionTypeNames[selectedSessionType] || 'Video Call';
+
+    bookingModal.classList.add("active");
+  }
+
+  // Close booking modal
+  function closeBookingModal() {
+    document.getElementById("booking-modal").classList.remove("active");
+    window.location.href = "/dashboard";
+  }
+
+  // Reset booking form
+  function resetBookingForm() {
+    selectedDate = null;
+    selectedTime = null;
+    selectedTherapist = null;
+    selectedSessionType = 'video'; // Reset to default
+
+    document.querySelectorAll(".calendar-day.selected").forEach(el => {
+      el.classList.remove("selected");
+    });
+
+    document.getElementById("therapist-select").value = "";
+    document.getElementById("session-type-select").value = "video"; // Reset dropdown
+    hideTherapistInfo();
+    updateTimeSlots();
+    updateBookingSummary();
+  }
+
+  // Show notification
+  function showNotification(message, type = "info") {
+    if (!message) return;
+
+    // Remove existing notifications
+    const existing = document.querySelector(".notification");
+    if (existing) {
+      existing.remove();
+    }
+
+    if (!document.body) {
+      console.error("Document body not found");
+      return;
+    }
+
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+
+    const icon = type === "success" ? "check-circle" :
+                 type === "error" ? "exclamation-circle" :
+                 type === "warning" ? "exclamation-triangle" : "info-circle";
+
+    notification.innerHTML = `
+      <i class="fas fa-${icon}" style="font-size: 1.25rem; color: ${
+        type === 'success' ? '#10b981' :
+        type === 'error' ? '#ef4444' :
+        type === 'warning' ? '#f59e0b' : '#3b82f6'
+      };"></i>
+      <span style="color: #1f2937; font-weight: 500;">${message}</span>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.classList.add("show");
+    }, 100);
+
+    setTimeout(() => {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 4000);
+  }
+
+  // Close modal when clicking outside
+  document.getElementById("booking-modal").addEventListener("click", function(e) {
+    if (e.target === this) {
+      closeBookingModal();
+    }
+  });
+</script

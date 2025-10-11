@@ -1,3 +1,4 @@
+<!-- Therapist application page content for therapist layout -->
 <div class="max-w-4xl mx-auto px-4 py-8">
   <div class="bg-white rounded-xl shadow-lg overflow-hidden">
     <!-- Header -->
@@ -104,15 +105,24 @@
           <div>
             <label class="block text-sm font-medium text-gray-800 mb-2">
               Professional Bio <span class="text-red-500">*</span>
+              <span class="text-xs text-gray-500">(Minimum 100 characters)</span>
             </label>
-            <textarea 
-              name="bio" 
-              rows="4" 
-              required 
-              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-              placeholder="Tell us about your background, approach to therapy, and what makes you passionate about mental health care..."
+            <textarea
+              name="bio"
+              id="bio-textarea"
+              rows="4"
+              required
+              minlength="100"
+              maxlength="1000"
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Tell us about your background, approach to therapy, and what makes you passionate about mental health care... Include your experience, therapeutic methods, and areas of expertise."
             ></textarea>
-            <p class="text-sm text-gray-500 mt-1">This will be displayed on your public profile</p>
+            <div class="flex justify-between mt-1">
+              <p class="text-sm text-gray-500">* Required field - This will be displayed on your public profile</p>
+              <p class="text-sm text-gray-400">
+                <span id="bio-count">0</span>/1000 characters
+              </p>
+            </div>
           </div>
         </div>
 
@@ -261,31 +271,48 @@ document.getElementById('certificationsInput').addEventListener('change', functi
   }
 });
 
+// Character counter for bio
+document.getElementById('bio-textarea').addEventListener('input', function() {
+  const count = this.value.length;
+  document.getElementById('bio-count').textContent = count;
+
+  // Change color based on length
+  const countElement = document.getElementById('bio-count');
+  if (count >= 100) {
+    countElement.className = 'text-green-600 font-medium';
+  } else if (count >= 50) {
+    countElement.className = 'text-yellow-600';
+  } else {
+    countElement.className = 'text-gray-400';
+  }
+});
+
 // Form validation
 document.querySelector('form').addEventListener('submit', function(e) {
   const terms = document.getElementById('terms').checked;
   const consent = document.getElementById('consent').checked;
-  
+
   if (!terms || !consent) {
     e.preventDefault();
     alert('Please accept all terms and conditions to proceed.');
     return;
   }
-  
+
   const specialty = document.querySelector('select[name="specialty"]').value;
   const experience = document.querySelector('select[name="experience"]').value;
   const bio = document.querySelector('textarea[name="bio"]').value.trim();
   const resume = document.getElementById('resumeInput').files.length;
-  
+
   if (!specialty || !experience || !bio || !resume) {
     e.preventDefault();
     alert('Please fill in all required fields.');
     return;
   }
-  
-  if (bio.length < 50) {
+
+  if (bio.length < 100) {
     e.preventDefault();
-    alert('Professional bio must be at least 50 characters long.');
+    alert('Professional bio must be at least 100 characters long.');
+    document.getElementById('bio-textarea').focus();
     return;
   }
 });

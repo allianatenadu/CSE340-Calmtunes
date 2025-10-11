@@ -1,34 +1,38 @@
-<!-- Beautiful Signup Background -->
-<div class="relative overflow-hidden bg-gradient-to-br from-primary/20 via-background-light to-primary/10 dark:from-primary/10 dark:via-background-dark dark:to-primary/5" style="min-height: calc(100vh - 80px);">
-  <!-- Animated Background Elements -->
-  <div class="absolute inset-0 overflow-hidden">
-    <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse delay-500"></div>
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - CalmTunes</title>
+    <link href="/css/output.css" rel="stylesheet" />
 
-  <div class="relative flex min-h-screen w-full flex-col">
-    <div class="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div class="w-full max-w-lg space-y-8">
-        <div class="text-center">
-          <div class="mb-4 inline-flex items-center gap-3">
-            <svg class="h-8 w-8 text-primary" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 42.4379C4 42.4379 14.0962 36.0744 24 41.1692C35.0664 46.8624 44 42.2078 44 42.2078L44 7.01134C44 7.01134 35.068 11.6577 24.0031 5.96913C14.0971 0.876274 4 7.27094 4 7.27094L4 42.4379Z" fill="currentColor"></path>
-            </svg>
-            <h1 class="text-3xl font-bold text-black tracking-tighter">CalmTunes</h1>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="min-h-screen bg-white flex flex-col lg:flex-row">
+      <!-- left Side - Signup Form -->
+      <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 lg:py-0">
+        <div class="w-full max-w-lg">
+          <!-- Logo Section -->
+          <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">
+              Create Account
+            </h1>
+            <p class="text-lg text-gray-900">
+              Join CalmTunes for your mental wellness journey
+            </p>
           </div>
-          <h2 class="text-2xl font-semibold text-black tracking-tight">Create your account</h2>
-          <p class="mt-2 text-sm text-gray-900">
-            Start your journey to a calmer mind.
-          </p>
-        </div>
 
-        <div class="bg-white/90 dark:bg-background-dark/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-primary/20 p-8 md:p-10">
-          <form action="/signup" method="POST" class="space-y-6">
+          <!-- Signup Card -->
+          <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-4 sm:p-6 md:p-8">
+          <form action="/signup" method="POST" class="space-y-4">
             <div>
               <label class="sr-only" for="full-name">Full Name</label>
               <input
-                class="form-input w-full rounded-lg border-2 border-primary/30 dark:border-primary/40 bg-background-light dark:bg-background-dark px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 text-gray-900 dark:text-gray-900"
+                class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 text-gray-900 placeholder-gray-500"
                 id="full-name"
                 name="name"
                 placeholder="Full Name"
@@ -40,7 +44,7 @@
             <div>
               <label class="sr-only" for="email">Email</label>
               <input
-                class="form-input w-full rounded-lg border-2 border-primary/30 dark:border-primary/40 bg-background-light dark:bg-background-dark px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 text-gray-900 dark:text-gray-900"
+                class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 text-gray-900 placeholder-gray-500"
                 id="email"
                 name="email"
                 placeholder="Email Address"
@@ -50,126 +54,150 @@
             </div>
 
             <!-- Role Selection -->
-            <div class="space-y-3">
-              <label class="block text-sm font-medium text-gray-900 dark:text-gray-300 mb-3">
-                Account Type
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                I am a:
               </label>
-              <div class="space-y-3">
-                <div class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors cursor-pointer">
+              <div class="flex gap-3">
+                <label class="flex-1 cursor-pointer">
                   <input
-                    id="role-patient"
-                    name="role"
                     type="radio"
+                    name="role"
                     value="patient"
                     checked
-                    class="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                    class="sr-only peer"
                   />
-                  <div class="ml-3 flex-1">
-                    <label for="role-patient" class="block text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
-                      <i class="fas fa-user-circle text-primary mr-2"></i>
-                      Patient
-                    </label>
-                    <p class="text-xs text-gray-900 dark:text-gray-400 mt-1">
-                      I'm looking for mental health support and therapy resources
-                    </p>
+                  <div class="p-3 border-2 border-gray-200 rounded-lg text-center hover:bg-primary/5 hover:border-primary/50 transition-all peer-checked:border-primary peer-checked:bg-primary/10">
+                    <i class="fas fa-user-circle text-primary text-lg mb-1 block"></i>
+                    <span class="text-sm font-medium text-gray-700">Patient</span>
                   </div>
-                </div>
-
-                <div class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors cursor-pointer">
+                </label>
+                <label class="flex-1 cursor-pointer">
                   <input
-                    id="role-therapist"
-                    name="role"
                     type="radio"
+                    name="role"
                     value="therapist"
-                    class="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                    id="role-therapist"
+                    class="sr-only peer"
                   />
-                  <div class="ml-3 flex-1">
-                    <label for="role-therapist" class="block text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
-                      <i class="fas fa-user-md text-primary mr-2"></i>
-                      Therapist
-                    </label>
-                    <p class="text-xs text-gray-900 dark:text-gray-400 mt-1">
-                      I'm a licensed therapist looking to connect with patients
-                    </p>
+                  <div class="p-3 border-2 border-gray-200 rounded-lg text-center hover:bg-primary/5 hover:border-primary/50 transition-all peer-checked:border-primary peer-checked:bg-primary/10">
+                    <i class="fas fa-user-md text-primary text-lg mb-1 block"></i>
+                    <span class="text-sm font-medium text-gray-700">Therapist</span>
                   </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="sr-only" for="password">Password</label>
+                <div class="relative">
+                  <input
+                    class="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 text-gray-900 placeholder-gray-500 pr-10"
+                    id="password"
+                    name="password"
+                    placeholder="Password"
+                    required
+                    type="password"
+                  />
+                  <button
+                    type="button"
+                    id="togglePassword"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-primary/60 hover:text-primary transition-colors"
+                  >
+                    <i class="fas fa-eye text-sm" id="passwordIcon"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="sr-only" for="confirm-password">Confirm Password</label>
+                <div class="relative">
+                  <input
+                    class="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 text-gray-900 placeholder-gray-500 pr-10"
+                    id="confirm-password"
+                    name="confirmPassword"
+                    placeholder="Confirm"
+                    required
+                    type="password"
+                  />
+                  <button
+                    type="button"
+                    id="toggleConfirmPassword"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-primary/60 hover:text-primary transition-colors"
+                  >
+                    <i class="fas fa-eye text-sm" id="confirmPasswordIcon"></i>
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div>
-              <label class="sr-only" for="password">Password</label>
+            <div class="flex items-start space-x-2">
               <input
-                class="form-input w-full rounded-lg border-2 border-primary/30 dark:border-primary/40 bg-background-light dark:bg-background-dark px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 text-gray-900 dark:text-gray-900"
-                id="password"
-                name="password"
-                placeholder="Password"
-                required
-                type="password"
+                class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mt-0.5"
+                id="terms-of-service"
+                name="terms"
+                type="checkbox"
               />
-            </div>
-
-            <div>
-              <label class="sr-only" for="confirm-password">Confirm Password</label>
-              <input
-                class="form-input w-full rounded-lg border-2 border-primary/30 dark:border-primary/40 bg-background-light dark:bg-background-dark px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 text-gray-900 dark:text-gray-900"
-                id="confirm-password"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                required
-                type="password"
-              />
-            </div>
-
-            <div class="flex items-center">
-              <input class="form-checkbox h-4 w-4 text-primary focus:ring-primary border-primary/30 rounded" id="terms-of-service" name="terms-of-service" type="checkbox"/>
-              <label class="ml-2 block text-sm text-gray-900 dark:text-gray-400" for="terms-of-service">
-                I agree to the <a class="font-medium text-primary hover:underline" href="#">Terms of Service</a> and <a class="font-medium text-primary hover:underline" href="#">Privacy Policy</a>.
+              <label class="text-xs text-gray-600" for="terms-of-service">
+                I agree to the <a class="text-primary hover:underline" href="#">Terms</a> and <a class="text-primary hover:underline" href="#">Privacy Policy</a>
               </label>
             </div>
 
-            <button class="flex w-full items-center justify-center rounded-lg bg-primary px-5 py-3 text-base font-bold text-white transition-opacity hover:opacity-90 shadow-lg hover:shadow-xl transform hover:scale-[1.02]">
+            <button class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center">
               <i class="fas fa-user-plus mr-2"></i>
               Create Account
             </button>
           </form>
-          <div class="relative">
-          <div class="absolute inset-0 flex items-center">
-            <span class="w-full border-t border-gray-300 dark:border-gray-600"></span>
+          <!-- Divider -->
+          <div class="relative my-4">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-200"></div>
+            </div>
+            <div class="relative flex justify-center text-xs">
+              <span class="px-3 bg-white text-gray-500">Or continue with</span>
+            </div>
           </div>
-          <div class="relative flex justify-center text-xs uppercase">
-            <span class="bg-white/80 dark:bg-background-dark/80 px-2 text-gray-900 dark:text-gray-400 font-medium">Or continue with</span>
+
+          <!-- Social Login Buttons -->
+          <div class="grid grid-cols-2 gap-3">
+            <a href="/auth/google" class="flex items-center justify-center py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-primary/10 hover:border-primary/50 transition-all duration-300">
+              <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              <span class="text-sm font-medium text-gray-700">Google</span>
+            </a>
+
+            <a href="/auth/spotify" class="flex items-center justify-center py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-primary/10 hover:border-primary/50 transition-all duration-300">
+              <svg class="w-4 h-4 mr-2 fill-current" viewBox="0 0 24 24">
+                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+              </svg>
+              <span class="text-sm font-medium text-gray-700">Spotify</span>
+            </a>
           </div>
-        </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <a href="/auth/google" class="flex w-full items-center justify-center gap-2 rounded-lg bg-white dark:bg-background-dark border-2 border-gray-200 dark:border-gray-600 py-2.5 font-medium transition-colors hover:bg-primary/20 dark:hover:bg-primary/20 shadow-md hover:shadow-lg">
-            <svg class="h-5 w-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            <span class="text-gray-900 dark:text-gray-300">Google</span>
-          </a>
-
-          <a href="/auth/spotify" class="flex w-full items-center justify-center gap-2 rounded-lg bg-white dark:bg-background-dark border-2 border-gray-200 dark:border-gray-600 py-2.5 font-medium transition-colors hover:bg-primary/20 dark:hover:bg-primary/20 shadow-md hover:shadow-lg">
-            <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24">
-              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
-            </svg>
-            <span class="text-gray-900 dark:text-gray-300">Spotify</span>
-          </a>
+          <p class="text-center text-xs text-gray-600 mt-3">
+            Already have an account? <a class="text-primary hover:underline font-medium" href="/login">Log in</a>
+          </p>
         </div>
+      </div>
 
-        <p class="text-center text-sm">
-          <span class="text-gray-900 dark:text-gray-400">Already have an account?</span>
-          <a class="font-semibold text-primary hover:underline ml-1" href="/login">Log in</a>
-        </p>
-        </div>
-        </div>
+       </div>
 
-        
-    </div>
-  </div>
+       <!-- Right Side - Image (Desktop Only) -->
+       <div class="hidden lg:flex flex-1 items-center justify-center p-8">
+         <div class="max-w-md">
+           <img
+             src="/images/login-image.png"
+             alt="CalmTunes - Mental Wellness"
+           />
+         </div>
+       </div>
+     </div>
+
 </div>
 
 <script>
@@ -199,14 +227,39 @@
 
     password.addEventListener("change", validatePassword);
     confirmPassword.addEventListener("keyup", validatePassword);
+
+    // Password visibility toggle
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordIcon = document.getElementById("passwordIcon");
+
+    if (togglePassword && passwordIcon) {
+      togglePassword.addEventListener("click", function () {
+        const type =
+          password.getAttribute("type") === "password" ? "text" : "password";
+        password.setAttribute("type", type);
+        passwordIcon.classList.toggle("fa-eye");
+        passwordIcon.classList.toggle("fa-eye-slash");
+      });
+    }
+
+    // Confirm password visibility toggle
+    const toggleConfirmPassword = document.getElementById(
+      "toggleConfirmPassword"
+    );
+    const confirmPasswordIcon = document.getElementById("confirmPasswordIcon");
+
+    if (toggleConfirmPassword && confirmPasswordIcon) {
+      toggleConfirmPassword.addEventListener("click", function () {
+        const type =
+          confirmPassword.getAttribute("type") === "password"
+            ? "text"
+            : "password";
+        confirmPassword.setAttribute("type", type);
+        confirmPasswordIcon.classList.toggle("fa-eye");
+        confirmPasswordIcon.classList.toggle("fa-eye-slash");
+      });
+    }
   });
 </script>
-
-<style>
-  .form-input::placeholder {
-    color: #4c9a92;
-  }
-  .dark .form-input::placeholder {
-    color: #a0c3bf;
-  }
-</style>
+  </body>
+</html>

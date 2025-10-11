@@ -31,6 +31,7 @@ module.exports.getPanicPage = async (req, res) => {
       emergencyContacts: emergencyContacts,
       hasTherapist: hasTherapist,
       therapist: therapist,
+      layout: "layouts/patient",
     });
   } catch (error) {
     console.error("Error loading panic page:", error);
@@ -206,6 +207,139 @@ module.exports.savePanicSession = async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || "Failed to save panic session",
+    });
+  }
+};
+
+// Get user's panic sessions for display
+module.exports.getPanicSessions = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const query = `
+      SELECT
+        id,
+        session_id,
+        start_time,
+        end_time,
+        duration,
+        breathing_used,
+        emergency_contacts_used,
+        trigger_method,
+        audio_recordings,
+        session_notes,
+        created_at
+      FROM panic_sessions
+      WHERE user_id = $1
+      ORDER BY start_time DESC
+      LIMIT 50
+    `;
+
+    const result = await db.query(query, [userId]);
+
+    res.json({
+      success: true,
+      sessions: result.rows.map(session => ({
+        ...session,
+        start_time: session.start_time.toISOString(),
+        end_time: session.end_time ? session.end_time.toISOString() : null,
+        created_at: session.created_at.toISOString(),
+        audio_recordings: Array.isArray(session.audio_recordings) ? session.audio_recordings : []
+      }))
+    });
+  } catch (error) {
+    console.error("Error fetching panic sessions:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch panic sessions",
+    });
+  }
+};
+
+// Delete a panic session
+module.exports.deletePanicSession = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const sessionId = req.params.id;
+
+    // First check if the session belongs to the user
+    const checkQuery = "SELECT id FROM panic_sessions WHERE id = $1 AND user_id = $2";
+    const checkResult = await db.query(checkQuery, [sessionId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Session not found or access denied",
+      });
+    }
+
+    // Delete the session
+    const deleteQuery = "DELETE FROM panic_sessions WHERE id = $1 AND user_id = $2";
+    await db.query(deleteQuery, [sessionId, userId]);
+
+    res.json({
+      success: true,
+      message: "Session deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting panic session:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to delete panic session",
+    });
+  }
+};
+
+// Get specific session for audio playback
+module.exports.getSessionForPlayback = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const sessionId = req.params.sessionId;
+
+    const query = `
+      SELECT
+        id,
+        session_id,
+        start_time,
+        end_time,
+        duration,
+        breathing_used,
+        emergency_contacts_used,
+        trigger_method,
+        audio_recordings,
+        session_notes,
+        created_at
+      FROM panic_sessions
+      WHERE user_id = $1 AND session_id = $2
+      LIMIT 1
+    `;
+
+    const result = await db.query(query, [userId, sessionId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Session not found",
+      });
+    }
+
+    const session = result.rows[0];
+
+    res.json({
+      success: true,
+      session: {
+        ...session,
+        start_time: session.start_time.toISOString(),
+        end_time: session.end_time ? session.end_time.toISOString() : null,
+        created_at: session.created_at.toISOString(),
+        audio_recordings: Array.isArray(session.audio_recordings) ? session.audio_recordings : []
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching session for playback:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch session",
     });
   }
 };

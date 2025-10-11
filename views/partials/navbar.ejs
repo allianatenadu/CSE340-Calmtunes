@@ -3,7 +3,7 @@
     <div class="flex h-20 items-center justify-between">
       <!-- Logo -->
       <div class="flex items-center gap-3">
-        <img src="/images/music-brain.png" alt="CalmTunes Logo" class="h-30 w-20 object-contain">
+        <img src="/images/logo.png" alt="CalmTunes Logo" class="h-20 w-20 object-contain">
         <h2 class="text-2xl font-bold text-gray-900">CalmTunes</h2>
       </div>
 
@@ -115,8 +115,19 @@
           <div class="relative group">
             <button class="flex items-center gap-3 p-2 rounded-full hover:bg-gray-50 transition-colors">
               <!-- Profile Image -->
-              <% if (typeof profileImageUrl !== 'undefined' && profileImageUrl) { %>
-                <img src="<%= profileImageUrl %>" alt="<%= user.name %>'s Profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary/20">
+              <%
+              let navbarProfileImage = null;
+              if (typeof user !== 'undefined' && user && user.profile_image && user.profile_image.trim() !== '' && user.profile_image !== 'null') {
+                navbarProfileImage = user.profile_image.startsWith('/')
+                  ? user.profile_image
+                  : '/uploads/profiles/' + user.profile_image;
+              }
+              %>
+              <% if (navbarProfileImage) { %>
+                <img src="<%= navbarProfileImage %>" alt="<%= user.name %>'s Profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary/20" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center" style="display: none;">
+                  <i class="fas fa-user text-primary"></i>
+                </div>
               <% } else { %>
                 <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <i class="fas fa-user text-primary"></i>
@@ -192,8 +203,19 @@
         <% if (typeof user !== 'undefined' && user) { %>
           <!-- Mobile User Info -->
           <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
-            <% if (typeof profileImageUrl !== 'undefined' && profileImageUrl) { %>
-              <img src="<%= profileImageUrl %>" alt="<%= user.name %>'s Profile" class="w-12 h-12 rounded-full object-cover border-2 border-primary/20">
+            <%
+            let mobileProfileImage = null;
+            if (typeof user !== 'undefined' && user && user.profile_image && user.profile_image.trim() !== '' && user.profile_image !== 'null') {
+              mobileProfileImage = user.profile_image.startsWith('/')
+                ? user.profile_image
+                : '/uploads/profiles/' + user.profile_image;
+            }
+            %>
+            <% if (mobileProfileImage) { %>
+              <img src="<%= mobileProfileImage %>" alt="<%= user.name %>'s Profile" class="w-12 h-12 rounded-full object-cover border-2 border-primary/20" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center" style="display: none;">
+                <i class="fas fa-user text-primary"></i>
+              </div>
             <% } else { %>
               <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <i class="fas fa-user text-primary"></i>
@@ -256,7 +278,7 @@
             <a class="mobile-nav-item pl-6" href="/mood-tracker">
               <i class="fas fa-chart-line text-accent mr-3"></i>Mood Tracker
             </a>
-            <a class="mobile-nav-item" href="/therapists">
+            <a class="mobile-nav-item" href="/find-therapist">
               <i class="fas fa-user-md text-purple-600 mr-3"></i>Find Therapist
             </a>
             <a class="mobile-nav-item" href="/appointments">

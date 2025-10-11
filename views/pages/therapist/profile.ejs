@@ -1,0 +1,620 @@
+<!-- Therapist Profile Page - Improved UI with Sidebar Integration -->
+
+<!-- Main Content Area with Sidebar Integration -->
+<div class="flex-1 p-3 sm:p-4 md:p-8" data-user-authenticated="<%= user ? 'true' : 'false' %>">
+  <div class="max-w-7xl mx-auto">
+    <!-- Loading State -->
+    <div id="loading-state" class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#13c8ec] mx-auto mb-4"></div>
+        <p class="text-[#618389]">Loading therapist profile...</p>
+      </div>
+    </div>
+
+    <!-- Profile Content -->
+    <div id="profile-content" style="display: none;">
+      <!-- Therapist Profile Header Card -->
+      <div class="flex p-3 sm:p-4 mb-4 sm:mb-6">
+        <div class="flex w-full flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div class="flex gap-3 sm:gap-4">
+            <!-- Therapist Profile Picture -->
+            <div
+              id="therapist-avatar-container"
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-24 w-24 sm:min-h-32 sm:w-32 border-4 border-[#13c8ec] shadow-lg"
+              style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iNjQiIGZpbGw9IiNGMEY0RjQiLz4KPHN2ZyB4PSI0MCIgeT0iNDAiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSIjNjE4Mzg5Ii8+Cjwvc3ZnPgo8L3N2Zz4=');"
+            ></div>
+            <div class="flex flex-col justify-center min-w-0 flex-1">
+              <p id="therapist-name" class="text-[#111718] text-lg sm:text-[22px] font-bold leading-tight tracking-[-0.015em] truncate">Dr. Evelyn Reed</p>
+              <p id="therapist-title" class="text-[#618389] text-sm sm:text-base font-normal leading-normal truncate">Licensed Clinical Psychologist</p>
+              <p id="therapist-experience" class="text-[#618389] text-sm sm:text-base font-normal leading-normal truncate">10+ years of experience</p>
+            </div>
+          </div>
+          <button
+            onclick="bookSession()"
+            class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#13c8ec] text-[#111718] text-sm font-bold leading-normal tracking-[0.015em] w-full sm:w-auto"
+          >
+            <span class="truncate">Book a Session</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- About and Reviews Tabs -->
+      <div class="pb-3 mb-6">
+        <div class="flex border-b border-[#dbe4e6] px-4 gap-8">
+          <a id="about-tab" class="flex flex-col items-center justify-center border-b-[3px] border-b-[#111718] text-[#111718] pb-[13px] pt-4 cursor-pointer" href="#" onclick="switchTab('about')">
+            <p class="text-[#111718] text-sm font-bold leading-normal tracking-[0.015em]">About</p>
+          </a>
+          <a id="reviews-tab" class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#618389] pb-[13px] pt-4 cursor-pointer" href="#" onclick="switchTab('reviews')">
+            <p class="text-[#618389] text-sm font-bold leading-normal tracking-[0.015em]">Reviews</p>
+          </a>
+        </div>
+      </div>
+
+      <!-- About Tab Content -->
+      <div id="about-content">
+        <!-- About Section -->
+        <div class="mb-6">
+          <h2 class="text-[#111718] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">About</h2>
+          <p id="therapist-bio" class="text-[#111718] text-base font-normal leading-normal pb-3 pt-1 px-4">
+            Dr. Reed is a licensed clinical psychologist with over 10 years of experience in the field. She specializes in cognitive behavioral therapy (CBT) and
+            mindfulness-based approaches to help individuals manage stress, anxiety, and depression. Dr. Reed believes in creating a supportive and collaborative environment
+            where clients can explore their challenges and develop effective coping strategies.
+          </p>
+        </div>
+
+        <!-- Specializations Section -->
+        <div class="mb-6">
+          <h2 class="text-[#111718] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Specializations</h2>
+          <div id="specializations-container" class="flex gap-3 p-3 flex-wrap pr-4">
+            <!-- Specializations will be populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Availability Section -->
+        <div class="mb-4 sm:mb-6">
+          <h2 class="text-[#111718] text-lg sm:text-[22px] font-bold leading-tight tracking-[-0.015em] px-3 sm:px-4 pb-2 sm:pb-3 pt-3 sm:pt-5">Availability</h2>
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 p-3 sm:p-4">
+            <!-- July Calendar -->
+            <div class="flex min-w-72 max-w-[336px] flex-1 flex-col gap-0.5">
+              <div class="flex items-center p-1 justify-between">
+                <button onclick="changeMonth(-1)" class="calendar-nav-btn">
+                  <div class="text-[#111718] flex size-10 items-center justify-center" data-icon="CaretLeft" data-size="18px" data-weight="regular">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 256 256">
+                      <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
+                    </svg>
+                  </div>
+                </button>
+                <p class="text-[#111718] text-base font-bold leading-tight flex-1 text-center pr-10" id="current-month">July 2024</p>
+              </div>
+              <div class="calendar-grid grid grid-cols-7">
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">S</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">M</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">T</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">W</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">T</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">F</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">S</p>
+                <!-- Calendar days will be populated by JavaScript -->
+              </div>
+            </div>
+
+            <!-- August Calendar -->
+            <div class="flex min-w-72 max-w-[336px] flex-1 flex-col gap-0.5">
+              <div class="flex items-center p-1 justify-between">
+                <p class="text-[#111718] text-base font-bold leading-tight flex-1 text-center pl-10" id="next-month">August 2024</p>
+                <button onclick="changeMonth(1)" class="calendar-nav-btn">
+                  <div class="text-[#111718] flex size-10 items-center justify-center" data-icon="CaretRight" data-size="18px" data-weight="regular">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 256 256">
+                      <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+              <div class="calendar-grid grid grid-cols-7">
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">S</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">M</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">T</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">W</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">T</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">F</p>
+                <p class="text-[#111718] text-[13px] font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5">S</p>
+                <!-- Calendar days will be populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+          <div class="flex px-4 py-3 justify-end">
+            <button
+              onclick="bookSession()"
+              class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#13c8ec] text-[#111718] text-sm font-bold leading-normal tracking-[0.015em]"
+            >
+              <span class="truncate">Book a Session</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviews Tab Content -->
+      <div id="reviews-content" style="display: none;">
+        <div class="flex flex-wrap gap-x-8 gap-y-6 p-4">
+          <!-- Rating Overview -->
+          <div class="flex flex-col gap-2">
+            <p class="text-[#111718] text-4xl font-black leading-tight tracking-[-0.033em]">4.8</p>
+            <div class="flex gap-0.5">
+              <div class="text-[#111718]" data-icon="Star" data-size="18px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+              </div>
+              <div class="text-[#111718]" data-icon="Star" data-size="18px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+              </div>
+              <div class="text-[#111718]" data-icon="Star" data-size="18px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+              </div>
+              <div class="text-[#111718]" data-icon="Star" data-size="18px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+              </div>
+              <div class="text-[#111718]" data-icon="Star" data-size="18px" data-weight="regular">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M239.2,97.29a16,16,0,0,0-13.81-11L166,81.17,142.72,25.81h0a15.95,15.95,0,0,0-29.44,0L90.07,81.17,30.61,86.32a16,16,0,0,0-9.11,28.06L66.61,153.8,53.09,212.34a16,16,0,0,0,23.84,17.34l51-31,51.11,31a16,16,0,0,0,23.84-17.34l-13.51-58.6,45.1-39.36A16,16,0,0,0,239.2,97.29Zm-15.22,5-45.1,39.36a16,16,0,0,0-5.08,15.71L187.35,216v0l-51.07-31a15.9,15.9,0,0,0-16.54,0l-51,31h0L82.2,157.4a16,16,0,0,0-5.08-15.71L32,102.35a.37.37,0,0,1,0-.09l59.44-5.14a16,16,0,0,0,13.35-9.75L128,32.08l23.2,55.29a16,16,0,0,0,13.35,9.75L224,102.26S224,102.32,224,102.33Z"></path>
+                </svg>
+              </div>
+            </div>
+            <p class="text-[#111718] text-base font-normal leading-normal">125 reviews</p>
+          </div>
+
+          <!-- Rating Breakdown -->
+          <div class="grid min-w-[200px] max-w-[400px] flex-1 grid-cols-[20px_1fr_40px] items-center gap-y-2 sm:gap-y-3">
+            <p class="text-[#111718] text-sm font-normal leading-normal">5</p>
+            <div class="flex h-2 flex-1 overflow-hidden rounded-full bg-[#dbe4e6]"><div class="rounded-full bg-[#111718]" style="width: 70%;"></div></div>
+            <p class="text-[#618389] text-sm font-normal leading-normal text-right">70%</p>
+            <p class="text-[#111718] text-sm font-normal leading-normal">4</p>
+            <div class="flex h-2 flex-1 overflow-hidden rounded-full bg-[#dbe4e6]"><div class="rounded-full bg-[#111718]" style="width: 20%;"></div></div>
+            <p class="text-[#618389] text-sm font-normal leading-normal text-right">20%</p>
+            <p class="text-[#111718] text-sm font-normal leading-normal">3</p>
+            <div class="flex h-2 flex-1 overflow-hidden rounded-full bg-[#dbe4e6]"><div class="rounded-full bg-[#111718]" style="width: 5%;"></div></div>
+            <p class="text-[#618389] text-sm font-normal leading-normal text-right">5%</p>
+            <p class="text-[#111718] text-sm font-normal leading-normal">2</p>
+            <div class="flex h-2 flex-1 overflow-hidden rounded-full bg-[#dbe4e6]"><div class="rounded-full bg-[#111718]" style="width: 3%;"></div></div>
+            <p class="text-[#618389] text-sm font-normal leading-normal text-right">3%</p>
+            <p class="text-[#111718] text-sm font-normal leading-normal">1</p>
+            <div class="flex h-2 flex-1 overflow-hidden rounded-full bg-[#dbe4e6]"><div class="rounded-full bg-[#111718]" style="width: 2%;"></div></div>
+            <p class="text-[#618389] text-sm font-normal leading-normal text-right">2%</p>
+          </div>
+        </div>
+
+        <!-- Individual Reviews -->
+        <div id="reviews-container" class="flex flex-col gap-8 overflow-x-hidden bg-white p-4">
+          <!-- Reviews will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // State management
+  let currentTherapist = null;
+  let currentDate = new Date();
+  let currentMonth = 0; // Track which month calendar is showing (0 = current, 1 = next)
+
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Therapist profile page loaded - initializing...');
+    loadTherapistProfile();
+  });
+
+  // Load therapist profile from API
+  async function loadTherapistProfile() {
+    const loadingState = document.getElementById('loading-state');
+    const profileContent = document.getElementById('profile-content');
+    const urlParts = window.location.pathname.split('/');
+    const therapistId = urlParts[urlParts.length - 1];
+
+    if (!therapistId || therapistId === 'profile') {
+      showError('Invalid therapist ID');
+      return;
+    }
+
+    try {
+      console.log('Loading therapist profile for ID:', therapistId);
+      const response = await fetch(`/therapist/api/profile/${therapistId}`);
+      const data = await response.json();
+
+      console.log('Therapist profile API Response:', data);
+
+      if (data.success && data.therapist) {
+        currentTherapist = data.therapist;
+        console.log('Loaded therapist:', currentTherapist);
+        renderTherapistProfile();
+        renderCalendars();
+        loadTherapistReviews();
+      } else {
+        showError(data.error || 'Therapist not found');
+      }
+    } catch (error) {
+      console.error('Error loading therapist profile:', error);
+      showError('Network error loading profile. Please try again.');
+    } finally {
+      loadingState.style.display = 'none';
+      profileContent.style.display = 'block';
+    }
+  }
+
+  // Render therapist profile
+  function renderTherapistProfile() {
+    const avatarContainer = document.getElementById('therapist-avatar-container');
+    const name = document.getElementById('therapist-name');
+    const title = document.getElementById('therapist-title');
+    const experience = document.getElementById('therapist-experience');
+    const bio = document.getElementById('therapist-bio');
+
+    // Handle avatar display with fallback
+    if (currentTherapist.profile_image && currentTherapist.profile_image.trim() !== '' && currentTherapist.profile_image !== 'null') {
+      const imageUrl = currentTherapist.profile_image.startsWith('/')
+        ? currentTherapist.profile_image
+        : `/uploads/${currentTherapist.profile_image}`;
+
+      // Create a new Image object to test if it loads successfully
+      const testImage = new Image();
+      testImage.onload = function() {
+        avatarContainer.style.backgroundImage = `url('${imageUrl}')`;
+      };
+      testImage.onerror = function() {
+        // Use fallback with first letter of therapist name
+        const firstLetter = currentTherapist.name ? currentTherapist.name.charAt(0).toUpperCase() : 'T';
+        avatarContainer.style.backgroundImage = `url('data:image/svg+xml;base64,${btoa(`
+          <svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="128" height="128" rx="64" fill="#F0F4F4"/>
+            <text x="64" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#618389">${firstLetter}</text>
+          </svg>
+        `)}')`;
+      };
+      testImage.src = imageUrl;
+    } else {
+      // Use fallback with first letter of therapist name
+      const firstLetter = currentTherapist.name ? currentTherapist.name.charAt(0).toUpperCase() : 'T';
+      avatarContainer.style.backgroundImage = `url('data:image/svg+xml;base64,${btoa(`
+        <svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="128" height="128" rx="64" fill="#F0F4F4"/>
+          <text x="64" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#618389">${firstLetter}</text>
+        </svg>
+      `)}')`;
+    }
+
+    // Update profile info
+    name.textContent = currentTherapist.name || 'Dr. Evelyn Reed';
+    title.textContent = currentTherapist.specialty ?
+      `${currentTherapist.specialty.replace('-', ' & ').replace(/\b\w/g, l => l.toUpperCase())} Therapist` :
+      'Licensed Clinical Psychologist';
+    experience.textContent = currentTherapist.experience || '10+ years of experience';
+    bio.textContent = currentTherapist.bio ||
+      'Dr. Reed is a licensed clinical psychologist with over 10 years of experience in the field. She specializes in cognitive behavioral therapy (CBT) and mindfulness-based approaches to help individuals manage stress, anxiety, and depression.';
+
+    // Render specializations
+    renderSpecializations();
+  }
+
+  // Render specializations
+  function renderSpecializations() {
+    const container = document.getElementById('specializations-container');
+
+    if (!currentTherapist.specialty) {
+      container.innerHTML = `
+        <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-[#f0f4f4] pl-4 pr-4">
+          <p class="text-[#111718] text-sm font-medium leading-normal">General Practice</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Split specialty by common separators and create tags
+    const specializations = currentTherapist.specialty
+      .split(/[-&,]/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    if (specializations.length === 0) {
+      container.innerHTML = `
+        <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-[#f0f4f4] pl-4 pr-4">
+          <p class="text-[#111718] text-sm font-medium leading-normal">General Practice</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = specializations.map(spec => `
+      <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-[#f0f4f4] pl-4 pr-4">
+        <p class="text-[#111718] text-sm font-medium leading-normal">${spec.replace(/\b\w/g, l => l.toUpperCase())}</p>
+      </div>
+    `).join('');
+  }
+
+  // Render both calendars
+  function renderCalendars() {
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    const currentMonthDate = new Date();
+    const nextMonthDate = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 1);
+
+    // Set current month
+    document.getElementById("current-month").textContent =
+      `${monthNames[currentMonthDate.getMonth()]} ${currentMonthDate.getFullYear()}`;
+
+    // Set next month
+    document.getElementById("next-month").textContent =
+      `${monthNames[nextMonthDate.getMonth()]} ${nextMonthDate.getFullYear()}`;
+
+    // Render current month calendar
+    renderCalendar("current", currentMonthDate);
+
+    // Render next month calendar
+    renderCalendar("next", nextMonthDate);
+  }
+
+  // Render calendar helper function
+  function renderCalendar(type, date) {
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    const calendarGrid = document.querySelectorAll(".calendar-grid")[type === "current" ? 0 : 1];
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    // Clear existing calendar days (but keep the headers)
+    const existingDays = calendarGrid.querySelectorAll("button:not(.calendar-day-header)");
+    existingDays.forEach(day => day.remove());
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      const emptyDay = document.createElement("div");
+      emptyDay.className = "h-12 w-full";
+      calendarGrid.appendChild(emptyDay);
+    }
+
+    // Add days of the month
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayButton = document.createElement("button");
+      const dayDate = new Date(year, month, day);
+      dayDate.setHours(0, 0, 0, 0);
+
+      dayButton.className = "h-12 w-full text-[#111718] text-sm font-medium leading-normal";
+      dayButton.innerHTML = `<div class="flex size-full items-center justify-center rounded-full">${day}</div>`;
+
+      // Mark today
+      if (dayDate.getTime() === today.getTime()) {
+        dayButton.querySelector("div").classList.add("bg-[#13c8ec]");
+        dayButton.querySelector("div").classList.add("text-white");
+      }
+
+      // Disable past dates
+      if (dayDate < today) {
+        dayButton.disabled = true;
+        dayButton.classList.add("text-gray-400");
+      } else {
+        dayButton.addEventListener("click", () => selectDate(day, type));
+      }
+
+      calendarGrid.appendChild(dayButton);
+    }
+  }
+
+  // Change calendar month
+  function changeMonth(direction) {
+    currentDate.setMonth(currentDate.getMonth() + direction);
+    renderCalendars();
+  }
+
+  // Select calendar date
+  function selectDate(day, type) {
+    // Clear all selected states
+    document.querySelectorAll(".calendar-grid button").forEach(button => {
+      const div = button.querySelector("div");
+      if (div) {
+        div.classList.remove("bg-[#13c8ec]", "text-white");
+      }
+    });
+
+    // Set selected state
+    const calendarGrids = document.querySelectorAll(".calendar-grid");
+    const targetGrid = calendarGrids[type === "current" ? 0 : 1];
+    const dayButtons = targetGrid.querySelectorAll("button");
+
+    // Find the button for the selected day (skip headers and empty cells)
+    let buttonIndex = 7; // Skip day headers (S M T W T F S)
+    const emptyCells = 7 - new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+    buttonIndex += emptyCells + day - 1;
+
+    if (dayButtons[buttonIndex]) {
+      const div = dayButtons[buttonIndex].querySelector("div");
+      if (div) {
+        div.classList.add("bg-[#13c8ec]", "text-white");
+      }
+    }
+  }
+
+  // Tab switching functionality
+  function switchTab(tabName) {
+    const aboutTab = document.getElementById('about-tab');
+    const reviewsTab = document.getElementById('reviews-tab');
+    const aboutContent = document.getElementById('about-content');
+    const reviewsContent = document.getElementById('reviews-content');
+
+    if (tabName === 'about') {
+      aboutTab.classList.remove('border-b-transparent', 'text-[#618389]');
+      aboutTab.classList.add('border-b-[#111718]', 'text-[#111718]');
+      reviewsTab.classList.remove('border-b-[#111718]', 'text-[#111718]');
+      reviewsTab.classList.add('border-b-transparent', 'text-[#618389]');
+
+      aboutContent.style.display = 'block';
+      reviewsContent.style.display = 'none';
+    } else {
+      reviewsTab.classList.remove('border-b-transparent', 'text-[#618389]');
+      reviewsTab.classList.add('border-b-[#111718]', 'text-[#111718]');
+      aboutTab.classList.remove('border-b-[#111718]', 'text-[#111718]');
+      aboutTab.classList.add('border-b-transparent', 'text-[#618389]');
+
+      reviewsContent.style.display = 'block';
+      aboutContent.style.display = 'none';
+    }
+  }
+
+  // Load therapist reviews
+  async function loadTherapistReviews() {
+    const container = document.getElementById('reviews-container');
+
+    try {
+      // Sample reviews data - replace with actual API call when reviews system is implemented
+      const reviews = [
+        {
+          id: 1,
+          patientName: 'Olivia Hayes',
+          date: 'June 15, 2024',
+          rating: 5,
+          content: 'Dr. Reed is an exceptional therapist. Her compassionate approach and insightful guidance have helped me navigate through challenging times. I highly recommend her services.',
+          helpful: 10,
+          notHelpful: 2
+        },
+        {
+          id: 2,
+          patientName: 'Ethan Walker',
+          date: 'May 22, 2024',
+          rating: 4,
+          content: 'Dr. Reed is very knowledgeable and supportive. She provided me with practical tools to manage my anxiety. I appreciate her professionalism and empathy.',
+          helpful: 8,
+          notHelpful: 1
+        }
+      ];
+
+      renderReviews(reviews);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+      container.innerHTML = '<p class="text-[#618389] text-center py-8">Unable to load reviews at this time.</p>';
+    }
+  }
+
+  // Render reviews
+  function renderReviews(reviews) {
+    const container = document.getElementById('reviews-container');
+
+    if (reviews.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-12">
+          <div class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+            <i class="fas fa-star text-3xl text-gray-400"></i>
+          </div>
+          <h3 class="text-xl font-medium text-gray-600 mb-2">No Reviews Yet</h3>
+          <p class="text-gray-500">Be the first to review this therapist!</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = reviews.map(review => `
+      <div class="flex flex-col gap-3 bg-white">
+        <div class="flex items-center gap-3">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-[#13c8ec]"
+               style="background-image: url('data:image/svg+xml;base64,${btoa(`
+                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                   <rect width="40" height="40" rx="20" fill="#F0F4F4"/>
+                   <text x="20" y="26" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#618389">${review.patientName.charAt(0).toUpperCase()}</text>
+                 </svg>
+               `)}');">
+          </div>
+          <div class="flex-1">
+            <p class="text-[#111718] text-base font-medium leading-normal">${review.patientName}</p>
+            <p class="text-[#618389] text-sm font-normal leading-normal">${review.date}</p>
+          </div>
+        </div>
+        <div class="flex gap-0.5">
+          ${Array(review.rating).fill(`
+            <div class="text-[#111718]" data-icon="Star" data-size="20px" data-weight="fill">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+              </svg>
+            </div>
+          `).join('')}
+          ${Array(5 - review.rating).fill(`
+            <div class="text-[#bacbce]" data-icon="Star" data-size="20px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M239.2,97.29a16,16,0,0,0-13.81-11L166,81.17,142.72,25.81h0a15.95,15.95,0,0,0-29.44,0L90.07,81.17,30.61,86.32a16,16,0,0,0-9.11,28.06L66.61,153.8,53.09,212.34a16,16,0,0,0,23.84,17.34l51-31,51.11,31a16,16,0,0,0,23.84-17.34l-13.51-58.6,45.1-39.36A16,16,0,0,0,239.2,97.29Zm-15.22,5-45.1,39.36a16,16,0,0,0-5.08,15.71L187.35,216v0l-51.07-31a15.9,15.9,0,0,0-16.54,0l-51,31h0L82.2,157.4a16,16,0,0,0-5.08-15.71L32,102.35a.37.37,0,0,1,0-.09l59.44-5.14a16,16,0,0,0,13.35-9.75L128,32.08l23.2,55.29a16,16,0,0,0,13.35,9.75L224,102.26S224,102.32,224,102.33Z"></path>
+              </svg>
+            </div>
+          `).join('')}
+        </div>
+        <p class="text-[#111718] text-base font-normal leading-normal">
+          ${review.content}
+        </p>
+        <div class="flex gap-9 text-[#618389]">
+          <button class="flex items-center gap-2" onclick="voteReview(${review.id}, 'helpful')">
+            <div class="text-inherit" data-icon="ThumbsUp" data-size="20px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M234,80.12A24,24,0,0,0,216,72H160V56a40,40,0,0,0-40-40,8,8,0,0,0-7.16,4.42L75.06,96H32a16,16,0,0,0-16,16v88a16,16,0,0,0,16,16H204a24,24,0,0,0,23.82-21l12-96A24,24,0,0,0,234,80.12ZM32,112H72v88H32ZM223.94,97l-12,96a8,8,0,0,1-7.94,7H88V105.89l36.71-73.43A24,24,0,0,1,144,56V80a8,8,0,0,0,8,8h64a8,8,0,0,1,7.94,9Z"></path>
+              </svg>
+            </div>
+            <p class="text-inherit">${review.helpful}</p>
+          </button>
+          <button class="flex items-center gap-2" onclick="voteReview(${review.id}, 'not-helpful')">
+            <div class="text-inherit" data-icon="ThumbsDown" data-size="20px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M239.82,157l-12-96A24,24,0,0,0,204,40H32A16,16,0,0,0,16,56v88a16,16,0,0,0,16,16H75.06l37.78,75.58A8,8,0,0,0,120,240a40,40,0,0,0,40-40V184h56a24,24,0,0,0,23.82-27ZM72,144H32V56H72Zm150,21.29a7.88,7.88,0,0,1-6,2.71H152a8,8,0,0,0-8,8v24a24,24,0,0,1-19.29,23.54L88,150.11V56H204a8,8,0,0,1,7.94,7l12,96A7.87,7.87,0,0,1,222,165.29Z"></path>
+              </svg>
+            </div>
+            <p class="text-inherit">${review.notHelpful}</p>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Book session
+  function bookSession() {
+    if (currentTherapist) {
+      window.location.href = `/book-session?therapist=${currentTherapist.id}`;
+    } else {
+      window.location.href = `/book-session`;
+    }
+  }
+
+  // Vote on review
+  function voteReview(reviewId, voteType) {
+    console.log(`Voting ${voteType} on review ${reviewId}`);
+    // TODO: Implement review voting functionality
+  }
+
+  // Show error message
+  function showError(message) {
+    const loadingState = document.getElementById('loading-state');
+    loadingState.innerHTML = `
+      <div class="text-center py-12">
+        <div class="w-24 h-24 bg-red-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+          <i class="fas fa-exclamation-triangle text-3xl text-red-400"></i>
+        </div>
+        <h3 class="text-xl font-medium text-gray-600 mb-2">Error Loading Profile</h3>
+        <p class="text-gray-500 mb-4">${message}</p>
+        <button onclick="window.history.back()" class="px-4 py-2 bg-[#13c8ec] text-white rounded-lg hover:bg-[#13c8ec]/90 transition-colors">
+          Go Back
+        </button>
+      </div>
+    `;
+  }
+</script>

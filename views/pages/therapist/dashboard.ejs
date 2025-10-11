@@ -1,426 +1,133 @@
-
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="mb-8">
-    <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-      👩‍⚕️ Therapist Dashboard
-    </h1>
-    <p class="text-lg text-gray-600">
-      Welcome, <%= user ? user.name : "Therapist" %>! Manage your profile and practice here.
-    </p>
+<!-- Therapist dashboard page content for therapist layout -->
+<div class="space-y-6 sm:space-y-8">
+  <!-- Welcome Header -->
+  <div>
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+    <p class="text-base sm:text-lg text-gray-600 mt-1">Welcome back, <%= user.name.split(' ')[0] %>!</p>
   </div>
 
-  <!-- Application Status Card -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <div class="lg:col-span-2">
-      <div class="card">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-2xl font-semibold text-textMain">Application Status</h2>
-          <% if (application && application.status) { %>
-            <span class="px-3 py-1 rounded-full text-sm font-medium 
-              <%= application.status === 'approved' ? 'bg-green-100 text-green-800' : 
-                  application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                  'bg-red-100 text-red-800' %>">
-              <%= application.status.charAt(0).toUpperCase() + application.status.slice(1) %>
-            </span>
-          <% } else { %>
-            <span class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-              Not Applied
-            </span>
-          <% } %>
-        </div>
-
-        <% if (!application || !application.application_id) { %>
-          <!-- No Application Yet -->
-          <div class="text-center py-8">
-            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i class="fas fa-file-medical text-2xl text-blue-600"></i>
-            </div>
-            <h3 class="text-lg font-medium text-textMain mb-2">Ready to Join Our Team?</h3>
-            <p class="text-gray-600 mb-6">Submit your application to become a verified therapist on our platform.</p>
-            <a href="/therapist/apply" class="btn-primary">
-              <i class="fas fa-plus mr-2"></i>Apply Now
-            </a>
-          </div>
-
-        <% } else if (application.status === 'pending') { %>
-          <!-- Pending Application -->
-          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <div class="flex items-center mb-4">
-              <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
-                <i class="fas fa-clock text-yellow-600 text-xl"></i>
-              </div>
-              <div>
-                <h3 class="text-lg font-medium text-textMain">Application Under Review</h3>
-                <p class="text-sm text-gray-600">Submitted on <%= new Date(application.created_at).toLocaleDateString() %></p>
-              </div>
-            </div>
-            <p class="text-gray-700 mb-4">
-              Your application has been successfully submitted and is currently being reviewed by our admin team. 
-              You'll receive a notification once a decision has been made.
-            </p>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span class="font-medium">Resume:</span> 
-                <span class="<%= application.resume_file ? 'text-green-600' : 'text-gray-500' %>">
-                  <i class="fas fa-<%= application.resume_file ? 'check' : 'times' %> mr-1"></i>
-                  <%= application.resume_file ? 'Uploaded' : 'Not uploaded' %>
-                </span>
-              </div>
-              <div>
-                <span class="font-medium">Certifications:</span> 
-                <span class="<%= application.certification_file ? 'text-green-600' : 'text-gray-500' %>">
-                  <i class="fas fa-<%= application.certification_file ? 'check' : 'times' %> mr-1"></i>
-                  <%= application.certification_file ? 'Uploaded' : 'Not uploaded' %>
-                </span>
-              </div>
-            </div>
-          </div>
-
-        <% } else if (application.status === 'approved') { %>
-          <!-- Approved Application -->
-          <div class="bg-green-50 border border-green-200 rounded-lg p-6">
-            <div class="flex items-center mb-4">
-              <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                <i class="fas fa-check-circle text-green-600 text-xl"></i>
-              </div>
-              <div>
-                <h3 class="text-lg font-medium text-textMain">Welcome to Our Team!</h3>
-                <p class="text-sm text-gray-600">Approved on <%= application.updated_at ? new Date(application.updated_at).toLocaleDateString() : 'Recently' %></p>
-              </div>
-            </div>
-            <p class="text-gray-700 mb-4">
-              Congratulations! Your application has been approved. You are now a verified therapist on our platform and can start accepting patients.
-            </p>
-            <div class="flex space-x-4">
-              <a href="/therapist/patients" class="btn-primary">
-                <i class="fas fa-users mr-2"></i>View Patients
-              </a>
-              <a href="/account" class="btn-secondary">
-                <i class="fas fa-user-edit mr-2"></i>Edit Profile
-              </a>
-            </div>
-          </div>
-
-        <% } else if (application.status === 'rejected') { %>
-          <!-- Rejected Application -->
-          <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-            <div class="flex items-center mb-4">
-              <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
-                <i class="fas fa-times-circle text-red-600 text-xl"></i>
-              </div>
-              <div>
-                <h3 class="text-lg font-medium text-textMain">Application Not Approved</h3>
-                <p class="text-sm text-gray-600">Reviewed on <%= application.updated_at ? new Date(application.updated_at).toLocaleDateString() : 'Recently' %></p>
-              </div>
-            </div>
-            <p class="text-gray-700 mb-4">
-              Unfortunately, your application was not approved at this time. You may reapply after reviewing our requirements.
-            </p>
-            <a href="/therapist/apply" class="btn-primary">
-              <i class="fas fa-redo mr-2"></i>Reapply
-            </a>
-          </div>
-        <% } %>
-      </div>
-    </div>
-
-    <!-- Quick Actions Sidebar -->
-    <div class="space-y-6">
-      <!-- Profile Card -->
-      <div class="card">
-        <div class="text-center">
-          <% 
-          // Determine profile image to show - priority order:
-          // 1. Application profile image
-          // 2. User's main profile image 
-          // 3. Session profile image
-          // 4. Default placeholder
-          let displayProfileImage = null;
-          if (application && application.profile_image) {
-            displayProfileImage = `/uploads/${application.profile_image}`;
-          } else if (application && application.user_profile_image) {
-            displayProfileImage = application.user_profile_image.startsWith('/') 
-              ? application.user_profile_image 
-              : `/uploads/profiles/${application.user_profile_image}`;
-          } else if (user && user.profile_image) {
-            displayProfileImage = user.profile_image.startsWith('/') 
-              ? user.profile_image 
-              : `/uploads/profiles/${user.profile_image}`;
-          } else if (typeof profileImageUrl !== 'undefined' && profileImageUrl) {
-            displayProfileImage = profileImageUrl;
-          }
-          %>
-          
-          <% if (displayProfileImage) { %>
-            <img src="<%= displayProfileImage %>" alt="<%= user.name %>'s Profile" 
-                 class="w-20 h-20 rounded-full mx-auto mb-3 object-cover border-4 border-primary shadow-lg"
-                 onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'w-20 h-20 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center\'><i class=\'fas fa-user text-2xl text-gray-500\'></i></div>';">
-          <% } else { %>
-            <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg">
-              <span class="text-white font-bold text-xl">
-                <%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %>
-              </span>
-            </div>
-          <% } %>
-          
-          <h3 class="font-semibold text-textMain"><%= user.name %></h3>
-          <p class="text-sm text-gray-600 mb-3"><%= user.email %></p>
-          <% if (user.role === 'therapist') { %>
-            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Verified Therapist</span>
-          <% } else { %>
-            <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">Applicant</span>
-          <% } %>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="card">
-        <h3 class="text-lg font-semibold text-textMain mb-4">Quick Actions</h3>
-        <div class="space-y-3">
-          <!-- Notifications Button -->
-          <a href="/notifications" class="block w-full text-left p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors">
-            <i class="fas fa-bell text-orange-600 mr-3"></i>
-            <span class="font-medium">Notifications</span>
-          </a>
-
-          <% if (user.role === 'therapist') { %>
-            <a href="/therapist/patients" class="block w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-              <i class="fas fa-users text-blue-600 mr-3"></i>
-              <span class="font-medium">My Patients</span>
-            </a>
-            <a href="/therapist/schedule" class="block w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
-              <i class="fas fa-calendar text-green-600 mr-3"></i>
-              <span class="font-medium">Schedule</span>
-            </a>
-            <a href="/account" class="block w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
-              <i class="fas fa-user-edit text-purple-600 mr-3"></i>
-              <span class="font-medium">Edit Profile</span>
-            </a>
-          <% } else if (!application || application.status === 'rejected') { %>
-            <a href="/therapist/apply" class="block w-full text-left p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors">
-              <i class="fas fa-file-medical text-primary mr-3"></i>
-              <span class="font-medium">Apply Now</span>
-            </a>
-          <% } %>
-         
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Enhanced Statistics Dashboard (for approved therapists) -->
-  <% if (user.role === 'therapist' && stats) { %>
-  <div class="mb-8">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-textMain">📊 Practice Statistics</h2>
-      <div class="text-sm text-gray-500">
-        Last updated: <%= new Date().toLocaleDateString() %>
-      </div>
-    </div>
-
-    <!-- Main Statistics Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-      <!-- Active Patients -->
-      <div class="card text-center hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-center mb-4">
-          <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-            <i class="fas fa-users text-xl text-white"></i>
-          </div>
-        </div>
-        <h3 class="text-3xl font-bold text-textMain mb-1"><%= stats.activePatients || 0 %></h3>
-        <p class="text-gray-600 font-medium">Active Patients</p>
-        <p class="text-xs text-gray-500 mt-1">Currently under care</p>
-      </div>
-
-      <!-- This Week Sessions -->
-      <div class="card text-center hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-center mb-4">
-          <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-            <i class="fas fa-calendar-check text-xl text-white"></i>
-          </div>
-        </div>
-        <h3 class="text-3xl font-bold text-textMain mb-1"><%= stats.weekSessions || 0 %></h3>
-        <p class="text-gray-600 font-medium">Sessions This Week</p>
-        <p class="text-xs text-gray-500 mt-1">Last 7 days</p>
-      </div>
-
-      <!-- Average Rating -->
-      <div class="card text-center hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-center mb-4">
-          <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <i class="fas fa-star text-xl text-white"></i>
-          </div>
-        </div>
-        <h3 class="text-3xl font-bold text-textMain mb-1"><%= stats.avgRating || '0.0' %></h3>
-        <p class="text-gray-600 font-medium">Average Rating</p>
-        <div class="flex items-center justify-center mt-2">
-          <% for (let i = 0; i < 5; i++) { %>
-            <i class="fas fa-star text-yellow-400 text-sm <%= i < Math.floor(stats.avgRating || 0) ? '' : 'text-gray-300' %>"></i>
-          <% } %>
-        </div>
-      </div>
-
-      <!-- Total Hours -->
-      <div class="card text-center hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-center mb-4">
-          <div class="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
-            <i class="fas fa-clock text-xl text-white"></i>
-          </div>
-        </div>
-        <h3 class="text-3xl font-bold text-textMain mb-1"><%= stats.totalHours || 0 %></h3>
-        <p class="text-gray-600 font-medium">Total Hours</p>
-        <p class="text-xs text-gray-500 mt-1">All time</p>
-      </div>
-    </div>
-
-    <!-- Additional Statistics Row -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Monthly Sessions -->
-      <div class="card text-center bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200">
-        <div class="flex items-center justify-center mb-3">
-          <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-calendar-alt text-indigo-600"></i>
-          </div>
-        </div>
-        <h4 class="text-lg font-semibold text-textMain mb-1">This Month</h4>
-        <p class="text-2xl font-bold text-indigo-600"><%= Math.floor((stats.weekSessions || 0) * 4.3) %></p>
-        <p class="text-xs text-gray-600">Estimated sessions</p>
-      </div>
-
-      <!-- Patient Satisfaction -->
-      <div class="card text-center bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200">
-        <div class="flex items-center justify-center mb-3">
-          <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-heart text-emerald-600"></i>
-          </div>
-        </div>
-        <h4 class="text-lg font-semibold text-textMain mb-1">Satisfaction</h4>
-        <p class="text-2xl font-bold text-emerald-600">
-          <%= stats.avgRating ? Math.round((parseFloat(stats.avgRating) / 5) * 100) : 0 %>%
-        </p>
-        <p class="text-xs text-gray-600">Based on ratings</p>
-      </div>
-
-      <!-- Response Time -->
-      <div class="card text-center bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
-        <div class="flex items-center justify-center mb-3">
-          <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-bolt text-amber-600"></i>
-          </div>
-        </div>
-        <h4 class="text-lg font-semibold text-textMain mb-1">Avg Response</h4>
-        <p class="text-2xl font-bold text-amber-600">< 2h</p>
-        <p class="text-xs text-gray-600">Message responses</p>
-      </div>
-    </div>
-  </div>
-  <% } %>
-
-  <!-- Enhanced Empty state for statistics if no stats available -->
-  <% if (user.role === 'therapist' && !stats) { %>
-  <div class="mb-8">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-textMain">📊 Practice Statistics</h2>
-      <div class="text-sm text-gray-500">
-        Start seeing patients to view statistics
-      </div>
-    </div>
-
-    <div class="card text-center py-12">
-      <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-        <i class="fas fa-chart-line text-3xl text-gray-400"></i>
-      </div>
-      <h3 class="text-xl font-semibold text-textMain mb-3">Ready to Track Your Progress?</h3>
-      <p class="text-gray-600 mb-6 max-w-md mx-auto">
-        Your practice statistics will appear here once you start accepting patients and conducting sessions.
-        All your metrics will be automatically calculated and displayed.
-      </p>
-      <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        <a href="/find-therapist" class="btn-primary">
-          <i class="fas fa-search mr-2"></i>Browse Patients
-        </a>
-        <a href="/therapist/patients" class="btn-secondary">
-          <i class="fas fa-users mr-2"></i>View My Patients
-        </a>
-      </div>
-    </div>
-  </div>
-  <% } %>
+  <!-- Rest of your dashboard content... -->
 </div>
 
-<script>
-// Auto-dismiss welcome alert after 5 seconds
-document.addEventListener('DOMContentLoaded', function() {
-  const welcomeAlert = document.getElementById('welcomeAlert');
-  
-  if (welcomeAlert) {
-    // Auto-dismiss after 5 seconds
-    setTimeout(function() {
-      dismissWelcomeAlert();
-    }, 5000);
-  }
-});
+  <!-- Main Content Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+    <!-- Left Column - Main Content -->
+    <div class="lg:col-span-2 space-y-6 lg:space-y-8">
+      <!-- Application Progress -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-gray-900">Application Progress</h2>
+          <span class="text-sm text-gray-500">Profile Completion</span>
+        </div>
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700"><%= application ? '100%' : '0%' %></span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-blue-600 h-2 rounded-full <%= application ? 'w-full' : '' %>"></div>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600">Complete your profile to get access to all features.</p>
+      </div>
 
-// Function to manually dismiss the welcome alert
-function dismissWelcomeAlert() {
-  const welcomeAlert = document.getElementById('welcomeAlert');
-  
-  if (welcomeAlert) {
-    // Add animation classes for smooth dismissal
-    welcomeAlert.style.opacity = '0';
-    welcomeAlert.style.transform = 'translateY(-10px)';
-    
-    // Remove the element after animation completes
-    setTimeout(function() {
-      welcomeAlert.remove();
-    }, 500);
-  }
-}
+      <!-- Practice Statistics -->
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">Practice Statistics</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <!-- Active Patients -->
+          <div class="stats-card rounded-xl p-6 text-center">
+            <div class="text-3xl font-bold text-gray-900 mb-2"><%= stats ? stats.activePatients : 0 %></div>
+            <div class="text-sm font-medium text-gray-600">Active Patients</div>
+          </div>
 
-// Add some interactive hover effects to cards
-document.addEventListener('DOMContentLoaded', function() {
-  const cards = document.querySelectorAll('.card');
-  
-  cards.forEach(card => {
-    card.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateY(-2px)';
-      this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-      this.style.transform = 'translateY(0)';
-      this.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-    });
-  });
-});
-</script>
+          <!-- Sessions This Week -->
+          <div class="stats-card rounded-xl p-6 text-center">
+            <div class="text-3xl font-bold text-gray-900 mb-2"><%= stats ? stats.weekSessions : 0 %></div>
+            <div class="text-sm font-medium text-gray-600">Sessions This Week</div>
+          </div>
 
-<style>
-.card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+          <!-- Average Rating -->
+          <div class="stats-card rounded-xl p-6 text-center">
+            <div class="text-3xl font-bold text-gray-900 mb-2"><%= stats ? stats.avgRating.toFixed(1) : '0.0' %></div>
+            <div class="text-sm font-medium text-gray-600">Average Rating</div>
+            <div class="flex items-center justify-center mt-2">
+              <% for (let i = 0; i < 5; i++) { %>
+                <i class="fas fa-star text-yellow-400 text-sm <%= i < (stats ? Math.floor(stats.avgRating) : 0) ? '' : 'text-gray-300' %>"></i>
+              <% } %>
+            </div>
+          </div>
 
-.btn-primary, .btn-secondary {
-  transition: all 0.2s ease;
-}
+          <!-- Total Hours -->
+          <div class="stats-card rounded-xl p-6 text-center">
+            <div class="text-3xl font-bold text-gray-900 mb-2"><%= stats ? stats.totalHours : 0 %></div>
+            <div class="text-sm font-medium text-gray-600">Total Hours Logged</div>
+          </div>
+        </div>
 
-.btn-primary:hover, .btn-secondary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
+        <!-- Additional Stats Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mt-6">
+          <!-- Monthly Estimates -->
+          <div class="stats-card rounded-xl p-6 text-center">
+            <div class="text-2xl font-bold text-gray-900 mb-1"><%= stats ? stats.monthlyEstimates : 0 %></div>
+            <div class="text-sm font-medium text-gray-600">Monthly Estimates</div>
+          </div>
 
-#welcomeAlert {
-  animation: slideInFromTop 0.5s ease-out;
-}
+          <!-- Patient Satisfaction -->
+          <div class="stats-card rounded-xl p-6 text-center">
+            <div class="text-2xl font-bold text-green-600 mb-1"><%= stats ? stats.patientSatisfaction + '%' : '0%' %></div>
+            <div class="text-sm font-medium text-gray-600">Patient Satisfaction</div>
+          </div>
 
-@keyframes slideInFromTop {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>
+          <!-- Avg Response Time -->
+          <div class="stats-card rounded-xl p-6 text-center">
+            <div class="text-2xl font-bold text-blue-600 mb-1"><%= stats ? stats.avgResponseTime : '0hr' %></div>
+            <div class="text-sm font-medium text-gray-600">Avg. Response Time</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Quick Actions -->
+    <div class="space-y-6">
+      <!-- Quick Actions -->
+      <div class="quick-action-card rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div class="space-y-3">
+          <!-- Notifications -->
+          <a href="/notifications" class="flex items-center justify-between p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors">
+            <div class="flex items-center">
+              <i class="fas fa-bell text-orange-600 mr-3"></i>
+              <span class="font-medium text-gray-900">Notifications</span>
+            </div>
+            <span class="bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+          </a>
+
+          <!-- Manage Patients -->
+          <a href="/therapist/patients" class="block w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+            <i class="fas fa-users text-blue-600 mr-3"></i>
+            <span class="font-medium text-gray-900">Manage Patients</span>
+          </a>
+
+          <!-- Manage Schedule -->
+          <a href="/therapist/schedule" class="block w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+            <i class="fas fa-calendar-alt text-green-600 mr-3"></i>
+            <span class="font-medium text-gray-900">Manage Schedule</span>
+          </a>
+
+          <!-- Edit Profile -->
+          <a href="/account" class="block w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+            <i class="fas fa-user-edit text-purple-600 mr-3"></i>
+            <span class="font-medium text-gray-900">Edit Profile</span>
+          </a>
+
+          <!-- Browse Available Patients -->
+          <a href="/find-therapist" class="block w-full text-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
+            <i class="fas fa-search mr-2"></i>
+            Browse Available Patients
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

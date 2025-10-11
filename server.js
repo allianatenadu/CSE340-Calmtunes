@@ -52,11 +52,22 @@ const PORT = process.env.PORT || 3000;
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
-app.set("layout", "layouts/main");
+// Note: Layout is set dynamically per route, no global layout
 
 // Static files
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads/chat-files", express.static(path.join(__dirname, "public/uploads/chat-files")));
+
+// Serve panic session audio files (add this BEFORE your general routes)
+app.use('/audio/panic_sessions', express.static(path.join(__dirname, 'public/audio/panic_sessions'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.webm')) {
+      res.set('Content-Type', 'audio/webm');
+      res.set('Accept-Ranges', 'bytes');
+    }
+  }
+}));
 
 // Body parsing middleware
 app.use(express.urlencoded({ extended: true }));
@@ -161,7 +172,6 @@ app.use("/support", supportRoutes);
 
 // 6. Appointment interface routes
 app.use("/appointments", appointmentRoutes);
-
 
 // 5. Spotify OAuth routes
 app.use("/spotify", spotifyRoutes);
@@ -307,8 +317,13 @@ app.use((req, res, next) => {
   });
 });
 
-// Global error handler
+// Global error handler - Skip API routes to preserve JSON responses
 app.use((error, req, res, next) => {
+  // Skip API routes to preserve JSON error responses
+  if (req.path.startsWith("/api/") || req.path.startsWith("/appointments/") || req.path.startsWith("/admin/")) {
+    return next(error);
+  }
+
   console.error("Server Error:", error);
 
   const errorMessage =
@@ -357,17 +372,54 @@ io.on("connection", (socket) => {
     socket.to(conversationId).emit("user_offline", { userId: socket.userId });
   });
 
-  // Typing indicator
+  // Enhanced typing indicator
   socket.on("typing", (data) => {
-    socket
-      .to(data.conversationId)
-      .emit("user_typing", { userId: socket.userId, typing: true });
+    console.log("📝 User started typing:", {
+      userId: socket.userId,
+      userName: data.userName,
+      conversationId: data.conversationId
+    });
+
+    if (data.conversationId && socket.userId) {
+      socket
+        .to(data.conversationId)
+        .emit("user_typing", {
+          userId: socket.userId,
+          conversationId: data.conversationId,
+          userName: data.userName || "Someone",
+          typing: true
+        });
+    } else {
+      console.error("❌ Invalid typing data:", data);
+    }
   });
 
   socket.on("stop_typing", (data) => {
-    socket
-      .to(data.conversationId)
-      .emit("user_typing", { userId: socket.userId, typing: false });
+    console.log("📝 User stopped typing:", {
+      userId: socket.userId,
+      conversationId: data.conversationId
+    });
+
+    if (data.conversationId && socket.userId) {
+      socket
+        .to(data.conversationId)
+        .emit("user_stopped_typing", {
+          userId: socket.userId,
+          conversationId: data.conversationId,
+          typing: false
+        });
+    } else {
+      console.error("❌ Invalid stop typing data:", data);
+    }
+  });
+
+  // Message reactions
+  socket.on("message_reaction", (data) => {
+    socket.to(data.conversationId).emit("message_reaction", data);
+  });
+
+  socket.on("message_reaction_removed", (data) => {
+    socket.to(data.conversationId).emit("message_reaction_removed", data);
   });
 
   // New message
@@ -408,8 +460,8 @@ io.on("connection", (socket) => {
 });
 
 // Handle port conflicts gracefully and start server
-server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
+server.on("error", (error) => {
+  if (error.code === "EADDRINUSE") {
     console.error(`❌ Port ${PORT} is already in use!`);
     console.error(`🔍 Run this command to find the process:`);
     console.error(`   netstat -ano | findstr :${PORT}`);
@@ -418,7 +470,7 @@ server.on('error', (error) => {
     console.error(`🔄 Or restart your computer to clear all processes`);
     process.exit(1);
   } else {
-    console.error('❌ Server error:', error.message);
+    console.error("❌ Server error:", error.message);
     process.exit(1);
   }
 });
@@ -429,7 +481,9 @@ server.listen(PORT, async () => {
   console.log(`🔧 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log("⚠️  Using memory store for sessions (development only)");
   console.log("📊 Database: PostgreSQL");
-  console.log("🎯 Routes configured: Auth, Admin, Therapist, Chat, Appointments");
+  console.log(
+    "🎯 Routes configured: Auth, Admin, Therapist, Chat, Appointments"
+  );
   console.log("🔌 Socket.io enabled for real-time chat");
 
   // Initialize database tables on server startup
@@ -447,7 +501,9 @@ server.listen(PORT, async () => {
     console.log("🎉 All database tables initialized successfully");
   } catch (error) {
     console.error("❌ Failed to initialize database tables:", error.message);
-    console.log("💡 You can manually create tables by visiting: /admin/test-database");
+    console.log(
+      "💡 You can manually create tables by visiting: /admin/test-database"
+    );
   }
 });
 

@@ -127,7 +127,8 @@
           </button>
         </div>
       </div>
-      <% } %> <% if (error && error.length > 0) { %>
+      <% } %>
+      <% if (error && error.length > 0) { %>
       <div
         class="flash-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 mx-auto max-w-4xl rounded relative mb-2 shadow-sm"
         data-type="error"
@@ -146,7 +147,7 @@
     </div>
 
     <!-- Main Content -->
-    <main class="flex-1"><%- body -%></main>
+    <main class="flex-1 pt-20 md:pt-0"><%- body -%></main>
 
     <!-- Footer -->
     <%- include('../partials/footer') %>
@@ -171,7 +172,6 @@
     <script src="/js/drawing.js" defer></script>
     <script src="/js/account.js" defer></script>
     <script src="/js/panic.js" defer></script>
-    <script src="/js/quotes.js" defer></script>
 
     <!-- Global session management -->
     <script>

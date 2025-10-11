@@ -1,0 +1,245 @@
+<aside id="therapist-sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out h-screen">
+  <!-- Logo Section with Toggle -->
+  <div id="logo-section" class="flex items-center justify-center gap-2 p-4 border-b border-gray-100 cursor-pointer hover:bg-purple-50 transition-all duration-200 relative group" onclick="toggleTherapistSidebar()">
+    <div class="flex items-center justify-center transition-transform duration-200 hover:scale-105">
+      <img src="/images/logo.png" alt="Calmtunes Logo" class="w-8 h-8 transition-all duration-200 hover:brightness-110" />
+    </div>
+    <span id="logo-text" class="text-base font-bold text-gray-800 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">Calmtunes</span>
+    <!-- Enhanced Tooltip -->
+    <div class="absolute left-full ml-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-50 shadow-lg">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-expand-arrows-alt text-purple-300"></i>
+        <span>Click to toggle sidebar</span>
+      </div>
+      <div class="absolute -left-1 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+    </div>
+    
+  </div>
+
+  <!-- Profile Section -->
+  <div class="p-4 border-b border-gray-200">
+    <div class="flex items-center gap-3">
+      <%
+      let therapistProfileImage = null;
+      if (typeof user !== 'undefined' && user) {
+        if (user.profile_image && user.profile_image.trim() !== '' && user.profile_image !== 'null') {
+          therapistProfileImage = user.profile_image.startsWith('/')
+            ? user.profile_image
+            : '/uploads/profiles/' + user.profile_image;
+        }
+      }
+      %>
+      <% if (therapistProfileImage) { %>
+        <img src="<%= therapistProfileImage %>" alt="<%= user.name %>'s Profile"
+             class="w-10 h-10 rounded-full object-cover border-2 border-blue-200"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center" style="display: none;">
+          <span class="text-blue-600 font-bold text-lg">
+            <%= user.name ? user.name.charAt(0).toUpperCase() : 'T' %>
+          </span>
+        </div>
+      <% } else { %>
+        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+          <span class="text-blue-600 font-bold text-lg">
+            <%= user.name ? user.name.charAt(0).toUpperCase() : 'T' %>
+          </span>
+        </div>
+      <% } %>
+      <div class="sidebar-profile-info">
+        <h2 class="font-bold text-gray-900 text-sm"><%= user.name %></h2>
+        <p class="text-xs text-gray-500">Licensed Therapist</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="flex-1 px-4 py-5 space-y-2 overflow-y-auto" style="display: block; visibility: visible;">
+    <a href="/therapist"
+       class="sidebar-nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-colors <%= currentPage === 'dashboard' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' %>"
+       title="Dashboard">
+      <i class="fas fa-th-large w-4"></i>
+      <span class="font-medium sidebar-text text-sm">Dashboard</span>
+    </a>
+
+    <a href="/therapist/patients"
+       class="sidebar-nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-colors <%= currentPage === 'patients' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' %>"
+       title="Patients">
+      <i class="fas fa-users w-4"></i>
+      <span class="font-medium sidebar-text text-sm">Patients</span>
+    </a>
+
+    <a href="/therapist/schedule"
+       class="sidebar-nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-colors <%= currentPage === 'schedule' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' %>"
+       title="Schedule">
+      <i class="fas fa-calendar-alt w-4"></i>
+      <span class="font-medium sidebar-text text-sm">Schedule</span>
+    </a>
+
+    <a href="/therapist/chat"
+       class="sidebar-nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-colors <%= currentPage === 'chat' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' %>"
+       title="Messages">
+      <i class="fas fa-comments w-4"></i>
+      <span class="font-medium sidebar-text text-sm">Messages</span>
+    </a>
+
+    <a href="/therapist/resources"
+       class="sidebar-nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-colors <%= currentPage === 'resources' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' %>"
+       title="Resources">
+      <i class="fas fa-book w-4"></i>
+      <span class="font-medium sidebar-text text-sm">Resources</span>
+    </a>
+  </nav>
+
+  <!-- Bottom Section - Fixed at bottom -->
+  <div class="flex-shrink-0 p-4 border-t border-gray-200 space-y-3">
+    <a href="/account"
+       class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+       title="Settings">
+      <i class="fas fa-cog w-4"></i>
+      <span class="font-medium sidebar-text text-sm">Settings</span>
+    </a>
+    <a href="/logout"
+       class="sidebar-nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+       title="Logout">
+      <i class="fas fa-sign-out-alt w-4"></i>
+      <span class="font-medium sidebar-text text-sm">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- Therapist Sidebar Toggle JavaScript -->
+<script>
+  // Therapist Sidebar state management
+  let therapistSidebarCollapsed = localStorage.getItem('therapistSidebarCollapsed') === 'true';
+
+  // Initialize sidebar state on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    applyTherapistSidebarState();
+  });
+
+  function toggleTherapistSidebar() {
+    therapistSidebarCollapsed = !therapistSidebarCollapsed;
+
+    // Add visual feedback during transition
+    const logoSection = document.getElementById('logo-section');
+    if (logoSection) {
+      logoSection.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        logoSection.style.transform = 'scale(1)';
+      }, 150);
+    }
+
+    applyTherapistSidebarState();
+
+    // Save state to localStorage
+    localStorage.setItem('therapistSidebarCollapsed', therapistSidebarCollapsed.toString());
+
+    // Show brief feedback
+    showTherapistToggleFeedback();
+  }
+
+  function applyTherapistSidebarState() {
+    const sidebar = document.getElementById('therapist-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const navItems = document.querySelectorAll('.sidebar-nav-item');
+    const navTexts = document.querySelectorAll('.sidebar-text');
+    const toggleIndicator = document.getElementById('toggle-indicator');
+
+    if (therapistSidebarCollapsed) {
+      // Collapsed state - show only icons
+      sidebar.className = 'w-16 bg-white border-r border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out h-screen';
+
+      if (logoText) {
+        logoText.style.display = 'none';
+      }
+
+      // Center the logo section in collapsed state
+      const logoSection = document.getElementById('logo-section');
+      if (logoSection) {
+        logoSection.className = 'flex items-center justify-center gap-2 p-3 border-b border-gray-100 cursor-pointer hover:bg-purple-50 transition-all duration-200 relative group';
+      }
+
+      navItems.forEach(item => {
+        item.className = item.className.replace(/gap-\d+/g, 'justify-center').replace(/px-\d+/g, 'px-2');
+      });
+
+      navTexts.forEach(text => {
+        text.style.display = 'none';
+      });
+
+      // Update toggle indicator
+      if (toggleIndicator) {
+        toggleIndicator.innerHTML = '<i class="fas fa-chevron-right text-sm"></i>';
+        toggleIndicator.className = 'ml-auto text-purple-500 opacity-50 group-hover:opacity-100 transition-all duration-200';
+      }
+
+    } else {
+      // Expanded state - show full sidebar
+      sidebar.className = 'w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out h-screen';
+
+      if (logoText) {
+        logoText.style.display = 'block';
+      }
+
+      // Restore normal logo section layout
+      const logoSection = document.getElementById('logo-section');
+      if (logoSection) {
+        logoSection.className = 'flex items-center justify-center gap-2 p-3 border-b border-gray-100 cursor-pointer hover:bg-purple-50 transition-all duration-200 relative group';
+      }
+
+      navItems.forEach(item => {
+        item.className = item.className.replace(/justify-center/g, 'gap-3').replace(/px-2/g, 'px-3');
+      });
+
+      navTexts.forEach(text => {
+        text.style.display = 'block';
+      });
+
+      // Update toggle indicator
+      if (toggleIndicator) {
+        toggleIndicator.innerHTML = '<i class="fas fa-chevron-left text-sm"></i>';
+        toggleIndicator.className = 'ml-auto text-purple-500 opacity-50 group-hover:opacity-100 transition-all duration-200';
+      }
+    }
+  }
+
+  function showTherapistToggleFeedback() {
+    // Remove existing feedback
+    const existingFeedback = document.querySelector('.therapist-toggle-feedback');
+    if (existingFeedback) {
+      existingFeedback.remove();
+    }
+
+    // Create feedback element
+    const feedback = document.createElement('div');
+    feedback.className = 'therapist-toggle-feedback fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-purple-600 text-white text-sm rounded-lg shadow-lg z-50 transition-all duration-300';
+    feedback.textContent = therapistSidebarCollapsed ? 'Sidebar Collapsed' : 'Sidebar Expanded';
+
+    document.body.appendChild(feedback);
+
+    // Animate in
+    setTimeout(() => {
+      feedback.style.opacity = '1';
+      feedback.style.transform = 'translateX(-50%) translateY(0)';
+    }, 10);
+
+    // Remove after animation
+    setTimeout(() => {
+      feedback.style.opacity = '0';
+      feedback.style.transform = 'translateX(-50%) translateY(-10px)';
+      setTimeout(() => {
+        if (feedback.parentNode) {
+          feedback.parentNode.removeChild(feedback);
+        }
+      }, 300);
+    }, 1500);
+  }
+
+  // Keyboard shortcut (Ctrl + B) to toggle therapist sidebar
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'b') {
+      e.preventDefault();
+      toggleTherapistSidebar();
+    }
+  });
+</script>

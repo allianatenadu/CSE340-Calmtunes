@@ -1,7 +1,7 @@
 // routes/admin.js - COMPLETE with Working Admin Chat
 const express = require("express");
 const router = express.Router();
-const { requireAuth, requireAdmin } = require("../middleware/auth");
+const { requireAuth, requireAuthAPI, requireAdmin } = require("../middleware/auth");
 const db = require("../config/database");
 const adminController = require("../controllers/adminController");
 
@@ -87,7 +87,7 @@ router.get("/therapists", requireAuth, requireAdmin, (req, res) => {
 // ===== ADMIN CHAT ROUTES =====
 
 // Get patients for admin chat
-router.get("/chat/patients", requireAuth, requireAdmin, async (req, res) => {
+router.get("/chat/patients", requireAuthAPI, requireAdmin, async (req, res) => {
   try {
     const query = `
       SELECT u.id, u.name, u.email, u.created_at, u.profile_image,
@@ -114,7 +114,7 @@ router.get("/chat/patients", requireAuth, requireAdmin, async (req, res) => {
 });
 
 // Get therapists for admin chat
-router.get("/chat/therapists", requireAuth, requireAdmin, async (req, res) => {
+router.get("/chat/therapists", requireAuthAPI, requireAdmin, async (req, res) => {
   try {
     const query = `
       SELECT u.id, u.name, u.email, u.created_at,
@@ -140,7 +140,7 @@ router.get("/chat/therapists", requireAuth, requireAdmin, async (req, res) => {
 });
 
 // Get admin conversations - Allow both admins and therapists
-router.get("/chat/conversations", requireAuth, async (req, res) => {
+router.get("/chat/conversations", requireAuthAPI, async (req, res) => {
   try {
     const userId = parseInt(req.session.user.id);
     const userRole = req.session.user.role;
@@ -200,7 +200,7 @@ router.get("/conversations", requireAuth, async (req, res) => {
 });
 
 // Get messages for admin conversation - Allow both admins and therapists
-router.get("/chat/:conversationId/messages", requireAuth, async (req, res) => {
+router.get("/chat/:conversationId/messages", requireAuthAPI, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
     const userId = parseInt(req.session.user.id);
@@ -422,7 +422,7 @@ router.post("/messages/:conversationId/send", requireAuth, async (req, res) => {
 });
 
 // Start admin conversation
-router.post("/chat/start", requireAuth, requireAdmin, async (req, res) => {
+router.post("/chat/start", requireAuthAPI, requireAdmin, async (req, res) => {
   const { participantId, participantType, message } = req.body;
   const adminId = parseInt(req.session.user.id);
 
@@ -682,7 +682,7 @@ router.post(
 );
 
 // Get therapist messages for admin (FIXED)
-router.get("/therapist-messages", requireAuth, requireAdmin, async (req, res) => {
+router.get("/therapist-messages", requireAuthAPI, requireAdmin, async (req, res) => {
   try {
     const adminId = parseInt(req.session.user.id);
 
@@ -719,7 +719,7 @@ router.get("/therapist-messages", requireAuth, requireAdmin, async (req, res) =>
 });
 
 // Get specific therapist conversation for admin (FIXED)
-router.get("/therapist-messages/:conversationId", requireAuth, requireAdmin, async (req, res) => {
+router.get("/therapist-messages/:conversationId", requireAuthAPI, requireAdmin, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
     const adminId = parseInt(req.session.user.id);

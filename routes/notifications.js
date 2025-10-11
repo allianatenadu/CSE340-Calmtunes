@@ -44,7 +44,8 @@ router.get("/notifications", requireAuth, async (req, res) => {
       title: "Notifications - CalmTunes",
       user: req.session.user,
       notifications: notifications,
-      therapistRequests: therapistRequests
+      therapistRequests: therapistRequests,
+      layout: "layouts/minimal", // Use minimal layout (no navbar, footer, or sidebar)
     });
 
   } catch (error) {

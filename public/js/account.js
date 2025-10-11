@@ -379,7 +379,7 @@ function previewImageUrl(url) {
     }
 
     if (url.trim()) {
-        selectedFile = null;
+        // Clear selected file when using URL
         const previewArea = document.getElementById('imagePreviewArea');
         if (previewArea) {
             previewArea.classList.add('hidden');

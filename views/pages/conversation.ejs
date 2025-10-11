@@ -1,1006 +1,1300 @@
-<!-- Enhanced conversation.ejs with Admin Chat Integration -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="mb-8">
-    <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-      💬 Messages & Support
-    </h1>
-    <p class="text-xl text-gray-900">
-      <% if (user.role === 'admin') { %> Your admin conversations with patients
-      and therapists <% } else if (user.role === 'therapist') { %> Your
-      conversations with patients and admin support <% } else { %> Chat with
-      your therapist and get admin support for any concerns <% } %>
-    </p>
-  </div>
+<!-- Main Layout Container with Sidebar Integration -->
+<div
+  class="flex h-screen overflow-hidden"
+  data-user-authenticated="<%= user ? 'true' : 'false' %>"
+>
+  <!-- Hidden element to indicate this is a chat page -->
+  <div id="current-page-indicator" data-page="chat" style="display: none"></div>
+  <!-- Main Content Area with Sidebar -->
+  <div
+    class="flex-1 flex flex-col overflow-hidden min-w-0"
+    style="min-width: 0; height: 100vh"
+  >
+    <!-- Ensure sidebar is visible -->
+    <style>
+      #sidebar {
+        display: block !important;
+        visibility: visible !important;
+      }
+      .nav-menu-visible {
+        display: block !important;
+        visibility: visible !important;
+      }
 
-  <!-- Quick Actions Bar -->
-  <div class="bg-white rounded-xl shadow-md mb-6 p-4">
-    <div class="flex flex-wrap gap-3 items-center justify-between">
-      <div class="flex flex-wrap gap-3">
-        <% if (user.role === 'patient') { %>
-        <a href="/find-therapist" class="btn-primary">
-          <i class="fas fa-search mr-2"></i>Find Therapist
-        </a>
-        <button onclick="startAdminSupport()" class="btn-secondary">
-          <i class="fas fa-headset mr-2"></i>Get Admin Support
-        </button>
-        <% } else if (user.role === 'therapist') { %>
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-medium text-gray-600">Chat Mode:</span>
-          <button
-            onclick="switchToPatientChat()"
-            id="patient-chat-btn"
-            class="btn-primary"
-          >
-            <i class="fas fa-users mr-2"></i>My Patients
-          </button>
-          <button
-            onclick="switchToAdminChat()"
-            id="admin-chat-btn"
-            class="btn-secondary"
-          >
-            <i class="fas fa-headset mr-2"></i>Contact Admin
-          </button>
+      /* Ensure main chat content shows properly */
+      #main-chat-content:not(.hidden) {
+        display: flex !important;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Messages container scrolling */
+      #messages-container {
+        flex: 1 1 0px;
+        overflow-y: auto;
+        min-height: 0;
+      }
+
+      /* Message input at bottom */
+      #message-input-container {
+        flex-shrink: 0;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      /* Typing indicator styling */
+      #typing-indicator {
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        z-index: 10;
+      }
+
+      #typing-indicator:not(.hidden) {
+        display: block !important;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Hide conversations container when chat is active */
+      #conversations-container.hidden {
+        display: none !important;
+      }
+
+      /* Ensure proper scrolling in webkit browsers */
+      #messages-container::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #messages-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+
+      #messages-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+      }
+
+      #messages-container::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+      }
+    </style>
+
+    <div class="flex-1 overflow-hidden">
+      <!-- Conversations List -->
+      <div id="conversations-container" class="bg-white rounded-xl shadow-md">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-semibold text-textMain">
+                Active Conversations
+              </h2>
+              <p class="text-sm text-gray-900 mt-1">
+                Your recent messages and support chats
+              </p>
+            </div>
+            <button
+              onclick="refreshConversations()"
+              class="text-gray-500 hover:text-gray-700"
+              title="Refresh conversations"
+            >
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
         </div>
-        <% } else if (user.role === 'admin') { %>
-        <button onclick="showPatientsModal()" class="btn-primary">
-          <i class="fas fa-users mr-2"></i>Chat with Patient
-        </button>
-        <button onclick="showTherapistsModal()" class="btn-secondary">
-          <i class="fas fa-user-md mr-2"></i>Chat with Therapist
-        </button>
-        <a href="/admin" class="btn-outline">
-          <i class="fas fa-cog mr-2"></i>Admin Panel
-        </a>
-        <% } %>
-      </div>
 
-      <!-- Connection Status -->
-      <div
-        id="connection-status"
-        class="flex items-center text-sm text-gray-900"
-      >
-        <div
-          id="status-indicator"
-          class="w-2 h-2 rounded-full bg-gray-400 mr-2"
-        ></div>
-        <span id="status-text">Connecting...</span>
-      </div>
-    </div>
-  </div>
+        <div id="conversations-list" class="divide-y divide-gray-200">
+          <!-- Conversations will be loaded here -->
+        </div>
 
-  <!-- Conversations List -->
-  <div id="conversations-container" class="bg-white rounded-xl shadow-md">
-    <div class="p-6 border-b border-gray-200">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-xl font-semibold text-textMain">
-            Active Conversations
-          </h2>
-          <p class="text-sm text-gray-900 mt-1">
-            Your recent messages and support chats
+        <div id="no-conversations" class="text-center py-12 hidden">
+          <div
+            class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center"
+          >
+            <i class="fas fa-comments text-3xl text-gray-400"></i>
+          </div>
+          <h3 class="text-xl font-medium text-gray-900 mb-2">
+            No Conversations Yet
+          </h3>
+          <p class="text-gray-500 mb-6">
+            <% if (user.role === 'patient') { %> Start by finding a therapist or
+            contacting admin support for any concerns. <% } else if (user.role
+            === 'therapist') { %> Your patient conversations and admin support
+            will appear here. <% } else { %> Start conversations with patients
+            or therapists to provide support. <% } %>
           </p>
+          <div class="space-y-3">
+            <% if (user.role === 'patient') { %>
+            <a href="/find-therapist" class="btn-primary inline-block">
+              <i class="fas fa-search mr-2"></i>Find a Therapist
+            </a>
+            <button onclick="startAdminSupport()" class="btn-secondary ml-3">
+              <i class="fas fa-headset mr-2"></i>Get Support
+            </button>
+            <% } else if (user.role === 'admin') { %>
+            <button onclick="showPatientsModal()" class="btn-primary">
+              <i class="fas fa-users mr-2"></i>Start Patient Chat
+            </button>
+            <% } %>
+          </div>
         </div>
-        <button
-          onclick="refreshConversations()"
-          class="text-gray-500 hover:text-gray-700"
-          title="Refresh conversations"
-        >
-          <i class="fas fa-sync-alt"></i>
-        </button>
+
+        <div id="loading-conversations" class="text-center py-8">
+          <div
+            class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
+          ></div>
+          <p class="text-gray-900 mt-2">Loading conversations...</p>
+        </div>
       </div>
-    </div>
 
-    <div id="conversations-list" class="divide-y divide-gray-200">
-      <!-- Conversations will be loaded here -->
-    </div>
-
-    <div id="no-conversations" class="text-center py-12 hidden">
+      <!-- Main Chat Content Area -->
       <div
-        class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center"
+        id="main-chat-content"
+        class="hidden"
+        style="display: none; height: 100%; flex-direction: column"
       >
-        <i class="fas fa-comments text-3xl text-gray-400"></i>
-      </div>
-      <h3 class="text-xl font-medium text-gray-900 mb-2">
-        No Conversations Yet
-      </h3>
-      <p class="text-gray-500 mb-6">
-        <% if (user.role === 'patient') { %> Start by finding a therapist or
-        contacting admin support for any concerns. <% } else if (user.role ===
-        'therapist') { %> Your patient conversations and admin support will
-        appear here. <% } else { %> Start conversations with patients or
-        therapists to provide support. <% } %>
-      </p>
-      <div class="space-y-3">
-        <% if (user.role === 'patient') { %>
-        <a href="/find-therapist" class="btn-primary inline-block">
-          <i class="fas fa-search mr-2"></i>Find a Therapist
-        </a>
-        <button onclick="startAdminSupport()" class="btn-secondary ml-3">
-          <i class="fas fa-headset mr-2"></i>Get Support
-        </button>
-        <% } else if (user.role === 'admin') { %>
-        <button onclick="showPatientsModal()" class="btn-primary">
-          <i class="fas fa-users mr-2"></i>Start Patient Chat
-        </button>
-        <% } %>
-      </div>
-    </div>
-
-    <div id="loading-conversations" class="text-center py-8">
-      <div
-        class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
-      ></div>
-      <p class="text-gray-900 mt-2">Loading conversations...</p>
-    </div>
-  </div>
-
-  <!-- Chat View - Hidden by default -->
-  <div id="chat-view" class="hidden bg-white rounded-xl shadow-md mt-6">
-    <div class="p-6 border-b border-gray-200">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <button onclick="backToConversations()" class="btn-secondary mr-4">
-            <i class="fas fa-arrow-left mr-2"></i>Back to Messages
-          </button>
-          <div id="chat-header" class="flex items-center">
-            <!-- Chat header will be populated by JavaScript -->
-          </div>
-        </div>
-        <div class="flex items-center space-x-2">
-          <!-- Refresh Messages Button -->
-          <button
-            onclick="refreshMessages()"
-            class="btn-secondary px-3 py-2"
-            title="Refresh messages"
-          >
-            <i class="fas fa-sync-alt"></i>
-          </button>
-
-          <!-- Admin-specific action buttons -->
-          <% if (user.role === 'admin') { %>
-          <button
-            id="patient-concern-btn"
-            onclick="showPatientConcernModal()"
-            class="btn-secondary px-4 py-2 hidden"
-          >
-            <i class="fas fa-exclamation-triangle mr-2"></i>Submit Concern
-          </button>
-          <button
-            id="therapist-contract-btn"
-            onclick="showTherapistContractModal()"
-            class="btn-secondary px-4 py-2 hidden"
-          >
-            <i class="fas fa-file-contract mr-2"></i>Send Contract
-          </button>
-          <button
-            id="close-conversation-btn"
-            onclick="closeConversation()"
-            class="btn-danger px-4 py-2"
-          >
-            <i class="fas fa-times mr-2"></i>Close Chat
-          </button>
-          <% } else { %>
-          <button
-            id="phone-call-btn"
-            onclick="startPhoneCall()"
-            class="btn-secondary px-4 py-2"
-          >
-            <i class="fas fa-phone mr-2"></i>Phone Call
-          </button>
-          <button
-            id="video-call-btn"
-            onclick="startVideoCall()"
-            class="btn-primary px-4 py-2"
-          >
-            <i class="fas fa-video mr-2"></i>Video Call
-          </button>
-          <% } %>
-        </div>
-      </div>
-    </div>
-
-    <!-- Messages Container -->
-    <div
-      id="messages-container"
-      class="h-96 overflow-y-auto bg-gray-50 p-4 space-y-4"
-    >
-      <div class="text-center text-gray-500 py-8" id="chat-loading">
+        <!-- Therapist Header Info -->
         <div
-          class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"
-        ></div>
-        <span class="text-gray-900">Loading messages...</span>
-      </div>
-    </div>
-
-    <!-- Message Input Form -->
-    <form id="message-form" class="p-6 border-t border-gray-200 hidden">
-      <div class="flex space-x-2">
-        <input
-          type="text"
-          id="message-input"
-          placeholder="Type a message..."
-          class="flex-1 form-input rounded-lg border-gray-300"
-          required
-        />
-        <button type="submit" class="btn-primary px-6" id="send-btn">
-          <i class="fas fa-paper-plane"></i>
-        </button>
-      </div>
-      <div id="typing-indicator" class="mt-2 text-sm text-gray-900 hidden">
-        <i class="fas fa-ellipsis-h animate-pulse mr-1"></i>
-        <span id="typing-user">Someone</span> is typing...
-      </div>
-    </form>
-  </div>
-
-  <!-- Admin Support Modal for Patients -->
-  <div
-    id="admin-support-modal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
-  >
-    <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-semibold">Get Admin Support</h3>
-          <button
-            onclick="closeAdminSupportModal()"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-      <div class="p-6">
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <div class="flex items-start">
-            <i class="fas fa-info-circle text-blue-600 mr-3 mt-1"></i>
-            <div>
-              <h4 class="font-medium text-blue-800 mb-1">
-                How can we help you?
-              </h4>
-              <p class="text-blue-700 text-sm">
-                Our admin team is here to assist with technical issues, account
-                problems, therapist concerns, or any questions about the
-                platform.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <form id="admin-support-form" onsubmit="submitAdminSupport(event)">
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-900 mb-2"
-              >What do you need help with?</label
-            >
-            <select
-              id="support-type"
-              name="supportType"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2"
-              required
-            >
-              <option value="">Select issue type</option>
-              <option value="technical">Technical Issue</option>
-              <option value="therapist">Therapist Related</option>
-              <option value="billing">Billing Question</option>
-              <option value="account">Account Problem</option>
-              <option value="platform">Platform Question</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Describe your issue</label
-            >
-            <textarea
-              id="support-message"
-              name="message"
-              rows="4"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2"
-              placeholder="Please provide details about your concern or question..."
-              required
-            ></textarea>
-          </div>
-
-          <div class="flex justify-end space-x-3">
-            <button
-              type="button"
-              onclick="closeAdminSupportModal()"
-              class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <i class="fas fa-paper-plane mr-2"></i>Send Message
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Therapist-Admin Chat Modal (Enhanced Interface) -->
-  <div
-    id="therapist-admin-modal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
-  >
-    <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex justify-between items-center">
-          <div>
-            <h3 class="text-lg font-semibold">Contact Admin Team</h3>
-            <p class="text-sm text-gray-900 mt-1">
-              Start a conversation with our admin support team
-            </p>
-          </div>
-          <button
-            onclick="closeTherapistAdminModal()"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-      <div class="p-6">
-        <div
-          class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mb-4"
+          class="flex flex-wrap justify-between items-center gap-3 p-4 border-b border-gray-200 flex-shrink-0"
         >
-          <div class="flex items-start">
+          <div class="flex items-center gap-3 min-w-72">
+            <!-- Profile Picture -->
             <div
-              class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3"
+              id="therapist-avatar"
+              class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0"
             >
-              <i class="fas fa-headset text-white text-lg"></i>
+              <i class="fas fa-user-md text-gray-600 text-lg"></i>
             </div>
-            <div>
-              <h4 class="font-medium text-blue-800 mb-1">Admin Support Team</h4>
-              <p class="text-blue-700 text-sm">
-                Our admin team is here to help with any questions, concerns, or
-                issues you may have. This will open a private chat just like
-                your patient conversations.
+            <div class="flex flex-col gap-3">
+              <p
+                class="text-[#111718] tracking-light text-[32px] font-bold leading-tight"
+                id="therapist-name-header"
+              >
+                Therapist Name
+              </p>
+              <p
+                class="text-[#618389] text-sm font-normal leading-normal"
+                id="therapist-status"
+              >
+                Online now
               </p>
             </div>
           </div>
+
+          <!-- Chat with Admin Button - Inline with header -->
+          <div id="admin-chat-button" class="hidden">
+            <button
+              onclick="openAdminChat()"
+              class="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-blue-200 hover:border-blue-300"
+            >
+              <div
+                class="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center"
+              >
+                <i class="fas fa-headset text-white text-xs"></i>
+              </div>
+              <div class="text-left">
+                <p class="text-xs font-semibold text-gray-900">
+                  Chat with Admin
+                </p>
+              </div>
+            </button>
+          </div>
         </div>
 
-        <form
-          id="therapist-admin-form"
-          onsubmit="submitTherapistAdminMessage(event)"
+        <!-- Video/Phone Call Buttons -->
+        <div
+          class="flex justify-between gap-2 px-4 py-3 border-b border-gray-200 flex-shrink-0"
         >
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >What would you like to discuss?</label
+          <div class="flex gap-2">
+            <!-- Test Typing Indicator Button (Development Only) -->
+            <button
+              onclick="startVideoCall()"
+              class="p-2 text-[#111718] hover:bg-[#f0f4f4] rounded-lg transition-colors"
+              title="Video Call"
             >
-            <textarea
-              id="therapist-admin-message"
-              name="message"
-              rows="4"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2"
-              placeholder="Describe what you need help with, or just say 'Hello' to start the conversation..."
-              required
-            ></textarea>
+              <div
+                class="text-[#111718]"
+                data-icon="Video"
+                data-size="24px"
+                data-weight="regular"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24px"
+                  height="24px"
+                  fill="currentColor"
+                  viewBox="0 0 256 256"
+                >
+                  <path
+                    d="M164.44,105.34l-48-32A8,8,0,0,0,104,80v64a8,8,0,0,0,12.44,6.66l48-32a8,8,0,0,0,0-13.32ZM120,129.05V95l25.58,17ZM216,40H40A16,16,0,0,0,24,56V168a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,128H40V56H216V168Zm16,40a8,8,0,0,1-8,8H32a8,8,0,0,1,0-16H224A8,8,0,0,1,232,208Z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
+            <button
+              onclick="startPhoneCall()"
+              class="p-2 text-[#111718] hover:bg-[#f0f4f4] rounded-lg transition-colors"
+              title="Phone Call"
+            >
+              <div
+                class="text-[#111718]"
+                data-icon="Phone"
+                data-size="24px"
+                data-weight="regular"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24px"
+                  height="24px"
+                  fill="currentColor"
+                  viewBox="0 0 256 256"
+                >
+                  <path
+                    d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16,16,0,0,0,1.32-15.06l0-.12L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46ZM176,208A128.14,128.14,0,0,1,48,80,40.2,40.2,0,0,1,82.87,40a.61.61,0,0,0,0,.12l21,47L83.2,111.86a6.13,6.13,0,0,0-.57.77,16,16,0,0,0-1,15.7c9.06,18.53,27.73,37.06,46.46,46.11a16,16,0,0,0,15.75-1.14,8.44,8.44,0,0,0,.74-.56L168.89,152l47,21.05h0s.08,0,.11,0A40.21,40.21,0,0,1,176,208Z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
           </div>
+        </div>
 
-          <div class="bg-gray-50 rounded-lg p-3 mb-4">
-            <div class="flex items-start">
-              <i class="fas fa-info-circle text-gray-500 mr-2 mt-0.5"></i>
-              <div class="text-sm text-gray-600">
-                <p class="font-medium mb-1">What happens next?</p>
-                <p>
-                  After sending this message, you'll be taken to a full chat
-                  interface where you can have a normal conversation with the
-                  admin team, just like chatting with your patients.
-                </p>
+        <!-- Messages Container - Scrollable Area -->
+        <div
+          id="messages-container"
+          class="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
+          style="flex: 1 1 0; overflow-y: auto"
+        >
+          <div class="text-center text-[#618389] py-8" id="chat-loading">
+            <div
+              class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#13c8ec] mr-2"
+            ></div>
+            <span>Loading messages...</span>
+          </div>
+        </div>
+
+        <!-- Typing Indicator - Enhanced Version (moved outside messages container) -->
+        <div id="typing-indicator" class="px-4 py-2 hidden" style="display: none; background: white; border-top: 1px solid #e5e7eb; position: relative; z-index: 10;">
+          <div class="flex items-center gap-2">
+            <div class="flex gap-1">
+              <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+              <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+              <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+            </div>
+            <span class="text-sm text-gray-600"><span id="typing-user-name"></span> is typing...</span>
+          </div>
+        </div>
+
+        <!-- Message Input Area - Fixed at Bottom -->
+        <div
+          id="message-input-container"
+          class="flex items-center px-4 py-3 gap-3 border-t border-gray-200 flex-shrink-0"
+          style="background: white; border-top: 1px solid #e5e7eb"
+        >
+          <div class="flex flex-col min-w-40 h-12 flex-1">
+            <div class="flex w-full flex-1 items-stretch rounded-xl h-full">
+              <input
+                type="text"
+                id="message-input"
+                placeholder="Type a message..."
+                class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#111718] focus:outline-0 focus:ring-0 border-none bg-[#f0f4f4] focus:border-none h-full placeholder:text-[#618389] px-4 rounded-r-none border-r-0 pr-2 text-base font-normal leading-normal"
+              />
+              <div
+                class="flex border-none bg-[#f0f4f4] items-center justify-center pr-2 rounded-r-xl border-l-0"
+              >
+                <div class="flex items-center gap-4 justify-end">
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      class="flex items-center justify-center p-1.5 text-[#618389] hover:text-[#111718] transition-colors"
+                      title="Add emoji"
+                    >
+                      <div
+                        class="text-[#618389]"
+                        data-icon="Smiley"
+                        data-size="20px"
+                        data-weight="regular"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20px"
+                          height="20px"
+                          fill="currentColor"
+                          viewBox="0 0 256 256"
+                        >
+                          <path
+                            d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM80,108a12,12,0,1,1,12,12A12,12,0,0,1,80,108Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,176,108Zm-1.07,48c-10.29,17.79-27.4,28-46.93,28s-36.63-10.2-46.92-28a8,8,0,1,1,13.84-8c7.47,12.91,19.21,20,33.08,20s25.61-7.1,33.07-20a8,8,0,0,1,13.86,8Z"
+                          ></path>
+                        </svg>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      class="flex items-center justify-center p-1.5 text-[#618389] hover:text-[#111718] transition-colors"
+                      title="Attach file"
+                    >
+                      <div
+                        class="text-[#618389]"
+                        data-icon="Paperclip"
+                        data-size="20px"
+                        data-weight="regular"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20px"
+                          height="20px"
+                          fill="currentColor"
+                          viewBox="0 0 256 256"
+                        >
+                          <path
+                            d="M209.66,122.34a8,8,0,0,1,0,11.32l-82.05,82a56,56,0,0,1-79.2-79.21L147.67,35.73a40,40,0,1,1,56.61,56.55L105,193A24,24,0,1,1,71,159L154.3,74.38A8,8,0,1,1,165.7,85.6L82.39,170.31a8,8,0,1,0,11.27,11.36L192.93,81A24,24,0,1,0,159,47L59.76,147.68a40,40,0,1,0,56.53,56.62l82.06-82A8,8,0,0,1,209.66,122.34Z"
+                          ></path>
+                        </svg>
+                      </div>
+                    </button>
+                  </div>
+                  <button
+                    type="submit"
+                    id="send-btn"
+                    class="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-8 px-4 bg-[#13c8ec] text-white text-sm font-medium leading-normal"
+                  >
+                    <span class="truncate">Send</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-
-          <div class="flex justify-end space-x-3">
-            <button
-              type="button"
-              onclick="closeTherapistAdminModal()"
-              class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700"
-            >
-              <i class="fas fa-comments mr-2"></i>Start Chat
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Patient Concern Modal (Admin Only) -->
-  <div
-    id="patient-concern-modal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
-  >
-    <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-semibold">Submit Patient Concern</h3>
+      <!-- Chat View - Simple Design -->
+      <div id="chat-view" class="hidden">
+        <!-- Back Button -->
+        <div
+          class="flex justify-between gap-2 px-4 py-3 border-b border-gray-200"
+        >
           <button
-            onclick="closePatientConcernModal()"
-            class="text-gray-500 hover:text-gray-700"
+            onclick="backToConversations()"
+            class="p-2 text-[#111718] hover:bg-[#f0f4f4] rounded-lg transition-colors"
           >
-            <i class="fas fa-times"></i>
+            <div
+              class="text-[#111718]"
+              data-icon="ArrowLeft"
+              data-size="20px"
+              data-weight="regular"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20px"
+                height="20px"
+                fill="currentColor"
+                viewBox="0 0 256 256"
+              >
+                <path
+                  d="M224,128a8,8,0,0,1-8,8H120v64a8,8,0,0,1-13.66,5.66l-72-72a8,8,0,0,1,0-11.32l72-72A8,8,0,0,1,120,56v64h96A8,8,0,0,1,224,128Z"
+                ></path>
+              </svg>
+            </div>
           </button>
         </div>
       </div>
-      <form
-        id="patient-concern-form"
-        onsubmit="submitPatientConcern(event)"
-        class="p-6"
+
+      <!-- Admin Support Modal for Patients -->
+      <div
+        id="admin-support-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
       >
-        <input type="hidden" id="concern-patient-id" name="patientId" />
-        <div class="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Concern Type</label
-            >
-            <select
-              id="concern-type"
-              name="concernType"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2"
-              required
-            >
-              <option value="">Select type</option>
-              <option value="technical">Technical Issue</option>
-              <option value="therapist">Therapist Related</option>
-              <option value="platform">Platform Issue</option>
-              <option value="billing">Billing Issue</option>
-              <option value="other">Other</option>
-            </select>
+        <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold">Get Admin Support</h3>
+              <button
+                onclick="closeAdminSupportModal()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Severity</label
-            >
-            <select
-              id="concern-severity"
-              name="severity"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2"
-              required
-            >
-              <option value="">Select severity</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-          </div>
-        </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Title</label
-          >
-          <input
-            type="text"
-            id="concern-title"
-            name="title"
-            class="w-full border border-gray-300 rounded-lg px-4 py-2"
-            placeholder="Brief description of the concern"
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Description</label
-          >
-          <textarea
-            id="concern-description"
-            name="description"
-            rows="4"
-            class="w-full border border-gray-300 rounded-lg px-4 py-2"
-            placeholder="Detailed description of the concern"
-            required
-          ></textarea>
-        </div>
-        <div class="flex justify-end space-x-3">
-          <button
-            type="button"
-            onclick="closePatientConcernModal()"
-            class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Submit Concern
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+          <div class="p-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div class="flex items-start">
+                <i class="fas fa-info-circle text-blue-600 mr-3 mt-1"></i>
+                <div>
+                  <h4 class="font-medium text-blue-800 mb-1">
+                    How can we help you?
+                  </h4>
+                  <p class="text-blue-700 text-sm">
+                    Our admin team is here to assist with technical issues,
+                    account problems, therapist concerns, or any questions about
+                    the platform.
+                  </p>
+                </div>
+              </div>
+            </div>
 
-  <!-- Therapist Contract Modal (Admin Only) -->
-  <div
-    id="therapist-contract-modal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
-  >
-    <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-semibold">Send Contract to Therapist</h3>
-          <button
-            onclick="closeTherapistContractModal()"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <i class="fas fa-times"></i>
-          </button>
+            <form id="admin-support-form" onsubmit="submitAdminSupport(event)">
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-900 mb-2"
+                  >What do you need help with?</label
+                >
+                <select
+                  id="support-type"
+                  name="supportType"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  required
+                >
+                  <option value="">Select issue type</option>
+                  <option value="technical">Technical Issue</option>
+                  <option value="therapist">Therapist Related</option>
+                  <option value="billing">Billing Question</option>
+                  <option value="account">Account Problem</option>
+                  <option value="platform">Platform Question</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Describe your issue</label
+                >
+                <textarea
+                  id="support-message"
+                  name="message"
+                  rows="4"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  placeholder="Please provide details about your concern or question..."
+                  required
+                ></textarea>
+              </div>
+
+              <div class="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onclick="closeAdminSupportModal()"
+                  class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <i class="fas fa-paper-plane mr-2"></i>Send Message
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-      <form
-        id="therapist-contract-form"
-        onsubmit="submitTherapistContract(event)"
-        class="p-6"
+
+      <!-- Therapist-Admin Chat Modal (Enhanced Interface) -->
+      <div
+        id="therapist-admin-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
       >
-        <input type="hidden" id="contract-therapist-id" name="therapistId" />
-        <div class="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Contract Type</label
-            >
-            <select
-              id="contract-type"
-              name="contractType"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2"
-              required
-            >
-              <option value="">Select type</option>
-              <option value="terms_update">Terms Update</option>
-              <option value="policy_change">Policy Change</option>
-              <option value="guidelines">Guidelines</option>
-              <option value="requirements">Requirements</option>
-              <option value="other">Other</option>
-            </select>
+        <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-lg font-semibold">Contact Admin Team</h3>
+                <p class="text-sm text-gray-900 mt-1">
+                  Start a conversation with our admin support team
+                </p>
+              </div>
+              <button
+                onclick="closeTherapistAdminModal()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Acknowledgment Required</label
+          <div class="p-6">
+            <div
+              class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mb-4"
             >
-            <select
-              id="requires-acknowledgment"
-              name="requiresAcknowledgment"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2"
+              <div class="flex items-start">
+                <div
+                  class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3"
+                >
+                  <i class="fas fa-headset text-white text-lg"></i>
+                </div>
+                <div>
+                  <h4 class="font-medium text-blue-800 mb-1">
+                    Admin Support Team
+                  </h4>
+                  <p class="text-blue-700 text-sm">
+                    Our admin team is here to help with any questions, concerns,
+                    or issues you may have. This will open a private chat just
+                    like your patient conversations.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <form
+              id="therapist-admin-form"
+              onsubmit="submitTherapistAdminMessage(event)"
             >
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >What would you like to discuss?</label
+                >
+                <textarea
+                  id="therapist-admin-message"
+                  name="message"
+                  rows="4"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  placeholder="Describe what you need help with, or just say 'Hello' to start the conversation..."
+                  required
+                ></textarea>
+              </div>
+
+              <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                <div class="flex items-start">
+                  <i class="fas fa-info-circle text-gray-500 mr-2 mt-0.5"></i>
+                  <div class="text-sm text-gray-600">
+                    <p class="font-medium mb-1">What happens next?</p>
+                    <p>
+                      After sending this message, you'll be taken to a full chat
+                      interface where you can have a normal conversation with
+                      the admin team, just like chatting with your patients.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onclick="closeTherapistAdminModal()"
+                  class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700"
+                >
+                  <i class="fas fa-comments mr-2"></i>Start Chat
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Title</label
+      </div>
+
+      <!-- Patient Concern Modal (Admin Only) -->
+      <div
+        id="patient-concern-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold">Submit Patient Concern</h3>
+              <button
+                onclick="closePatientConcernModal()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <form
+            id="patient-concern-form"
+            onsubmit="submitPatientConcern(event)"
+            class="p-6"
           >
-          <input
-            type="text"
-            id="contract-title"
-            name="title"
-            class="w-full border border-gray-300 rounded-lg px-4 py-2"
-            placeholder="Contract title"
-            required
-          />
+            <input type="hidden" id="concern-patient-id" name="patientId" />
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Concern Type</label
+                >
+                <select
+                  id="concern-type"
+                  name="concernType"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  required
+                >
+                  <option value="">Select type</option>
+                  <option value="technical">Technical Issue</option>
+                  <option value="therapist">Therapist Related</option>
+                  <option value="platform">Platform Issue</option>
+                  <option value="billing">Billing Issue</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Severity</label
+                >
+                <select
+                  id="concern-severity"
+                  name="severity"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  required
+                >
+                  <option value="">Select severity</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Title</label
+              >
+              <input
+                type="text"
+                id="concern-title"
+                name="title"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                placeholder="Brief description of the concern"
+                required
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Description</label
+              >
+              <textarea
+                id="concern-description"
+                name="description"
+                rows="4"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                placeholder="Detailed description of the concern"
+                required
+              ></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+              <button
+                type="button"
+                onclick="closePatientConcernModal()"
+                class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Submit Concern
+              </button>
+            </div>
+          </form>
         </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Content</label
+      </div>
+
+      <!-- Therapist Contract Modal (Admin Only) -->
+      <div
+        id="therapist-contract-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold">Send Contract to Therapist</h3>
+              <button
+                onclick="closeTherapistContractModal()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <form
+            id="therapist-contract-form"
+            onsubmit="submitTherapistContract(event)"
+            class="p-6"
           >
-          <textarea
-            id="contract-content"
-            name="content"
-            rows="6"
-            class="w-full border border-gray-300 rounded-lg px-4 py-2"
-            placeholder="Contract content and details"
-            required
-          ></textarea>
+            <input
+              type="hidden"
+              id="contract-therapist-id"
+              name="therapistId"
+            />
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Contract Type</label
+                >
+                <select
+                  id="contract-type"
+                  name="contractType"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  required
+                >
+                  <option value="">Select type</option>
+                  <option value="terms_update">Terms Update</option>
+                  <option value="policy_change">Policy Change</option>
+                  <option value="guidelines">Guidelines</option>
+                  <option value="requirements">Requirements</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Acknowledgment Required</label
+                >
+                <select
+                  id="requires-acknowledgment"
+                  name="requiresAcknowledgment"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                >
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Title</label
+              >
+              <input
+                type="text"
+                id="contract-title"
+                name="title"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                placeholder="Contract title"
+                required
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Content</label
+              >
+              <textarea
+                id="contract-content"
+                name="content"
+                rows="6"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                placeholder="Contract content and details"
+                required
+              ></textarea>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Acknowledgment Deadline (Optional)</label
+              >
+              <input
+                type="datetime-local"
+                id="acknowledgment-deadline"
+                name="acknowledgmentDeadline"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2"
+              />
+            </div>
+            <div class="flex justify-end space-x-3">
+              <button
+                type="button"
+                onclick="closeTherapistContractModal()"
+                class="px-4 py-2 text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Send Contract
+              </button>
+            </div>
+          </form>
         </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Acknowledgment Deadline (Optional)</label
-          >
-          <input
-            type="datetime-local"
-            id="acknowledgment-deadline"
-            name="acknowledgmentDeadline"
-            class="w-full border border-gray-300 rounded-lg px-4 py-2"
-          />
+      </div>
+
+      <!-- Patients Modal (Admin Only) -->
+      <div
+        id="patients-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
+      >
+        <div
+          class="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-96 overflow-y-auto"
+        >
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold">Select Patient to Chat With</h3>
+              <button
+                onclick="closePatientsModal()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div id="patients-list" class="p-6">
+            <div class="text-center text-gray-500">
+              <i class="fas fa-spinner fa-spin mb-2"></i>
+              <p class="text-gray-900">Loading patients...</p>
+            </div>
+          </div>
         </div>
-        <div class="flex justify-end space-x-3">
-          <button
-            type="button"
-            onclick="closeTherapistContractModal()"
-            class="px-4 py-2 text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Send Contract
-          </button>
+      </div>
+
+      <!-- Therapists Modal (Admin Only) -->
+      <div
+        id="therapists-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
+      >
+        <div
+          class="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-96 overflow-y-auto"
+        >
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold">
+                Select Therapist to Chat With
+              </h3>
+              <button
+                onclick="closeTherapistsModal()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div id="therapists-list" class="p-6">
+            <div class="text-center text-gray-500">
+              <i class="fas fa-spinner fa-spin mb-2"></i>
+              <p class="text-gray-900">Loading therapists...</p>
+            </div>
+          </div>
         </div>
-      </form>
+      </div>
+
+      <!-- Toast Notification -->
+      <div
+        id="toast-notification"
+        class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden transform transition-all duration-300"
+      >
+        <div class="flex items-center">
+          <i class="fas fa-check-circle mr-2"></i>
+          <span id="toast-message">Action completed successfully!</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Patients Modal (Admin Only) -->
-  <div
-    id="patients-modal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
-  >
-    <div
-      class="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-96 overflow-y-auto"
-    >
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-semibold">Select Patient to Chat With</h3>
-          <button
-            onclick="closePatientsModal()"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-      <div id="patients-list" class="p-6">
-        <div class="text-center text-gray-500">
-          <i class="fas fa-spinner fa-spin mb-2"></i>
-          <p class="text-gray-900">Loading patients...</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Socket.IO Client -->
+  <script src="/socket.io/socket.io.js"></script>
 
-  <!-- Therapists Modal (Admin Only) -->
-  <div
-    id="therapists-modal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
-  >
-    <div
-      class="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-96 overflow-y-auto"
-    >
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-semibold">Select Therapist to Chat With</h3>
-          <button
-            onclick="closeTherapistsModal()"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-      <div id="therapists-list" class="p-6">
-        <div class="text-center text-gray-500">
-          <i class="fas fa-spinner fa-spin mb-2"></i>
-          <p class="text-gray-900">Loading therapists...</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Enhanced Chat JavaScript with Admin Support -->
+  <script>
+    // Global variables
+    let conversations = [];
+    let currentConversationId = null;
+    let messages = [];
+    let otherUser = {};
+    let socket = null;
+    let isPageVisible = true;
+    let messagePollingInterval = null;
+    let conversationPollingInterval = null;
+    let lastMessageCount = 0;
+    let typingTimer = null;
+    let currentUserId = "<%= user.id %>";
+    let userRole = "<%= user.role %>";
 
-  <!-- Toast Notification -->
-  <div
-    id="toast-notification"
-    class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden transform transition-all duration-300"
-  >
-    <div class="flex items-center">
-      <i class="fas fa-check-circle mr-2"></i>
-      <span id="toast-message">Action completed successfully!</span>
-    </div>
-  </div>
-</div>
+    // Initialize on page load
+    document.addEventListener("DOMContentLoaded", function () {
+      console.log("Initializing enhanced chat with admin support");
 
-<!-- Socket.IO Client -->
-<script src="/socket.io/socket.io.js"></script>
+      // Show test button in development
+      const testBtn = document.getElementById("test-typing-btn");
+      if (testBtn && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        testBtn.style.display = "block";
+      }
 
-<!-- Enhanced Chat JavaScript with Admin Support -->
-<script>
-  // Global variables
-  let conversations = [];
-  let currentConversationId = null;
-  let messages = [];
-  let otherUser = {};
-  let socket = null;
-  let isPageVisible = true;
-  let messagePollingInterval = null;
-  let conversationPollingInterval = null;
-  let lastMessageCount = 0;
-  let typingTimer = null;
-  let currentUserId = "<%= user.id %>";
-  let userRole = "<%= user.role %>";
+      // Initialize Socket.IO
+      initializeSocket();
 
-  // Initialize on page load
-  document.addEventListener("DOMContentLoaded", function () {
-    console.log("Initializing enhanced chat with admin support");
+      // Load conversations
+      loadConversations();
 
-    // Initialize Socket.IO
-    initializeSocket();
+      // Set up event listeners
+      setupEventListeners();
 
-    // Load conversations
-    loadConversations();
+      // Handle direct conversation loading from URL
+      const conversationId =
+        '<%= typeof conversationId !== "undefined" ? conversationId || "" : "" %>';
+      if (conversationId && conversationId.trim() !== "") {
+        console.log("=== DIRECT CONVERSATION LOAD ===");
+        console.log("Conversation ID:", conversationId);
 
-    // Set up event listeners
-    setupEventListeners();
+        currentConversationId = conversationId;
 
-    // Handle direct conversation loading from URL
-    const conversationId =
-      '<%= typeof conversationId !== "undefined" ? conversationId || "" : "" %>';
-    if (conversationId && conversationId.trim() !== "") {
-      currentConversationId = conversationId;
-      document
-        .getElementById("conversations-container")
-        .classList.add("hidden");
-      document.getElementById("chat-view").classList.remove("hidden");
-      loadChat(conversationId);
-    }
-  });
-
-  // Initialize Socket.IO connection
-  function initializeSocket() {
-    console.log("Initializing Socket.IO connection...");
-    socket = io();
-
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
-      updateConnectionStatus(true);
-
-      // Authenticate socket connection
-      socket.emit("authenticate", { userId: currentUserId, role: userRole });
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Socket disconnected");
-      updateConnectionStatus(false);
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
-      updateConnectionStatus(false);
-    });
-
-    socket.on("new_message", (data) => {
-      console.log("New message received via socket:", data);
-      console.log("Current conversation ID:", currentConversationId);
-
-      if (
-        data &&
-        data.conversationId === currentConversationId &&
-        data.message
-      ) {
-        console.log("Message is for current conversation, processing...");
-
-        // Enhanced duplicate detection to avoid duplicates
-        const messageExists = messages.some(
-          (msg) => msg.id === data.message.id
+        // Hide conversations list
+        const conversationsContainer = document.getElementById(
+          "conversations-container"
         );
+        if (conversationsContainer) {
+          conversationsContainer.classList.add("hidden");
+          console.log("conversations-container hidden");
+        }
 
-        // Additional check: if message exists and was sent by current user very recently, ignore it
-        const isRecentOwnMessage = messages.some(
-          (msg) =>
-            msg.id === data.message.id &&
-            msg.sender_id === currentUserId &&
-            data.message.created_at &&
-            msg.created_at &&
-            Math.abs(
-              new Date(data.message.created_at) - new Date(msg.created_at)
-            ) < 5000 // 5 seconds
+        // Show main chat content
+        const mainChatContent = document.getElementById("main-chat-content");
+        if (mainChatContent) {
+          mainChatContent.classList.remove("hidden");
+          mainChatContent.style.display = "block";
+          console.log("main-chat-content shown");
+        }
+
+        // Hide chat-view (back button view)
+        const chatView = document.getElementById("chat-view");
+        if (chatView) {
+          chatView.classList.add("hidden");
+          console.log("chat-view hidden");
+        }
+
+        // Load chat data
+        loadChat(conversationId);
+
+        // Show message input for direct conversation access
+        const messageInputContainer = document.getElementById(
+          "message-input-container"
         );
+        if (messageInputContainer) {
+          messageInputContainer.style.display = "flex";
+          console.log("Message input shown for direct conversation");
+        }
 
-        console.log("Message exists:", messageExists);
-        console.log("Is recent own message:", isRecentOwnMessage);
+        // Update avatar for direct conversation access - only if otherUser exists and has data
+        if (typeof otherUser !== "undefined" && otherUser && otherUser.name) {
+          updateTherapistAvatar(otherUser);
+          console.log("Avatar updated for direct conversation");
+        } else {
+          console.log("⚠️ otherUser not ready for direct conversation avatar update");
+        }
 
-        if (!messageExists || !isRecentOwnMessage) {
-          console.log("Adding new message to array");
-          messages.push(data.message);
-          console.log("Messages array after push:", messages);
-          displayMessages();
-          showToast("New message received");
-
-          // Scroll to bottom to show new message
-          const container = document.getElementById("messages-container");
-          if (container) {
-            setTimeout(() => {
-              container.scrollTop = container.scrollHeight;
-              console.log("Scrolled after socket message");
-            }, 100);
+        // Show/hide admin button for direct conversation access
+        const adminButton = document.getElementById("admin-chat-button");
+        if (adminButton) {
+          // Show admin button for therapist conversations, hide for admin conversations
+          const shouldShowAdminButton = !isAdminConversation;
+          if (shouldShowAdminButton) {
+            adminButton.classList.remove("hidden");
+            console.log("Admin button shown for direct therapist conversation");
+          } else {
+            adminButton.classList.add("hidden");
+            console.log("Admin button hidden for direct admin conversation");
           }
         } else {
-          console.log("Duplicate message ignored:", data.message.id, {
-            messageExists,
-            isRecentOwnMessage,
+          console.log("Admin button not found in DOM for direct conversation");
+        }
+
+        // Join socket room for real-time updates
+        setTimeout(() => {
+          if (socket && socket.connected) {
+            socket.emit("join_conversation", conversationId);
+            console.log("Joined socket room:", conversationId);
+          }
+        }, 500);
+      }
+    });
+
+    // Initialize Socket.IO connection
+    function initializeSocket() {
+      console.log("Initializing Socket.IO connection...");
+      socket = io();
+
+      socket.on("connect", () => {
+        console.log("Socket connected:", socket.id);
+        updateConnectionStatus(true);
+
+        // Authenticate socket connection
+        socket.emit("authenticate", { userId: currentUserId, role: userRole });
+      });
+
+      socket.on("disconnect", () => {
+        console.log("Socket disconnected");
+        updateConnectionStatus(false);
+      });
+
+      socket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+        updateConnectionStatus(false);
+      });
+
+      socket.on("new_message", (data) => {
+        console.log("New message received via socket:", data);
+        console.log("Current conversation ID:", currentConversationId);
+
+        if (
+          data &&
+          data.conversationId === currentConversationId &&
+          data.message
+        ) {
+          console.log("Message is for current conversation, processing...");
+
+          // Enhanced duplicate detection to avoid duplicates
+          const messageExists = messages.some(
+            (msg) => msg.id === data.message.id
+          );
+
+          // Additional check: if message exists and was sent by current user very recently, ignore it
+          const isRecentOwnMessage = messages.some(
+            (msg) =>
+              msg.id === data.message.id &&
+              msg.sender_id === currentUserId &&
+              data.message.created_at &&
+              msg.created_at &&
+              Math.abs(
+                new Date(data.message.created_at) - new Date(msg.created_at)
+              ) < 5000 // 5 seconds
+          );
+
+          console.log("Message exists:", messageExists);
+          console.log("Is recent own message:", isRecentOwnMessage);
+
+          if (!messageExists || !isRecentOwnMessage) {
+            console.log("Adding new message to array");
+            messages.push(data.message);
+            console.log("Messages array after push:", messages);
+            displayMessages();
+            showToast("New message received");
+
+            // Scroll to bottom to show new message
+            const container = document.getElementById("messages-container");
+            if (container) {
+              setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+                console.log(
+                  "Scrolled after socket message, height:",
+                  container.scrollHeight
+                );
+              }, 100);
+            }
+          } else {
+            console.log("Duplicate message ignored:", data.message.id, {
+              messageExists,
+              isRecentOwnMessage,
+            });
+          }
+        } else if (data && data.conversationId !== currentConversationId) {
+          console.log("Message for different conversation, updating list");
+          // Update conversation list for unread count
+          loadConversations();
+        } else {
+          console.log("Invalid socket message data:", data);
+        }
+      });
+
+      socket.on("user_typing", (data) => {
+        console.log("📨 Typing event received:", data);
+        console.log("🔍 Current conversation ID:", currentConversationId);
+        console.log("👤 Current user ID:", currentUserId);
+        console.log("📊 Event data:", {
+          conversationId: data.conversationId,
+          userId: data.userId,
+          userName: data.userName,
+          matchesConversation: data.conversationId === currentConversationId,
+          notCurrentUser: data.userId !== currentUserId
+        });
+
+        if (data.conversationId === currentConversationId && data.userId !== currentUserId) {
+          console.log("✅ Conditions met, showing typing indicator");
+          // Show typing indicator with the other user's name
+          const typingUserName = otherUser ? otherUser.name : (data.userName || "Someone");
+          console.log("👤 Showing typing for:", typingUserName);
+          showTypingIndicator(typingUserName);
+        } else {
+          console.log("❌ Conditions not met:", {
+            conversationMatch: data.conversationId === currentConversationId,
+            notCurrentUser: data.userId !== currentUserId
           });
         }
-      } else if (data && data.conversationId !== currentConversationId) {
-        console.log("Message for different conversation, updating list");
-        // Update conversation list for unread count
-        loadConversations();
-      } else {
-        console.log("Invalid socket message data:", data);
-      }
-    });
-
-    socket.on("user_typing", (data) => {
-      if (
-        data.conversationId === currentConversationId &&
-        data.userId !== currentUserId
-      ) {
-        showTypingIndicator(data.userName || "Someone");
-      }
-    });
-
-    socket.on("user_stopped_typing", (data) => {
-      if (data.conversationId === currentConversationId) {
-        hideTypingIndicator();
-      }
-    });
-  }
-
-  // Set up event listeners
-  function setupEventListeners() {
-    // Message form submission
-    const messageForm = document.getElementById("message-form");
-    if (messageForm) {
-      messageForm.addEventListener("submit", sendMessage);
-      console.log("Message form listener attached");
-    } else {
-      console.error("Message form not found!");
-    }
-
-    // Typing detection
-    const messageInput = document.getElementById("message-input");
-    if (messageInput) {
-      messageInput.addEventListener("input", handleTyping);
-      messageInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage(e);
-        }
       });
-    }
 
-    // Page visibility change
-    document.addEventListener("visibilitychange", () => {
-      isPageVisible = !document.hidden;
-    });
-  }
-
-  // Update connection status indicator
-  function updateConnectionStatus(connected) {
-    const indicator = document.getElementById("status-indicator");
-    const text = document.getElementById("status-text");
-
-    if (connected) {
-      indicator.className = "w-2 h-2 rounded-full bg-green-400 mr-2";
-      text.textContent = "Connected";
-    } else {
-      indicator.className = "w-2 h-2 rounded-full bg-red-400 mr-2";
-      text.textContent = "Disconnected";
-    }
-  }
-
-  // Load conversations from server
-  async function loadConversations() {
-    const loadingElement = document.getElementById("loading-conversations");
-    const conversationsList = document.getElementById("conversations-list");
-    const noConversations = document.getElementById("no-conversations");
-
-    if (loadingElement) loadingElement.classList.remove("hidden");
-
-    try {
-      // Use appropriate endpoint based on user role
-      const endpoint =
-        userRole === "admin"
-          ? "/admin/chat/conversations"
-          : "/appointments/chat/conversations";
-      const response = await fetch(endpoint, {
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        conversations = data.conversations || [];
-        displayConversations();
-      } else {
-        console.error("Failed to load conversations:", data.error);
-        showNoConversations();
-      }
-    } catch (error) {
-      console.error("Error loading conversations:", error);
-      showNoConversations();
-    } finally {
-      if (loadingElement) loadingElement.classList.add("hidden");
-    }
-  }
-
-  // Display conversations list with admin conversation indicators
-  function displayConversations() {
-    const container = document.getElementById("conversations-list");
-    const noConversations = document.getElementById("no-conversations");
-
-    if (!conversations || conversations.length === 0) {
-      container.innerHTML = "";
-      noConversations.classList.remove("hidden");
-      return;
-    }
-
-    noConversations.classList.add("hidden");
-
-    container.innerHTML = conversations
-      .map((conversation) => {
-        const isAdmin = userRole === "admin";
-        const isAdminConversation = conversation.conversation_type === "admin";
-
-        // Determine other user based on conversation type and current user role
-        let otherUser;
-        if (isAdminConversation) {
-          if (userRole === "admin") {
-            // Admin viewing patient's admin support request
-            otherUser = {
-              name: conversation.patient_name || "Patient",
-              image: conversation.patient_image,
-              role: "patient",
-              specialty: "Patient Support",
-            };
-          } else {
-            // Patient viewing admin support conversation
-            otherUser = {
-              name: "Admin Support",
-              image: null,
-              role: "admin",
-              specialty: "CalmTunes Admin Team",
-            };
-          }
+      socket.on("user_stopped_typing", (data) => {
+        console.log("🔇 Stopped typing event received:", data);
+        console.log("🔍 Current conversation ID:", currentConversationId);
+        if (data.conversationId === currentConversationId) {
+          console.log("✅ Hiding typing indicator");
+          hideTypingIndicator();
         } else {
-          // Regular patient-therapist conversation
-          if (userRole === "patient") {
-            otherUser = {
-              name: conversation.therapist_name || "Therapist",
-              image: conversation.therapist_image,
-              role: "therapist",
-              specialty: conversation.specialty || "General Practice",
-            };
-          } else {
-            otherUser = {
-              name: conversation.patient_name || "Patient",
-              image: conversation.patient_image,
-              role: "patient",
-              specialty: "Patient",
-            };
+          console.log("❌ Stop typing event for different conversation");
+        }
+      });
+    }
+
+    // Set up event listeners
+    function setupEventListeners() {
+      // Message input handling
+      const messageInput = document.getElementById("message-input");
+      const sendBtn = document.getElementById("send-btn");
+
+      if (messageInput) {
+        // Typing detection
+        messageInput.addEventListener("input", handleTyping);
+
+        // Enter key to send message
+        messageInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage(e);
           }
+        });
+
+        console.log("Message input listener attached");
+      } else {
+        console.error("Message input not found!");
+      }
+
+      if (sendBtn) {
+        // Send button click
+        sendBtn.addEventListener("click", sendMessage);
+        console.log("Send button listener attached");
+      }
+
+      // Page visibility change
+      document.addEventListener("visibilitychange", () => {
+        isPageVisible = !document.hidden;
+      });
+    }
+
+    // Update connection status indicator
+    function updateConnectionStatus(connected) {
+      const indicator = document.getElementById("status-indicator");
+      const text = document.getElementById("status-text");
+
+      if (indicator && text) {
+        if (connected) {
+          indicator.className = "w-2 h-2 rounded-full bg-green-400 mr-2";
+          text.textContent = "Connected";
+        } else {
+          indicator.className = "w-2 h-2 rounded-full bg-red-400 mr-2";
+          text.textContent = "Disconnected";
+        }
+      }
+    }
+
+    // Load conversations from server
+    async function loadConversations() {
+      const loadingElement = document.getElementById("loading-conversations");
+      const conversationsList = document.getElementById("conversations-list");
+      const noConversations = document.getElementById("no-conversations");
+
+      if (loadingElement) loadingElement.classList.remove("hidden");
+
+      try {
+        // Use appropriate endpoint based on user role
+        let endpoint;
+        if (userRole === "admin") {
+          endpoint = "/admin/chat/conversations";
+        } else if (userRole === "therapist") {
+          endpoint = "/therapist/api/conversations";
+        } else {
+          endpoint = "/appointments/chat/conversations";
         }
 
-        const imageUrl =
-          otherUser.image && !otherUser.image.startsWith("http")
-            ? `/uploads/${otherUser.image}`
-            : otherUser.image;
+        console.log("Loading conversations from endpoint:", endpoint);
+        const response = await fetch(endpoint, {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
 
-        const lastMessageTime = conversation.last_message_time
-          ? formatMessageTime(conversation.last_message_time)
-          : formatMessageTime(conversation.created_at);
+        if (data.success) {
+          conversations = data.conversations || [];
+          console.log("Loaded conversations:", conversations.length);
+          displayConversations();
+        } else {
+          console.error("Failed to load conversations:", data.error);
+          showNoConversations();
+        }
+      } catch (error) {
+        console.error("Error loading conversations:", error);
+        showNoConversations();
+      } finally {
+        if (loadingElement) loadingElement.classList.add("hidden");
+      }
+    }
 
-        const unreadCount = parseInt(conversation.unread_count) || 0;
+    // Display conversations list with admin conversation indicators
+    function displayConversations() {
+      const container = document.getElementById("conversations-list");
+      const noConversations = document.getElementById("no-conversations");
 
-        // Admin conversation badge
-        const adminBadge = isAdminConversation
-          ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full ml-2"><i class="fas fa-headset mr-1"></i>Support</span>'
-          : "";
+      if (!conversations || conversations.length === 0) {
+        container.innerHTML = "";
+        noConversations.classList.remove("hidden");
+        return;
+      }
 
-        return `
+      noConversations.classList.add("hidden");
+
+      container.innerHTML = conversations
+        .map((conversation) => {
+          const isAdmin = userRole === "admin";
+          const isAdminConversation =
+            conversation.conversation_type === "admin";
+
+          // Determine other user based on conversation type and current user role
+          let otherUser;
+          if (isAdminConversation) {
+            if (userRole === "admin") {
+              // Admin viewing patient's admin support request
+              otherUser = {
+                name: conversation.patient_name || "Patient",
+                image: conversation.patient_image,
+                role: "patient",
+                specialty: "Patient Support",
+              };
+            } else {
+              // Patient/Therapist viewing admin support conversation
+              otherUser = {
+                name: "Admin Support",
+                image: null,
+                role: "admin",
+                specialty: "CalmTunes Admin Team",
+              };
+            }
+          } else {
+            // Regular patient-therapist conversation
+            if (userRole === "patient") {
+              // Patient viewing - show therapist info
+              otherUser = {
+                name: conversation.therapist_name || "Therapist",
+                image: conversation.therapist_image,
+                role: "therapist",
+                specialty: conversation.specialty || "General Practice",
+              };
+            } else {
+              // Therapist viewing - show patient info
+              otherUser = {
+                name: conversation.patient_name || "Patient",
+                image: conversation.patient_image,
+                role: "patient",
+                specialty: "Patient",
+              };
+            }
+          }
+
+          const imageUrl =
+            otherUser.image && !otherUser.image.startsWith("http")
+              ? `/uploads/${otherUser.image}`
+              : otherUser.image;
+
+          const lastMessageTime = conversation.last_message_time
+            ? formatMessageTime(conversation.last_message_time)
+            : formatMessageTime(conversation.created_at);
+
+          const unreadCount = parseInt(conversation.unread_count) || 0;
+
+          // Admin conversation badge
+          const adminBadge = isAdminConversation
+            ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full ml-2"><i class="fas fa-headset mr-1"></i>Support</span>'
+            : "";
+
+          return `
       <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${
         isAdminConversation
           ? "border-blue-500 bg-blue-50/30"
@@ -1063,345 +1357,520 @@
         </div>
       </div>
     `;
-      })
-      .join("");
-  }
-
-  // Rest of the JavaScript functions would continue here...
-  // Including loadChat, sendMessage, displayMessages, etc.
-
-  // Utility functions
-  function escapeHtml(unsafe) {
-    return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  function formatMessageTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now - date;
-
-    if (diff < 24 * 60 * 60 * 1000) {
-      return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+        })
+        .join("");
     }
 
-    if (diff < 7 * 24 * 60 * 60 * 1000) {
-      return date.toLocaleDateString([], { weekday: "short" });
+    // Rest of the JavaScript functions would continue here...
+    // Including loadChat, sendMessage, displayMessages, etc.
+
+    // Utility functions
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
-    return date.toLocaleDateString([], { month: "short", day: "numeric" });
-  }
+    function formatMessageTime(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
 
-  function showToast(message) {
-    const toast = document.getElementById("toast-notification");
-    const messageEl = document.getElementById("toast-message");
+      if (diff < 24 * 60 * 60 * 1000) {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
 
-    messageEl.textContent = message;
-    toast.classList.remove("hidden");
+      if (diff < 7 * 24 * 60 * 60 * 1000) {
+        return date.toLocaleDateString([], { weekday: "short" });
+      }
 
-    setTimeout(() => {
-      toast.classList.add("hidden");
-    }, 3000);
-  }
+      return date.toLocaleDateString([], { month: "short", day: "numeric" });
+    }
 
-  // Admin Support Functions for Patients
-  function startAdminSupport() {
-    document.getElementById("admin-support-modal").classList.remove("hidden");
-    document.getElementById("admin-support-modal").classList.add("flex");
-  }
+    function showToast(message) {
+      const toast = document.getElementById("toast-notification");
+      const messageEl = document.getElementById("toast-message");
 
-  function closeAdminSupportModal() {
-    document.getElementById("admin-support-modal").classList.add("hidden");
-    document.getElementById("admin-support-modal").classList.remove("flex");
-  }
+      messageEl.textContent = message;
+      toast.classList.remove("hidden");
 
-  async function submitAdminSupport(event) {
-    event.preventDefault();
+      setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 3000);
+    }
 
-    const form = event.target;
-    const formData = new FormData(form);
+    // Update therapist avatar/profile picture
+    function updateTherapistAvatar(otherUser) {
+      const avatarContainer = document.getElementById("therapist-avatar");
+      if (!avatarContainer) {
+        console.error("❌ Avatar container not found");
+        return;
+      }
 
-    const supportData = {
-      participantId: currentUserId,
-      participantType: "patient",
-      message: `Support Request (${formData.get(
-        "supportType"
-      )}): ${formData.get("message")}`,
-    };
+      console.log("🔍 Updating avatar - otherUser:", otherUser);
 
-    try {
-      const response = await fetch("/support/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(supportData),
-      });
+      if (!otherUser) {
+        console.error("❌ No otherUser provided");
+        return;
+      }
 
-      const data = await response.json();
+      console.log("📸 otherUser.image value:", otherUser.image);
+      console.log("👤 otherUser.name:", otherUser.name);
+      console.log("🎭 otherUser.role:", otherUser.role);
 
-      if (data.success) {
-        closeAdminSupportModal();
-        showToast("Support request sent! Admin will respond soon.");
+      // Build the image URL properly
+      let imageUrl = null;
 
-        // Refresh conversations to show new admin chat
-        setTimeout(() => {
-          loadConversations();
-        }, 1000);
-
-        // Optionally redirect to the conversation
-        if (data.conversationId) {
-          setTimeout(() => {
-            openConversation(data.conversationId);
-          }, 2000);
+      if (otherUser.image && otherUser.image.trim() !== "" && otherUser.image !== "null") {
+        // Handle different image path formats
+        if (otherUser.image.startsWith("http")) {
+          imageUrl = otherUser.image;
+        } else if (otherUser.image.startsWith("/uploads")) {
+          imageUrl = otherUser.image;
+        } else if (otherUser.image.startsWith("uploads/")) {
+          imageUrl = "/" + otherUser.image;
+        } else {
+          // For therapist images, use /uploads/profiles/ path since that's where the file actually exists
+          imageUrl = `/uploads/profiles/${otherUser.image}`;
         }
+
+        console.log("✅ Using profile image URL:", imageUrl);
       } else {
-        showToast(data.error || "Failed to send support request", "error");
+        console.log("⚠️ No valid image found, using letter avatar");
       }
-    } catch (error) {
-      console.error("Error submitting admin support:", error);
-      showToast("Failed to send support request", "error");
+
+      // Get first letter for fallback
+      const firstLetter = otherUser.name ? otherUser.name.charAt(0).toUpperCase() : "U";
+
+      // Determine background color based on role
+      let bgColor = "bg-gray-500"; // Default
+      if (otherUser.role === "admin") {
+        bgColor = "bg-gradient-to-br from-blue-500 to-purple-600";
+      } else if (otherUser.role === "therapist") {
+        bgColor = "bg-blue-500";
+      } else if (otherUser.role === "patient") {
+        bgColor = "bg-green-500";
+      }
+
+      if (imageUrl) {
+        // Create image with error handling
+        avatarContainer.innerHTML = `
+          <img
+            src="${imageUrl}"
+            alt="${otherUser.name}"
+            class="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+            onerror="console.error('❌ Image failed to load:', this.src); this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-12 h-12 ${bgColor} rounded-full flex items-center justify-center\\'><span class=\\'text-white font-semibold text-lg\\'>${firstLetter}</span></div>'"
+          >
+        `;
+        console.log("✅ Avatar set to image successfully");
+      } else {
+        // Use letter avatar
+        avatarContainer.innerHTML = `
+          <div class="w-12 h-12 ${bgColor} rounded-full flex items-center justify-center">
+            <span class="text-white font-semibold text-lg">${firstLetter}</span>
+          </div>
+        `;
+        console.log("ℹ️ Avatar set to letter:", firstLetter);
+      }
     }
-  }
 
-  // Contact Admin Function for Therapists (Enhanced)
-  function contactAdmin() {
-    document.getElementById("therapist-admin-modal").classList.remove("hidden");
-    document.getElementById("therapist-admin-modal").classList.add("flex");
-    document.getElementById("therapist-admin-message").focus();
-  }
+    // Update top buttons visibility based on conversation type
+    function updateTopButtons(isAdminConversation) {
+      const adminButton = document.getElementById("admin-chat-button");
+      const therapistsButton = document.getElementById("therapists-button");
 
-  function closeTherapistAdminModal() {
-    document.getElementById("therapist-admin-modal").classList.add("hidden");
-    document.getElementById("therapist-admin-modal").classList.remove("flex");
-    document.getElementById("therapist-admin-form").reset();
-  }
+      if (isAdminConversation) {
+        // Hide admin button, show therapists button
+        if (adminButton) adminButton.classList.add("hidden");
+        if (therapistsButton) therapistsButton.classList.remove("hidden");
+      } else {
+        // Show admin button, hide therapists button
+        if (adminButton) adminButton.classList.remove("hidden");
+        if (therapistsButton) therapistsButton.classList.add("hidden");
+      }
 
-  async function submitTherapistAdminMessage(event) {
-    event.preventDefault();
-
-    const form = event.target;
-    const formData = new FormData(form);
-    const message = formData.get("message").trim();
-
-    if (!message) {
-      showToast("Please enter a message", "error");
-      return;
-    }
-
-    try {
-      // Use the support endpoint instead of admin endpoint
-      const response = await fetch("/support/start", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: message }),
+      console.log("Top buttons updated:", {
+        isAdminConversation,
+        adminButton: !!adminButton,
+        therapistsButton: !!therapistsButton,
       });
+    }
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Response not OK:", response.status, text);
-        throw new Error(`Failed to start chat (${response.status})`);
-      }
+    // Admin Support Functions for Patients
+    function startAdminSupport() {
+      document.getElementById("admin-support-modal").classList.remove("hidden");
+      document.getElementById("admin-support-modal").classList.add("flex");
+    }
 
-      const data = await response.json();
+    function closeAdminSupportModal() {
+      document.getElementById("admin-support-modal").classList.add("hidden");
+      document.getElementById("admin-support-modal").classList.remove("flex");
+    }
 
-      if (data.success) {
-        closeTherapistAdminModal();
-        showToast("Chat started with admin team!");
+    async function submitAdminSupport(event) {
+      event.preventDefault();
 
-        // Refresh conversations
-        await loadConversations();
+      const form = event.target;
+      const formData = new FormData(form);
 
-        // Open the conversation after a delay
-        if (data.conversationId) {
+      const supportData = {
+        participantId: currentUserId,
+        participantType: "patient",
+        message: `Support Request (${formData.get(
+          "supportType"
+        )}): ${formData.get("message")}`,
+      };
+
+      try {
+        const response = await fetch("/support/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(supportData),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          closeAdminSupportModal();
+          showToast("Support request sent! Admin will respond soon.");
+
+          // Refresh conversations to show new admin chat
           setTimeout(() => {
-            openConversation(data.conversationId);
+            loadConversations();
           }, 1000);
+
+          // Optionally redirect to the conversation
+          if (data.conversationId) {
+            setTimeout(() => {
+              openConversation(data.conversationId);
+            }, 2000);
+          }
+        } else {
+          showToast(data.error || "Failed to send support request", "error");
         }
-      } else {
-        showToast(data.error || "Failed to start admin chat", "error");
+      } catch (error) {
+        console.error("Error submitting admin support:", error);
+        showToast("Failed to send support request", "error");
       }
-    } catch (error) {
-      console.error("Error starting admin chat:", error);
-      showToast("Failed to start admin chat: " + error.message, "error");
-    }
-  }
-
-  // Admin Functions for Patient Concerns
-  function showPatientConcernModal() {
-    if (!otherUser || otherUser.role !== "patient") {
-      showToast(
-        "This feature is only available when chatting with patients",
-        "error"
-      );
-      return;
     }
 
-    document.getElementById("concern-patient-id").value = otherUser.id;
-    document.getElementById("patient-concern-modal").classList.remove("hidden");
-    document.getElementById("patient-concern-modal").classList.add("flex");
-  }
+    // Open Admin Chat Function
+    async function openAdminChat() {
+      try {
+        // Check if user is authenticated
+        const isAuthenticated =
+          document.querySelector("[data-user-authenticated]")?.dataset
+            .userAuthenticated === "true";
 
-  function closePatientConcernModal() {
-    document.getElementById("patient-concern-modal").classList.add("hidden");
-    document.getElementById("patient-concern-modal").classList.remove("flex");
-  }
+        if (!isAuthenticated) {
+          alert("Please login to chat with admin.");
+          window.location.href = "/login";
+          return;
+        }
 
-  async function submitPatientConcern(event) {
-    event.preventDefault();
+        console.log("Opening admin chat...");
 
-    const form = event.target;
-    const formData = new FormData(form);
+        // Use the support endpoint to start admin conversation
+        const response = await fetch("/support/start", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: "Hello, I need help with my account.",
+          }),
+        });
 
-    const concernData = {
-      patientId: formData.get("patientId"),
-      concernType: formData.get("concernType"),
-      severity: formData.get("severity"),
-      title: formData.get("title"),
-      description: formData.get("description"),
-    };
+        console.log("Admin chat response status:", response.status);
 
-    try {
-      const response = await fetch("/admin/submit-patient-concern", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(concernData),
-      });
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error("Authentication failed - redirecting to login");
+            alert("Your session has expired. Please login again.");
+            window.location.href = "/login";
+            return;
+          }
+          const errorText = await response.text();
+          throw new Error(
+            `HTTP error! status: ${response.status}, message: ${errorText}`
+          );
+        }
 
-      const data = await response.json();
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const errorText = await response.text();
+          throw new Error(`Server returned HTML instead of JSON: ${errorText}`);
+        }
 
-      if (data.success) {
-        closePatientConcernModal();
-        showToast("Patient concern submitted successfully");
-        form.reset();
-      } else {
-        showToast(data.error || "Failed to submit concern", "error");
+        const data = await response.json();
+        console.log("Admin chat response data:", data);
+
+        if (data.success) {
+          console.log(
+            "Admin chat started successfully, redirecting to:",
+            data.conversationId
+          );
+          // Redirect to the chat page with the new conversation ID
+          window.location.href = `/chat/${data.conversationId}`;
+        } else {
+          alert(data.error || "Failed to start admin chat");
+        }
+      } catch (error) {
+        console.error("Error starting admin chat:", error);
+        alert(
+          "Failed to start admin chat. Please try again. Error: " +
+            error.message
+        );
       }
-    } catch (error) {
-      console.error("Error submitting patient concern:", error);
-      showToast("Failed to submit concern", "error");
-    }
-  }
-
-  // Admin Functions for Therapist Contracts
-  function showTherapistContractModal() {
-    if (!otherUser || otherUser.role !== "therapist") {
-      showToast(
-        "This feature is only available when chatting with therapists",
-        "error"
-      );
-      return;
     }
 
-    document.getElementById("contract-therapist-id").value = otherUser.id;
-    document
-      .getElementById("therapist-contract-modal")
-      .classList.remove("hidden");
-    document.getElementById("therapist-contract-modal").classList.add("flex");
-  }
+    // Contact Admin Function for Therapists (Enhanced)
+    function contactAdmin() {
+      document
+        .getElementById("therapist-admin-modal")
+        .classList.remove("hidden");
+      document.getElementById("therapist-admin-modal").classList.add("flex");
+      document.getElementById("therapist-admin-message").focus();
+    }
 
-  function closeTherapistContractModal() {
-    document.getElementById("therapist-contract-modal").classList.add("hidden");
-    document
-      .getElementById("therapist-contract-modal")
-      .classList.remove("flex");
-  }
+    function closeTherapistAdminModal() {
+      document.getElementById("therapist-admin-modal").classList.add("hidden");
+      document.getElementById("therapist-admin-modal").classList.remove("flex");
+      document.getElementById("therapist-admin-form").reset();
+    }
 
-  async function submitTherapistContract(event) {
-    event.preventDefault();
+    async function submitTherapistAdminMessage(event) {
+      event.preventDefault();
 
-    const form = event.target;
-    const formData = new FormData(form);
+      const form = event.target;
+      const formData = new FormData(form);
+      const message = formData.get("message").trim();
 
-    const contractData = {
-      therapistId: formData.get("therapistId"),
-      contractType: formData.get("contractType"),
-      title: formData.get("title"),
-      content: formData.get("content"),
-      requiresAcknowledgment: formData.get("requiresAcknowledgment") === "true",
-      acknowledgmentDeadline: formData.get("acknowledgmentDeadline") || null,
-    };
-
-    try {
-      const response = await fetch("/admin/send-therapist-contract", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contractData),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        closeTherapistContractModal();
-        showToast("Contract sent to therapist successfully");
-        form.reset();
-      } else {
-        showToast(data.error || "Failed to send contract", "error");
+      if (!message) {
+        showToast("Please enter a message", "error");
+        return;
       }
-    } catch (error) {
-      console.error("Error sending therapist contract:", error);
-      showToast("Failed to send contract", "error");
-    }
-  }
 
-  // Admin Modals for Patient/Therapist Selection
-  async function showPatientsModal() {
-    document.getElementById("patients-modal").classList.remove("hidden");
-    document.getElementById("patients-modal").classList.add("flex");
+      try {
+        // Use the support endpoint instead of admin endpoint
+        const response = await fetch("/support/start", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message }),
+        });
 
-    try {
-      const response = await fetch("/admin/chat/patients", {
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("Response not OK:", response.status, text);
+          throw new Error(`Failed to start chat (${response.status})`);
+        }
 
-      if (data.success) {
-        displayPatientsList(data.patients || []);
-      } else {
-        showToast("Failed to load patients", "error");
+        const data = await response.json();
+
+        if (data.success) {
+          closeTherapistAdminModal();
+          showToast("Chat started with admin team!");
+
+          // Refresh conversations
+          await loadConversations();
+
+          // Open the conversation after a delay
+          if (data.conversationId) {
+            setTimeout(() => {
+              openConversation(data.conversationId);
+            }, 1000);
+          }
+        } else {
+          showToast(data.error || "Failed to start admin chat", "error");
+        }
+      } catch (error) {
+        console.error("Error starting admin chat:", error);
+        showToast("Failed to start admin chat: " + error.message, "error");
       }
-    } catch (error) {
-      console.error("Error loading patients:", error);
-      showToast("Error loading patients", "error");
     }
-  }
 
-  function closePatientsModal() {
-    document.getElementById("patients-modal").classList.add("hidden");
-    document.getElementById("patients-modal").classList.remove("flex");
-  }
+    // Admin Functions for Patient Concerns
+    function showPatientConcernModal() {
+      if (!otherUser || otherUser.role !== "patient") {
+        showToast(
+          "This feature is only available when chatting with patients",
+          "error"
+        );
+        return;
+      }
 
-  function displayPatientsList(patients) {
-    const container = document.getElementById("patients-list");
+      document.getElementById("concern-patient-id").value = otherUser.id;
+      document
+        .getElementById("patient-concern-modal")
+        .classList.remove("hidden");
+      document.getElementById("patient-concern-modal").classList.add("flex");
+    }
 
-    if (patients.length === 0) {
-      container.innerHTML = `
+    function closePatientConcernModal() {
+      document.getElementById("patient-concern-modal").classList.add("hidden");
+      document.getElementById("patient-concern-modal").classList.remove("flex");
+    }
+
+    async function submitPatientConcern(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+
+      const concernData = {
+        patientId: formData.get("patientId"),
+        concernType: formData.get("concernType"),
+        severity: formData.get("severity"),
+        title: formData.get("title"),
+        description: formData.get("description"),
+      };
+
+      try {
+        const response = await fetch("/admin/submit-patient-concern", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(concernData),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          closePatientConcernModal();
+          showToast("Patient concern submitted successfully");
+          form.reset();
+        } else {
+          showToast(data.error || "Failed to submit concern", "error");
+        }
+      } catch (error) {
+        console.error("Error submitting patient concern:", error);
+        showToast("Failed to submit concern", "error");
+      }
+    }
+
+    // Admin Functions for Therapist Contracts
+    function showTherapistContractModal() {
+      if (!otherUser || otherUser.role !== "therapist") {
+        showToast(
+          "This feature is only available when chatting with therapists",
+          "error"
+        );
+        return;
+      }
+
+      document.getElementById("contract-therapist-id").value = otherUser.id;
+      document
+        .getElementById("therapist-contract-modal")
+        .classList.remove("hidden");
+      document.getElementById("therapist-contract-modal").classList.add("flex");
+    }
+
+    function closeTherapistContractModal() {
+      document
+        .getElementById("therapist-contract-modal")
+        .classList.add("hidden");
+      document
+        .getElementById("therapist-contract-modal")
+        .classList.remove("flex");
+    }
+
+    async function submitTherapistContract(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+
+      const contractData = {
+        therapistId: formData.get("therapistId"),
+        contractType: formData.get("contractType"),
+        title: formData.get("title"),
+        content: formData.get("content"),
+        requiresAcknowledgment:
+          formData.get("requiresAcknowledgment") === "true",
+        acknowledgmentDeadline: formData.get("acknowledgmentDeadline") || null,
+      };
+
+      try {
+        const response = await fetch("/admin/send-therapist-contract", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contractData),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          closeTherapistContractModal();
+          showToast("Contract sent to therapist successfully");
+          form.reset();
+        } else {
+          showToast(data.error || "Failed to send contract", "error");
+        }
+      } catch (error) {
+        console.error("Error sending therapist contract:", error);
+        showToast("Failed to send contract", "error");
+      }
+    }
+
+    // Admin Modals for Patient/Therapist Selection
+    async function showPatientsModal() {
+      document.getElementById("patients-modal").classList.remove("hidden");
+      document.getElementById("patients-modal").classList.add("flex");
+
+      try {
+        const response = await fetch("/admin/chat/patients", {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          displayPatientsList(data.patients || []);
+        } else {
+          showToast("Failed to load patients", "error");
+        }
+      } catch (error) {
+        console.error("Error loading patients:", error);
+        showToast("Error loading patients", "error");
+      }
+    }
+
+    function closePatientsModal() {
+      document.getElementById("patients-modal").classList.add("hidden");
+      document.getElementById("patients-modal").classList.remove("flex");
+    }
+
+    function displayPatientsList(patients) {
+      const container = document.getElementById("patients-list");
+
+      if (patients.length === 0) {
+        container.innerHTML = `
       <div class="text-center text-gray-500 py-8">
         <i class="fas fa-users text-4xl mb-2"></i>
         <p>No patients found</p>
       </div>
     `;
-      return;
-    }
+        return;
+      }
 
-    container.innerHTML = patients
-      .map(
-        (patient) => `
+      container.innerHTML = patients
+        .map(
+          (patient) => `
     <div class="patient-item p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer mb-3"
          onclick="startChatWithPatient('${patient.id}', '${escapeHtml(
-          patient.name
-        )}')">
+            patient.name
+          )}')">
       <div class="flex items-center">
         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
           ${
@@ -1427,59 +1896,59 @@
       </div>
     </div>
   `
-      )
-      .join("");
-  }
-
-  async function showTherapistsModal() {
-    document.getElementById("therapists-modal").classList.remove("hidden");
-    document.getElementById("therapists-modal").classList.add("flex");
-
-    try {
-      const response = await fetch("/admin/chat/therapists", {
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        displayTherapistsList(data.therapists || []);
-      } else {
-        showToast("Failed to load therapists", "error");
-      }
-    } catch (error) {
-      console.error("Error loading therapists:", error);
-      showToast("Error loading therapists", "error");
+        )
+        .join("");
     }
-  }
 
-  function closeTherapistsModal() {
-    document.getElementById("therapists-modal").classList.add("hidden");
-    document.getElementById("therapists-modal").classList.remove("flex");
-  }
+    async function showTherapistsModal() {
+      document.getElementById("therapists-modal").classList.remove("hidden");
+      document.getElementById("therapists-modal").classList.add("flex");
 
-  function displayTherapistsList(therapists) {
-    const container = document.getElementById("therapists-list");
+      try {
+        const response = await fetch("/admin/chat/therapists", {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
 
-    if (therapists.length === 0) {
-      container.innerHTML = `
+        if (data.success) {
+          displayTherapistsList(data.therapists || []);
+        } else {
+          showToast("Failed to load therapists", "error");
+        }
+      } catch (error) {
+        console.error("Error loading therapists:", error);
+        showToast("Error loading therapists", "error");
+      }
+    }
+
+    function closeTherapistsModal() {
+      document.getElementById("therapists-modal").classList.add("hidden");
+      document.getElementById("therapists-modal").classList.remove("flex");
+    }
+
+    function displayTherapistsList(therapists) {
+      const container = document.getElementById("therapists-list");
+
+      if (therapists.length === 0) {
+        container.innerHTML = `
       <div class="text-center text-gray-500 py-8">
         <i class="fas fa-user-md text-4xl mb-2"></i>
         <p>No therapists found</p>
       </div>
     `;
-      return;
-    }
+        return;
+      }
 
-    container.innerHTML = therapists
-      .map(
-        (therapist) => `
+      container.innerHTML = therapists
+        .map(
+          (therapist) => `
     <div class="therapist-item p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer mb-3"
          onclick="startChatWithTherapist('${therapist.id}', '${escapeHtml(
-          therapist.name
-        )}')">
+            therapist.name
+          )}')">
       <div class="flex items-center">
         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
           ${
@@ -1510,319 +1979,409 @@
       </div>
     </div>
   `
-      )
-      .join("");
-  }
+        )
+        .join("");
+    }
 
-  // Start Chat Functions
-  async function startChatWithPatient(patientId, patientName) {
-    closePatientsModal();
+    // Start Chat Functions
+    async function startChatWithPatient(patientId, patientName) {
+      closePatientsModal();
 
-    try {
-      const response = await fetch("/admin/chat/start", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          participantId: patientId,
-          participantType: "patient",
-          message: `Hello ${patientName}, this is ${
-            userRole === "admin" ? "Admin" : "Support"
-          } from CalmTunes. How can I help you today?`,
-        }),
-      });
+      try {
+        const response = await fetch("/admin/chat/start", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            participantId: patientId,
+            participantType: "patient",
+            message: `Hello ${patientName}, this is ${
+              userRole === "admin" ? "Admin" : "Support"
+            } from CalmTunes. How can I help you today?`,
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        showToast("Chat started with patient");
-        loadConversations();
-
-        if (data.conversationId) {
-          setTimeout(() => {
-            openConversation(data.conversationId);
-          }, 1000);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      } else {
-        showToast(data.error || "Failed to start chat", "error");
-      }
-    } catch (error) {
-      console.error("Error starting chat with patient:", error);
-      showToast("Failed to start chat", "error");
-    }
-  }
 
-  async function startChatWithTherapist(therapistId, therapistName) {
-    closeTherapistsModal();
+        const data = await response.json();
 
-    try {
-      const response = await fetch("/admin/chat/start", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          participantId: therapistId,
-          participantType: "therapist",
-          message: `Hello ${therapistName}, this is ${
-            userRole === "admin" ? "Admin" : "Support"
-          } from CalmTunes. I wanted to check in with you. How are things going?`,
-        }),
-      });
+        if (data.success) {
+          showToast("Chat started with patient");
+          loadConversations();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        showToast("Chat started with therapist");
-        loadConversations();
-
-        if (data.conversationId) {
-          setTimeout(() => {
-            openConversation(data.conversationId);
-          }, 1000);
+          if (data.conversationId) {
+            setTimeout(() => {
+              openConversation(data.conversationId);
+            }, 1000);
+          }
+        } else {
+          showToast(data.error || "Failed to start chat", "error");
         }
-      } else {
-        showToast(data.error || "Failed to start chat", "error");
+      } catch (error) {
+        console.error("Error starting chat with patient:", error);
+        showToast("Failed to start chat", "error");
       }
-    } catch (error) {
-      console.error("Error starting chat with therapist:", error);
-      showToast("Failed to start chat", "error");
-    }
-  }
-
-  // Core Chat Functions
-  function openConversation(conversationId) {
-    currentConversationId = conversationId;
-    console.log("Opening conversation:", conversationId);
-
-    // Join socket room
-    if (socket) {
-      socket.emit("join_conversation", conversationId);
     }
 
-    // Show chat view
-    document.getElementById("conversations-container").classList.add("hidden");
-    document.getElementById("chat-view").classList.remove("hidden");
+    async function startChatWithTherapist(therapistId, therapistName) {
+      closeTherapistsModal();
 
-    // Load chat data
-    loadChat(conversationId);
+      try {
+        const response = await fetch("/admin/chat/start", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            participantId: therapistId,
+            participantType: "therapist",
+            message: `Hello ${therapistName}, this is ${
+              userRole === "admin" ? "Admin" : "Support"
+            } from CalmTunes. I wanted to check in with you. How are things going?`,
+          }),
+        });
 
-    // Start polling for new messages as fallback (in case socket fails)
-    startMessagePolling(conversationId);
-  }
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-  function startMessagePolling(conversationId) {
-    // Clear existing polling
-    if (messagePollingInterval) {
-      clearInterval(messagePollingInterval);
+        const data = await response.json();
+
+        if (data.success) {
+          showToast("Chat started with therapist");
+          loadConversations();
+
+          if (data.conversationId) {
+            setTimeout(() => {
+              openConversation(data.conversationId);
+            }, 1000);
+          }
+        } else {
+          showToast(data.error || "Failed to start chat", "error");
+        }
+      } catch (error) {
+        console.error("Error starting chat with therapist:", error);
+        showToast("Failed to start chat", "error");
+      }
     }
 
-    // Poll every 5 seconds for new messages
-    messagePollingInterval = setInterval(async () => {
-      if (currentConversationId && isPageVisible) {
-        try {
-          const response = await fetch(
-            `/appointments/chat/${conversationId}/messages`,
-            {
+    // Core Chat Functions
+    function openConversation(conversationId) {
+      currentConversationId = conversationId;
+      console.log("Opening conversation:", conversationId);
+
+      // Join socket room
+      if (socket) {
+        socket.emit("join_conversation", conversationId);
+      }
+
+      // Show main chat content and hide conversations list
+      document
+        .getElementById("conversations-container")
+        .classList.add("hidden");
+      document.getElementById("main-chat-content").classList.remove("hidden");
+      document.getElementById("chat-view").classList.add("hidden");
+
+      // Load chat data
+      loadChat(conversationId);
+
+      // Start polling for new messages as fallback (in case socket fails)
+      startMessagePolling(conversationId);
+    }
+
+    function startMessagePolling(conversationId) {
+      // Clear existing polling
+      if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+      }
+
+      // Poll every 5 seconds for new messages
+      messagePollingInterval = setInterval(async () => {
+        if (currentConversationId && isPageVisible) {
+          try {
+            // Use appropriate endpoint based on user role
+            let endpoint;
+            if (userRole === "therapist") {
+              endpoint = `/therapist/api/conversations/${conversationId}/messages`;
+            } else {
+              endpoint = `/appointments/chat/${conversationId}/messages`;
+            }
+
+            const response = await fetch(endpoint, {
               credentials: "same-origin",
               headers: {
                 "Content-Type": "application/json",
               },
-            }
-          );
+            });
 
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.messages) {
-              const newMessages = data.messages.filter(
-                (msg) => !messages.some((existing) => existing.id === msg.id)
-              );
-
-              if (newMessages.length > 0) {
-                console.log(
-                  "Found new messages via polling:",
-                  newMessages.length
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.messages) {
+                const newMessages = data.messages.filter(
+                  (msg) => !messages.some((existing) => existing.id === msg.id)
                 );
-                messages.push(...newMessages);
-                displayMessages();
 
-                // Scroll to bottom
-                const container = document.getElementById("messages-container");
-                if (container) {
-                  setTimeout(() => {
-                    container.scrollTop = container.scrollHeight;
-                  }, 100);
+                if (newMessages.length > 0) {
+                  console.log(
+                    "Found new messages via polling:",
+                    newMessages.length
+                  );
+                  messages.push(...newMessages);
+                  displayMessages();
+
+                  // Scroll to bottom
+                  const container =
+                    document.getElementById("messages-container");
+                  if (container) {
+                    setTimeout(() => {
+                      container.scrollTop = container.scrollHeight;
+                    }, 100);
+                  }
                 }
               }
             }
-          }
-        } catch (error) {
-          console.error("Error polling for messages:", error);
-        }
-      }
-    }, 5000);
-  }
-
-  async function loadChat(conversationId) {
-    console.log("Loading chat for conversation:", conversationId);
-    const loadingElement = document.getElementById("chat-loading");
-    if (loadingElement) loadingElement.style.display = "block";
-
-    try {
-      // EVERYONE uses the same endpoint - no special routing needed
-      const endpoint = `/appointments/chat/${conversationId}/messages`;
-      console.log("Fetching from endpoint:", endpoint);
-
-      const response = await fetch(endpoint, {
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      console.log("Response status:", response.status);
-      const responseText = await response.text();
-      console.log("Response text:", responseText);
-
-      if (!response.ok) {
-        throw new Error(
-          `HTTP error! status: ${response.status}, message: ${responseText}`
-        );
-      }
-
-      const data = JSON.parse(responseText);
-      console.log("Chat data received:", data);
-
-      if (data.success) {
-        messages = data.messages || [];
-        lastMessageCount = messages.length;
-        console.log("Loaded messages:", messages.length);
-        console.log("Messages array:", messages);
-
-        // Set other user info based on conversation data
-        const conv = data.conversation;
-        console.log("Conversation data:", conv);
-
-        // Determine if this is an admin conversation based on the conversation data
-        const isAdminConversation =
-          conv &&
-          (conv.conversation_type === "admin" ||
-            conv.participant_role === "admin" ||
-            conv.admin_id !== null ||
-            conv.participant_type === "admin");
-
-        console.log("Is admin conversation:", isAdminConversation);
-
-        if (isAdminConversation) {
-          if (userRole === "admin") {
-            otherUser = {
-              id: conv.participant_id,
-              name: conv.participant_name || "User",
-              role: conv.participant_role || "user",
-              image: conv.participant_image,
-              specialty:
-                conv.participant_role === "therapist" ? "Therapist" : "Patient",
-            };
-          } else {
-            otherUser = {
-              id: conv.admin_id || "admin",
-              name: "Admin Support",
-              role: "admin",
-              image: null,
-              specialty: "CalmTunes Admin",
-            };
-          }
-        } else {
-          // Regular conversation
-          if (userRole === "patient") {
-            otherUser = {
-              id: conv.therapist_id,
-              name: conv.therapist_name || "Therapist",
-              role: "therapist",
-              image: conv.therapist_image,
-              specialty: conv.specialty || "General Practice",
-            };
-          } else {
-            otherUser = {
-              id: conv.patient_id,
-              name: conv.patient_name || "Patient",
-              role: "patient",
-              image: conv.patient_image,
-              specialty: null,
-            };
+          } catch (error) {
+            console.error("Error polling for messages:", error);
           }
         }
-
-        console.log("Other user set to:", otherUser);
-
-        displayChatHeader();
-        displayMessages();
-
-        // Show message input
-        const messageForm = document.getElementById("message-form");
-        if (messageForm) {
-          messageForm.classList.remove("hidden");
-        }
-
-        // Show admin action buttons if admin
-        if (userRole === "admin") {
-          if (otherUser.role === "patient") {
-            const patientConcernBtn = document.getElementById(
-              "patient-concern-btn"
-            );
-            if (patientConcernBtn) patientConcernBtn.classList.remove("hidden");
-          }
-          if (otherUser.role === "therapist") {
-            const therapistContractBtn = document.getElementById(
-              "therapist-contract-btn"
-            );
-            if (therapistContractBtn)
-              therapistContractBtn.classList.remove("hidden");
-          }
-        }
-      } else {
-        console.error("Failed to load chat:", data.error);
-        if (loadingElement) {
-          loadingElement.innerHTML = `<p class="text-red-500">Failed to load messages: ${data.error}</p>`;
-        }
-      }
-    } catch (error) {
-      console.error("Error loading chat:", error);
-      if (loadingElement) {
-        loadingElement.innerHTML = `<p class="text-red-500">Error loading messages: ${error.message}</p>`;
-      }
-    } finally {
-      if (loadingElement) loadingElement.style.display = "none";
+      }, 5000);
     }
-  }
 
-  function displayChatHeader() {
-    const header = document.getElementById("chat-header");
-    if (!header) return;
+    async function loadChat(conversationId) {
+      console.log("Loading chat for conversation:", conversationId);
+      const loadingElement = document.getElementById("chat-loading");
+      if (loadingElement) loadingElement.style.display = "block";
 
-    const isAdminConversation =
-      otherUser.role === "admin" || otherUser.specialty === "CalmTunes Admin";
+      try {
+        // Use appropriate endpoint based on user role
+        let endpoint;
+        if (userRole === "therapist") {
+          endpoint = `/therapist/api/conversations/${conversationId}/messages`;
+        } else {
+          endpoint = `/appointments/chat/${conversationId}/messages`;
+        }
 
-    let imageHtml = "";
-    if (otherUser.image) {
-      const imageUrl = otherUser.image.startsWith("/")
-        ? otherUser.image
-        : `/uploads/${otherUser.image}`;
-      imageHtml = `<img src="${imageUrl}" alt="${otherUser.name}" class="w-10 h-10 rounded-full object-cover mr-3">`;
-    } else {
-      const bgClass = isAdminConversation
-        ? "from-blue-500 to-purple-600"
-        : "from-blue-400 to-purple-500";
-      const iconClass = isAdminConversation ? "fas fa-headset" : "";
+        console.log("Fetching from endpoint:", endpoint);
 
-      imageHtml = `<div class="w-10 h-10 bg-gradient-to-br ${bgClass} rounded-full flex items-center justify-center mr-3">
+        const response = await fetch(endpoint, {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        console.log("Response status:", response.status);
+        const responseText = await response.text();
+        console.log("Response text:", responseText);
+
+        if (!response.ok) {
+          // Try fallback endpoint if therapist endpoint fails
+          if (userRole === "therapist" && response.status === 404) {
+            console.log("Therapist endpoint failed, trying appointments endpoint");
+            endpoint = `/appointments/chat/${conversationId}/messages`;
+            const fallbackResponse = await fetch(endpoint, {
+              credentials: "same-origin",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (!fallbackResponse.ok) {
+              throw new Error(`HTTP error! status: ${response.status}, message: ${responseText}`);
+            }
+
+            const data = await fallbackResponse.json();
+            console.log("Chat data received from fallback:", data);
+          } else {
+            throw new Error(`HTTP error! status: ${response.status}, message: ${responseText}`);
+          }
+        }
+
+        const data = JSON.parse(responseText);
+        console.log("Chat data received:", data);
+
+        if (data.success) {
+          messages = data.messages || [];
+          lastMessageCount = messages.length;
+          console.log("Loaded messages:", messages.length);
+          console.log("Messages array:", messages);
+
+          const conv = data.conversation;
+          console.log("Conversation data:", conv);
+
+          // FIXED: Use otherUser data directly from backend response
+          if (conv && conv.other_user) {
+            // Backend already provides the correct otherUser object
+            otherUser = conv.other_user;
+            console.log("Using otherUser from backend:", otherUser);
+          } else {
+            // Fallback: construct otherUser manually (shouldn't happen with fixed backend)
+            const isAdminConversation = conv?.conversation_type === "admin";
+
+            if (isAdminConversation) {
+              if (userRole === "admin") {
+                otherUser = {
+                  id: conv.participant_id,
+                  name: conv.participant_name || "User",
+                  role: conv.participant_role || "user",
+                  image: conv.participant_image,
+                  specialty: conv.participant_role === "therapist" ? "Therapist" : "Patient",
+                };
+              } else {
+                otherUser = {
+                  id: conv.admin_id || "admin",
+                  name: "Admin Support",
+                  role: "admin",
+                  image: null,
+                  specialty: "CalmTunes Admin",
+                };
+              }
+            } else {
+              // Regular patient-therapist conversation
+              if (userRole === "therapist") {
+                otherUser = {
+                  id: conv.patient_id,
+                  name: conv.patient_name || "Patient",
+                  role: "patient",
+                  image: conv.patient_image,
+                  specialty: "Patient",
+                };
+              } else {
+                otherUser = {
+                  id: conv.therapist_id,
+                  name: conv.therapist_name || "Therapist",
+                  role: "therapist",
+                  image: conv.therapist_image,
+                  specialty: conv.specialty || "General Practice",
+                };
+              }
+            }
+            console.log("Constructed otherUser manually:", otherUser);
+          }
+
+          console.log("Final otherUser:", otherUser);
+
+          // Update therapist name and status in header
+          const therapistNameHeader = document.getElementById("therapist-name-header");
+          const therapistStatus = document.getElementById("therapist-status");
+          const isAdminConversation = conv?.conversation_type === "admin";
+
+          if (therapistNameHeader) {
+            if (isAdminConversation) {
+              therapistNameHeader.textContent = "Admin Support";
+              console.log("Header set to: Admin Support");
+            } else if (userRole === "therapist") {
+              // Therapist viewing - show patient name (no Dr. prefix)
+              therapistNameHeader.textContent = otherUser.name || "Patient";
+              console.log("THERAPIST viewing - Header set to:", otherUser.name);
+            } else if (userRole === "patient") {
+              // Patient viewing - show therapist name with Dr. prefix
+              let therapistName = otherUser.name && otherUser.name !== "Therapist"
+                ? otherUser.name
+                : "Therapist";
+
+              // Add Dr. prefix if not already present
+              if (!therapistName.toLowerCase().startsWith("dr.") &&
+                  !therapistName.toLowerCase().startsWith("doctor")) {
+                therapistName = "Dr. " + therapistName;
+              }
+
+              therapistNameHeader.textContent = therapistName;
+              console.log("PATIENT viewing - Header set to:", therapistName);
+            } else {
+              therapistNameHeader.textContent = otherUser.name || "Unknown User";
+              console.log("Header set to:", otherUser.name);
+            }
+          }
+
+          // Update profile picture - ONLY AFTER otherUser is properly set
+          if (otherUser && otherUser.name) {
+            console.log("🔄 Updating avatar with otherUser:", otherUser);
+            console.log("📋 Full otherUser object:", JSON.stringify(otherUser, null, 2));
+            updateTherapistAvatar(otherUser);
+          } else {
+            console.error("❌ otherUser not properly set, cannot update avatar");
+          }
+
+          if (therapistStatus) {
+            if (isAdminConversation) {
+              therapistStatus.textContent = "Admin Support";
+              console.log("Status set to: Admin Support (admin conversation)");
+            } else {
+              therapistStatus.textContent = "Online now";
+              console.log("Status set to: Online now (therapist conversation)");
+            }
+          }
+
+          console.log("Final conversation setup:", {
+            isAdminConversation,
+            otherUser: otherUser.name,
+            otherUserRole: otherUser.role,
+            otherUserImage: otherUser.image,
+            headerName: therapistNameHeader?.textContent,
+            headerStatus: therapistStatus?.textContent
+          });
+
+          // Update top buttons
+          updateTopButtons(isAdminConversation);
+
+          // Show/hide admin button
+          const adminButton = document.getElementById("admin-chat-button");
+          if (adminButton) {
+            if (!isAdminConversation) {
+              adminButton.classList.remove("hidden");
+              console.log("Admin button shown for therapist conversation");
+            } else {
+              adminButton.classList.add("hidden");
+              console.log("Admin button hidden for admin conversation");
+            }
+          }
+
+          // Show message input
+          const messageInputContainer = document.getElementById("message-input-container");
+          if (messageInputContainer) {
+            messageInputContainer.style.display = "flex";
+            console.log("Message input container shown");
+          }
+
+          displayMessages();
+        } else {
+          console.error("Failed to load chat:", data.error);
+          if (loadingElement) {
+            loadingElement.innerHTML = `<p class="text-red-500">Failed to load messages: ${data.error}</p>`;
+          }
+        }
+      } catch (error) {
+        console.error("Error loading chat:", error);
+        if (loadingElement) {
+          loadingElement.innerHTML = `<p class="text-red-500">Error loading messages: ${error.message}</p>`;
+        }
+      } finally {
+        if (loadingElement) loadingElement.style.display = "none";
+      }
+    }
+
+    function displayChatHeader() {
+      const header = document.getElementById("chat-header");
+      if (!header) return;
+
+      const isAdminConversation =
+        otherUser.role === "admin" || otherUser.specialty === "CalmTunes Admin";
+
+      let imageHtml = "";
+      if (otherUser.image) {
+        const imageUrl = otherUser.image.startsWith("/")
+          ? otherUser.image
+          : `/uploads/${otherUser.image}`;
+        imageHtml = `<img src="${imageUrl}" alt="${otherUser.name}" class="w-10 h-10 rounded-full object-cover mr-3">`;
+      } else {
+        const bgClass = isAdminConversation
+          ? "from-blue-500 to-purple-600"
+          : "from-blue-400 to-purple-500";
+        const iconClass = isAdminConversation ? "fas fa-headset" : "";
+
+        imageHtml = `<div class="w-10 h-10 bg-gradient-to-br ${bgClass} rounded-full flex items-center justify-center mr-3">
       ${
         isAdminConversation
           ? `<i class="${iconClass} text-white text-sm"></i>`
@@ -1831,488 +2390,647 @@
               .toUpperCase()}</span>`
       }
     </div>`;
-    }
-
-    header.innerHTML = `
-    ${imageHtml}
-    <div>
-      <h3 class="font-semibold text-textMain">${escapeHtml(otherUser.name)}</h3>
-      ${
-        otherUser.specialty
-          ? `<p class="text-sm text-gray-500">${escapeHtml(
-              otherUser.specialty
-            )}</p>`
-          : ""
       }
-      ${
-        isAdminConversation
-          ? '<p class="text-xs text-blue-600 font-medium">Admin Support</p>'
-          : ""
-      }
-    </div>
-  `;
-  }
 
-  function displayMessages() {
-    const container = document.getElementById("messages-container");
-    if (!container) {
-      console.error("Messages container not found");
-      return;
-    }
+      // Create the header content based on the design
+      let headerContent = "";
 
-    console.log("Displaying messages:", messages.length);
-    console.log("Messages data:", messages);
-
-    if (messages.length === 0) {
-      console.log("No messages to display");
-      container.innerHTML = `
-      <div class="text-center text-gray-900 py-8">
-        <i class="fas fa-comments text-4xl mb-2 text-gray-400"></i>
-        <p class="text-gray-900">No messages yet. Start the conversation!</p>
-      </div>
-    `;
-      return;
-    }
-
-    console.log("Rendering messages...");
-    const messagesHtml = messages
-      .map((msg, index) => {
-        console.log("Rendering message:", index, msg);
-
-        if (!msg || !msg.content) {
-          console.log("Skipping invalid message:", msg);
-          return "";
-        }
-
-        const isOwn = msg.sender_id == currentUserId;
-        const time = msg.created_at
-          ? new Date(msg.created_at).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-
-        const alignClass = isOwn ? "justify-end" : "justify-start";
-        const bubbleClass = isOwn
-          ? "bg-primary text-white ml-auto"
-          : "bg-white border ml-0";
-
-        // Add sender indicator for admin messages
-        const isAdminSender = msg.sender_role === "admin";
-        let senderIndicator = "";
-        if (!isOwn && isAdminSender) {
-          senderIndicator = `
-        <div class="flex items-center mb-1">
-          <i class="fas fa-user-shield text-blue-600 mr-2 text-xs"></i>
-          <span class="text-xs font-medium text-blue-600">Admin</span>
+      if (isAdminConversation) {
+        headerContent = `
+        ${imageHtml}
+        <div>
+          <h3 class="font-semibold text-textMain text-lg">${escapeHtml(
+            otherUser.name
+          )}</h3>
+          <p class="text-xs text-blue-600 font-medium">Admin Support</p>
         </div>
       `;
-        }
-
-        return `
-      <div class="flex ${alignClass} mb-4">
-        <div class="${bubbleClass} max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm">
-          ${senderIndicator}
-          <p class="text-sm">${escapeHtml(msg.content || "No content")}</p>
-          <p class="text-xs ${
-            isOwn ? "text-primary/70" : "text-gray-500"
-          } mt-1">${time}</p>
+      } else {
+        // Regular therapist/patient conversation - show name prominently like in the image
+        headerContent = `
+        <div class="flex items-center">
+          ${imageHtml}
+          <div>
+            <h3 class="font-semibold text-textMain text-lg">${escapeHtml(
+              otherUser.name
+            )}</h3>
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+              <p class="text-sm text-gray-600">Online now</p>
+            </div>
+          </div>
         </div>
-      </div>
-    `;
-      })
-      .join("");
+      `;
+      }
 
-    console.log("Generated HTML:", messagesHtml);
-    container.innerHTML = messagesHtml;
-
-    // Scroll to bottom to show latest messages
-    setTimeout(() => {
-      container.scrollTop = container.scrollHeight;
-      console.log("Scrolled to bottom");
-    }, 100);
-  }
-
-  async function sendMessage(event) {
-    event.preventDefault();
-
-    const input = document.getElementById("message-input");
-    const sendBtn = document.getElementById("send-btn");
-    const content = input.value.trim();
-
-    if (!content) return;
-
-    if (!currentConversationId) {
-      showToast("No conversation selected", "error");
-      return;
+      header.innerHTML = headerContent;
     }
 
-    console.log("Sending message:", {
-      conversationId: currentConversationId,
-      content: content.substring(0, 50),
-    });
+    function displayMessages() {
+      const container = document.getElementById("messages-container");
+      if (!container) {
+        console.error("Messages container not found");
+        return;
+      }
 
-    // Disable input while sending
-    input.disabled = true;
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      console.log("Displaying messages:", messages.length);
 
-    try {
-      // Use the same endpoint for everyone - no special routing
-      const response = await fetch(
-        `/appointments/chat/${currentConversationId}/send`,
-        {
+      // Hide loading indicator
+      const loadingElement = document.getElementById("chat-loading");
+      if (loadingElement) {
+        loadingElement.style.display = "none";
+      }
+
+      if (messages.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-comments text-4xl mb-2 text-gray-400"></i>
+            <p class="text-gray-500">No messages yet. Start the conversation!</p>
+          </div>
+        `;
+        container.classList.remove("hidden");
+        return;
+      }
+
+      const messagesHtml = messages
+        .map((msg) => {
+          if (!msg || !msg.content) {
+            return "";
+          }
+
+          const isOwn = msg.sender_id == currentUserId;
+
+          // FIXED: Get avatar URL from the message data itself
+          let avatarUrl = "";
+
+          if (isOwn) {
+            // Own message - use current user's profile image from session
+            const userProfileImage = "<%= user.profile_image || '' %>";
+            if (userProfileImage && userProfileImage.trim() !== "" && userProfileImage !== "null") {
+              if (userProfileImage.startsWith("http")) {
+                avatarUrl = userProfileImage;
+              } else if (userProfileImage.startsWith("/uploads")) {
+                avatarUrl = userProfileImage;
+              } else if (userProfileImage.startsWith("uploads/")) {
+                avatarUrl = "/" + userProfileImage;
+              } else {
+                avatarUrl = "/uploads/profiles/" + userProfileImage;
+              }
+              console.log("Own message - Using profile image:", avatarUrl);
+            }
+          } else {
+            // FIXED: Other user message - use the new simplified image fields
+            let imageFilename = null;
+ 
+            if (msg.sender_therapist_profile_image && msg.sender_therapist_profile_image.trim() !== "" && msg.sender_therapist_profile_image !== "null") {
+              imageFilename = msg.sender_therapist_profile_image;
+              console.log("Other user message - Using therapist profile image:", imageFilename);
+            } else if (msg.sender_user_profile_image && msg.sender_user_profile_image.trim() !== "" && msg.sender_user_profile_image !== "null") {
+              imageFilename = msg.sender_user_profile_image;
+              console.log("Other user message - Using user profile image:", imageFilename);
+            } else {
+              console.log("Other user message - No profile image found, using fallback");
+            }
+ 
+            if (imageFilename) {
+              if (imageFilename.startsWith("http")) {
+                avatarUrl = imageFilename;
+              } else if (imageFilename.startsWith("/uploads/profiles/")) {
+                // Already a complete path - use as is
+                avatarUrl = imageFilename;
+              } else if (imageFilename.startsWith("/uploads")) {
+                avatarUrl = imageFilename;
+              } else if (imageFilename.startsWith("uploads/")) {
+                avatarUrl = "/" + imageFilename;
+              } else {
+                // Just a filename - add the profiles path
+                avatarUrl = "/uploads/profiles/" + imageFilename;
+              }
+              console.log("Other user message - Final avatar URL:", avatarUrl);
+            }
+          }
+
+          // Get sender name
+          const senderName = isOwn
+            ? "<%= user.name %>"
+            : (msg.sender_name || otherUser.name || "User");
+          const firstLetter = senderName.charAt(0).toUpperCase();
+
+          // Create avatar HTML
+          let avatarHtml = "";
+          if (avatarUrl) {
+            avatarHtml = `
+              <div
+                class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 shrink-0"
+                style="background-image: url('${avatarUrl}');"
+                onerror="this.style.backgroundImage=''; this.innerHTML='<div class=\\'w-10 h-10 ${isOwn ? 'bg-blue-500' : 'bg-gray-500'} rounded-full flex items-center justify-center\\'><span class=\\'text-white font-semibold\\'>${firstLetter}</span></div>'"
+              ></div>
+            `;
+          } else {
+            // Fallback to letter avatar with role-based colors
+            const bgColor = isOwn
+              ? "bg-blue-500"
+              : (msg.sender_role === "therapist" ? "bg-blue-500" : "bg-green-500");
+
+            avatarHtml = `
+              <div class="w-10 h-10 ${bgColor} rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">${firstLetter}</span>
+              </div>
+            `;
+          }
+
+          const messageBubbleClass = isOwn
+            ? "bg-[#13c8ec] text-white"
+            : "bg-[#f0f4f4] text-[#111718]";
+
+          return `
+            <div class="flex items-end gap-3 ${isOwn ? "justify-end" : "justify-start"} mb-4">
+              ${!isOwn ? avatarHtml : ""}
+              <div class="flex flex-1 flex-col gap-1 items-${isOwn ? "end" : "start"}">
+                <p class="text-[#618389] text-[13px] font-normal leading-normal max-w-[360px] ${isOwn ? "text-right" : ""}">
+                  ${isOwn ? "You" : escapeHtml(senderName)}
+                </p>
+                <div class="text-base font-normal leading-normal flex max-w-[360px] rounded-xl px-4 py-3 ${messageBubbleClass}">
+                  ${escapeHtml(msg.content)}
+                </div>
+              </div>
+              ${isOwn ? avatarHtml : ""}
+            </div>
+          `;
+        })
+        .join("");
+
+      container.innerHTML = messagesHtml;
+      container.classList.remove("hidden");
+
+      // Scroll to bottom
+      setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+        console.log("Scrolled to bottom, height:", container.scrollHeight);
+      }, 100);
+
+      container.style.overflowY = "auto";
+    }
+
+    async function sendMessage(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      const input = document.getElementById("message-input");
+      const sendBtn = document.getElementById("send-btn");
+      const content = input.value.trim();
+
+      if (!content) return;
+
+      if (!currentConversationId) {
+        showToast("No conversation selected", "error");
+        return;
+      }
+
+      console.log("Sending message:", {
+        conversationId: currentConversationId,
+        content: content.substring(0, 50),
+      });
+
+      // Disable input while sending
+      input.disabled = true;
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      try {
+        // Use appropriate endpoint based on user role
+        let endpoint;
+        if (userRole === "therapist") {
+          endpoint = `/therapist/api/conversations/${currentConversationId}/messages`;
+        } else {
+          endpoint = `/appointments/chat/${currentConversationId}/send`;
+        }
+
+        const response = await fetch(endpoint, {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),
-        }
-      );
-
-      console.log("Send response status:", response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Send failed:", response.status, errorText);
-        throw new Error(`Failed to send message (${response.status})`);
-      }
-
-      const data = await response.json();
-      console.log("Send response data:", data);
-
-      if (data.success) {
-        // Add message locally for immediate feedback
-        const newMessage = {
-          id: data.message.id,
-          conversation_id: currentConversationId,
-          sender_id: currentUserId,
-          content: content,
-          created_at: data.message.created_at || new Date().toISOString(),
-          sender_role: userRole,
-          sender_name: "<%= user.name %>",
-        };
-
-        messages.push(newMessage);
-        displayMessages();
-
-        // Emit via socket for real-time updates
-        if (socket && socket.connected) {
-          socket.emit("new_message", {
-            conversationId: currentConversationId,
-            message: newMessage,
-          });
-        }
-
-        input.value = "";
-        console.log("Message sent successfully");
-      } else {
-        console.error("Failed to send message:", data.error);
-        showToast(data.error || "Failed to send message", "error");
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      showToast("Failed to send message: " + error.message, "error");
-    } finally {
-      // Re-enable input
-      input.disabled = false;
-      sendBtn.disabled = false;
-      sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-    }
-  }
-
-  function backToConversations() {
-    currentConversationId = null;
-
-    // Stop message polling
-    if (messagePollingInterval) {
-      clearInterval(messagePollingInterval);
-      messagePollingInterval = null;
-    }
-
-    // Leave socket room
-    if (socket) {
-      socket.emit("leave_conversation", currentConversationId);
-    }
-
-    // Hide chat view and show conversations
-    document.getElementById("chat-view").classList.add("hidden");
-    document
-      .getElementById("conversations-container")
-      .classList.remove("hidden");
-
-    // Hide admin action buttons
-    document.getElementById("patient-concern-btn").classList.add("hidden");
-    document.getElementById("therapist-contract-btn").classList.add("hidden");
-
-    // Refresh conversations
-    loadConversations();
-  }
-
-  async function closeConversation() {
-    if (!currentConversationId) return;
-
-    const reason = prompt("Reason for closing conversation (optional):");
-
-    try {
-      // Use appropriate endpoint based on user role and conversation type
-      let endpoint;
-      if (userRole === "admin") {
-        endpoint = `/admin/close-conversation/${currentConversationId}`;
-      } else {
-        // Patients and therapists use the same endpoint
-        endpoint = `/appointments/chat/${currentConversationId}/close`;
-      }
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reason: reason || "Conversation closed",
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        showToast("Conversation closed successfully");
-        backToConversations();
-      } else {
-        showToast(data.error || "Failed to close conversation", "error");
-      }
-    } catch (error) {
-      console.error("Error closing conversation:", error);
-      showToast("Failed to close conversation", "error");
-    }
-  }
-
-  function refreshConversations() {
-    loadConversations();
-    showToast("Conversations refreshed");
-  }
-
-  function refreshMessages() {
-    if (currentConversationId) {
-      console.log(
-        "Manually refreshing messages for conversation:",
-        currentConversationId
-      );
-      loadChat(currentConversationId);
-      showToast("Messages refreshed");
-    } else {
-      showToast("No conversation selected", "error");
-    }
-  }
-
-  function showNoConversations() {
-    const container = document.getElementById("conversations-list");
-    const noConversations = document.getElementById("no-conversations");
-
-    container.innerHTML = "";
-    noConversations.classList.remove("hidden");
-  }
-
-  function handleTyping() {
-    if (socket && currentConversationId) {
-      socket.emit("typing", {
-        conversationId: currentConversationId,
-        userId: currentUserId,
-        userName: userRole === "admin" ? "Admin" : "User",
-      });
-
-      clearTimeout(typingTimer);
-      typingTimer = setTimeout(() => {
-        socket.emit("stop_typing", {
-          conversationId: currentConversationId,
-          userId: currentUserId,
         });
-      }, 1000);
+
+        console.log("Send response status:", response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Send failed:", response.status, errorText);
+          throw new Error(`Failed to send message (${response.status})`);
+        }
+
+        const data = await response.json();
+        console.log("Send response data:", data);
+
+        if (data.success) {
+          // Add message locally for immediate feedback
+          const newMessage = {
+            id: data.message.id,
+            conversation_id: currentConversationId,
+            sender_id: currentUserId,
+            content: content,
+            created_at: data.message.created_at || new Date().toISOString(),
+            sender_role: userRole,
+            sender_name: "<%= user.name %>",
+          };
+
+          messages.push(newMessage);
+          displayMessages();
+
+          // Emit via socket for real-time updates
+          if (socket && socket.connected) {
+            socket.emit("new_message", {
+              conversationId: currentConversationId,
+              message: newMessage,
+            });
+          }
+
+          input.value = "";
+          console.log("Message sent successfully");
+        } else {
+          console.error("Failed to send message:", data.error);
+          showToast(data.error || "Failed to send message", "error");
+        }
+      } catch (error) {
+        console.error("Error sending message:", error);
+        showToast("Failed to send message: " + error.message, "error");
+      } finally {
+        // Re-enable input
+        input.disabled = false;
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<span class="truncate">Send</span>';
+      }
     }
-  }
 
-  function showTypingIndicator(userName) {
-    const indicator = document.getElementById("typing-indicator");
-    const userEl = document.getElementById("typing-user");
+    function backToConversations() {
+      currentConversationId = null;
 
-    if (indicator && userEl) {
-      userEl.textContent = userName;
-      indicator.classList.remove("hidden");
-    }
-  }
-
-  function hideTypingIndicator() {
-    const indicator = document.getElementById("typing-indicator");
-    if (indicator) {
-      indicator.classList.add("hidden");
-    }
-  }
-
-  // Enhanced toast function with different types
-  function showToast(message, type = "success") {
-    const toast = document.getElementById("toast-notification");
-    const messageEl = document.getElementById("toast-message");
-
-    // Update toast styling based on type
-    const bgClass = type === "error" ? "bg-red-500" : "bg-green-500";
-    const iconClass =
-      type === "error" ? "fas fa-exclamation-circle" : "fas fa-check-circle";
-
-    toast.className = `fixed top-4 right-4 ${bgClass} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300`;
-
-    const icon = toast.querySelector("i");
-    icon.className = `${iconClass} mr-2`;
-
-    messageEl.textContent = message;
-    toast.classList.remove("hidden");
-
-    setTimeout(() => {
-      toast.classList.add("hidden");
-    }, 4000);
-  }
-
-  // Therapist chat mode switching functions
-  let currentChatMode = "patient"; // 'patient' or 'admin'
-
-  function switchToPatientChat() {
-    currentChatMode = "patient";
-
-    // Update button styles
-    document
-      .getElementById("patient-chat-btn")
-      .classList.remove("btn-secondary");
-    document.getElementById("patient-chat-btn").classList.add("btn-primary");
-    document.getElementById("admin-chat-btn").classList.remove("btn-primary");
-    document.getElementById("admin-chat-btn").classList.add("btn-secondary");
-
-    // Update page title and description
-    document.querySelector("h1").innerHTML = "💬 Patient Conversations";
-    document.querySelector(".text-xl").textContent =
-      "Chat with your patients and manage your practice conversations";
-
-    // Reload conversations for patient chat mode
-    loadConversationsForMode("patient");
-
-    showToast("Switched to Patient Chat Mode");
-  }
-
-  function switchToAdminChat() {
-    currentChatMode = "admin";
-
-    // Update button styles
-    document.getElementById("admin-chat-btn").classList.remove("btn-secondary");
-    document.getElementById("admin-chat-btn").classList.add("btn-primary");
-    document.getElementById("patient-chat-btn").classList.remove("btn-primary");
-    document.getElementById("patient-chat-btn").classList.add("btn-secondary");
-
-    // Update page title and description
-    document.querySelector("h1").innerHTML = "💬 Admin Support";
-    document.querySelector(".text-xl").textContent =
-      "Contact admin support for assistance with your therapist account and practice";
-
-    // Load admin conversations
-    loadConversationsForMode("admin");
-
-    showToast("Switched to Admin Chat Mode");
-  }
-
-  // Load conversations based on mode
-  async function loadConversationsForMode(mode) {
-    try {
-      let endpoint;
-      if (mode === "admin") {
-        endpoint = "/therapist/api/admin-conversations";
-      } else {
-        endpoint = "/appointments/chat/conversations";
+      // Stop message polling
+      if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+        messagePollingInterval = null;
       }
 
-      const response = await fetch(endpoint, {
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        conversations = data.conversations || [];
-        displayConversationsForMode(mode);
-      } else {
-        console.error("Failed to load conversations:", data.error);
-        showNoConversations();
+      // Leave socket room
+      if (socket) {
+        socket.emit("leave_conversation", currentConversationId);
       }
-    } catch (error) {
-      console.error("Error loading conversations:", error);
-      showNoConversations();
+
+      // Hide main chat content and show conversations
+      document.getElementById("main-chat-content").classList.add("hidden");
+      document.getElementById("chat-view").classList.add("hidden");
+      document
+        .getElementById("conversations-container")
+        .classList.remove("hidden");
+
+      // Refresh conversations
+      loadConversations();
     }
-  }
 
-  // Display conversations with mode-specific styling
-  function displayConversationsForMode(mode) {
-    const container = document.getElementById("conversations-list");
-    const noConversations = document.getElementById("no-conversations");
+    async function closeConversation() {
+      if (!currentConversationId) return;
 
-    if (!conversations || conversations.length === 0) {
+      const reason = prompt("Reason for closing conversation (optional):");
+
+      try {
+        // Use appropriate endpoint based on user role and conversation type
+        let endpoint;
+        if (userRole === "admin") {
+          endpoint = `/admin/close-conversation/${currentConversationId}`;
+        } else {
+          // Patients and therapists use the same endpoint
+          endpoint = `/appointments/chat/${currentConversationId}/close`;
+        }
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reason: reason || "Conversation closed",
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast("Conversation closed successfully");
+          backToConversations();
+        } else {
+          showToast(data.error || "Failed to close conversation", "error");
+        }
+      } catch (error) {
+        console.error("Error closing conversation:", error);
+        showToast("Failed to close conversation", "error");
+      }
+    }
+
+    function refreshConversations() {
+      loadConversations();
+      showToast("Conversations refreshed");
+    }
+
+    function refreshMessages() {
+      if (currentConversationId) {
+        console.log(
+          "Manually refreshing messages for conversation:",
+          currentConversationId
+        );
+        loadChat(currentConversationId);
+        showToast("Messages refreshed");
+      } else {
+        showToast("No conversation selected", "error");
+      }
+    }
+
+    function showNoConversations() {
+      const container = document.getElementById("conversations-list");
+      const noConversations = document.getElementById("no-conversations");
+
       container.innerHTML = "";
       noConversations.classList.remove("hidden");
-      return;
     }
 
-    noConversations.classList.add("hidden");
+    function handleTyping() {
+      if (socket && currentConversationId && socket.connected) {
+        // Emit typing event
+        socket.emit("typing", {
+          conversationId: currentConversationId,
+          userId: currentUserId,
+          userName: "<%= user.name %>",
+        });
 
-    container.innerHTML = conversations
-      .map((conversation) => {
-        const isAdmin =
-          mode === "admin" || conversation.conversation_type === "admin";
+        // Clear existing timer
+        clearTimeout(typingTimer);
 
-        // Determine other user based on conversation type and current user role
-        let otherUser;
-        if (isAdmin) {
-          otherUser = {
-            name: "Admin Support",
-            image: null,
-            role: "admin",
-            specialty: "CalmTunes Admin Team",
-          };
+        // Set new timer to emit stop typing after 1 second
+        typingTimer = setTimeout(() => {
+          socket.emit("stop_typing", {
+            conversationId: currentConversationId,
+            userId: currentUserId,
+          });
+        }, 1000);
+      }
+    }
+
+    function showTypingIndicator(userName) {
+      console.log("🎯 showTypingIndicator called with:", userName);
+      const indicator = document.getElementById("typing-indicator");
+      const userNameEl = document.getElementById("typing-user-name");
+
+      if (indicator && userNameEl) {
+        console.log("✅ Typing indicator elements found");
+        userNameEl.textContent = userName;
+        indicator.classList.remove("hidden");
+        indicator.style.display = "block";
+        console.log("✅ Typing indicator shown for:", userName);
+
+        // Auto-hide after 3 seconds of no typing
+        clearTimeout(window.typingIndicatorTimeout);
+        window.typingIndicatorTimeout = setTimeout(() => {
+          console.log("⏰ Auto-hiding typing indicator");
+          hideTypingIndicator();
+        }, 3000);
+      } else {
+        console.error("❌ Typing indicator elements not found:", {
+          indicator: !!indicator,
+          userNameEl: !!userNameEl
+        });
+      }
+    }
+
+    function hideTypingIndicator() {
+      console.log("🔇 hideTypingIndicator called");
+      const indicator = document.getElementById("typing-indicator");
+      if (indicator) {
+        indicator.classList.add("hidden");
+        indicator.style.display = "none";
+        console.log("✅ Typing indicator hidden");
+      } else {
+        console.error("❌ Typing indicator element not found");
+      }
+    }
+
+    // Debug function to test typing indicator manually
+    function testTypingIndicator() {
+      console.log("🧪 Testing typing indicator manually");
+      showTypingIndicator("Test User");
+      setTimeout(() => {
+        hideTypingIndicator();
+      }, 3000);
+    }
+
+    // Make test function available globally for debugging
+    window.testTypingIndicator = testTypingIndicator;
+
+    // Enhanced typing indicator check
+    function checkTypingIndicator() {
+      console.log("🔍 Checking typing indicator elements:");
+      const indicator = document.getElementById("typing-indicator");
+      const userNameEl = document.getElementById("typing-user-name");
+
+      console.log("Indicator element:", indicator);
+      console.log("UserName element:", userNameEl);
+      console.log("Indicator classes:", indicator?.className);
+      console.log("Indicator style:", indicator?.style.cssText);
+      console.log("Indicator visibility:", indicator?.hidden ? "hidden" : "visible");
+
+      if (indicator) {
+        console.log("✅ Typing indicator exists");
+        // Force show it for testing
+        indicator.classList.remove("hidden");
+        indicator.style.display = "block";
+        if (userNameEl) {
+          userNameEl.textContent = "Debug User";
+        }
+        console.log("🧪 Typing indicator forced visible for 3 seconds");
+        setTimeout(() => {
+          indicator.classList.add("hidden");
+          indicator.style.display = "none";
+          console.log("🧪 Typing indicator hidden after test");
+        }, 3000);
+      } else {
+        console.error("❌ Typing indicator element not found!");
+      }
+    }
+
+    // Make check function available globally
+    window.checkTypingIndicator = checkTypingIndicator;
+
+    // Enhanced toast function with different types
+    function showToast(message, type = "success") {
+      const toast = document.getElementById("toast-notification");
+      const messageEl = document.getElementById("toast-message");
+
+      // Update toast styling based on type
+      const bgClass = type === "error" ? "bg-red-500" : "bg-green-500";
+      const iconClass =
+        type === "error" ? "fas fa-exclamation-circle" : "fas fa-check-circle";
+
+      toast.className = `fixed top-4 right-4 ${bgClass} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300`;
+
+      const icon = toast.querySelector("i");
+      icon.className = `${iconClass} mr-2`;
+
+      messageEl.textContent = message;
+      toast.classList.remove("hidden");
+
+      setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 4000);
+    }
+
+    // Therapist chat mode switching functions
+    let currentChatMode = "patient"; // 'patient' or 'admin'
+
+    function switchToPatientChat() {
+      currentChatMode = "patient";
+
+      // Update button styles
+      document
+        .getElementById("patient-chat-btn")
+        .classList.remove("btn-secondary");
+      document.getElementById("patient-chat-btn").classList.add("btn-primary");
+      document.getElementById("admin-chat-btn").classList.remove("btn-primary");
+      document.getElementById("admin-chat-btn").classList.add("btn-secondary");
+
+      // Update page title and description
+      document.querySelector("h1").innerHTML = "💬 Patient Conversations";
+      document.querySelector(".text-xl").textContent =
+        "Chat with your patients and manage your practice conversations";
+
+      // Reload conversations for patient chat mode
+      loadConversationsForMode("patient");
+
+      showToast("Switched to Patient Chat Mode");
+    }
+
+    function switchToAdminChat() {
+      currentChatMode = "admin";
+
+      // Update button styles
+      document
+        .getElementById("admin-chat-btn")
+        .classList.remove("btn-secondary");
+      document.getElementById("admin-chat-btn").classList.add("btn-primary");
+      document
+        .getElementById("patient-chat-btn")
+        .classList.remove("btn-primary");
+      document
+        .getElementById("patient-chat-btn")
+        .classList.add("btn-secondary");
+
+      // Update page title and description
+      document.querySelector("h1").innerHTML = "💬 Admin Support";
+      document.querySelector(".text-xl").textContent =
+        "Contact admin support for assistance with your therapist account and practice";
+
+      // Load admin conversations
+      loadConversationsForMode("admin");
+
+      showToast("Switched to Admin Chat Mode");
+    }
+
+    // Load conversations based on mode
+    async function loadConversationsForMode(mode) {
+      try {
+        let endpoint;
+        if (mode === "admin") {
+          endpoint = "/therapist/api/admin-conversations";
         } else {
-          // Regular patient-therapist conversation
-          if (userRole === "patient") {
-            otherUser = {
-              name: conversation.therapist_name || "Therapist",
-              image: conversation.therapist_image,
-              role: "therapist",
-              specialty: conversation.specialty || "General Practice",
-            };
-          } else {
-            otherUser = {
-              name: conversation.patient_name || "Patient",
-              image: conversation.patient_image,
-              role: "patient",
-              specialty: "Patient",
-            };
-          }
+          endpoint = "/appointments/chat/conversations";
         }
 
-        const imageUrl =
-          otherUser.image && !otherUser.image.startsWith("http")
-            ? `/uploads/${otherUser.image}`
-            : otherUser.image;
+        const response = await fetch(endpoint, {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-        const lastMessageTime = conversation.last_message_time
-          ? formatMessageTime(conversation.last_message_time)
-          : formatMessageTime(conversation.created_at);
+        const data = await response.json();
 
-        const unreadCount = parseInt(conversation.unread_count) || 0;
+        if (data.success) {
+          conversations = data.conversations || [];
+          displayConversationsForMode(mode);
+        } else {
+          console.error("Failed to load conversations:", data.error);
+          showNoConversations();
+        }
+      } catch (error) {
+        console.error("Error loading conversations:", error);
+        showNoConversations();
+      }
+    }
 
-        // Admin conversation badge
-        const adminBadge = isAdmin
-          ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full ml-2"><i class="fas fa-headset mr-1"></i>Support</span>'
-          : "";
+    // Display conversations with mode-specific styling
+    function displayConversationsForMode(mode) {
+      const container = document.getElementById("conversations-list");
+      const noConversations = document.getElementById("no-conversations");
 
-        return `
+      if (!conversations || conversations.length === 0) {
+        container.innerHTML = "";
+        noConversations.classList.remove("hidden");
+        return;
+      }
+
+      noConversations.classList.add("hidden");
+
+      container.innerHTML = conversations
+        .map((conversation) => {
+          const isAdmin =
+            mode === "admin" || conversation.conversation_type === "admin";
+
+          // Determine other user based on conversation type and current user role
+          let otherUser;
+          if (isAdmin) {
+            otherUser = {
+              name: "Admin Support",
+              image: null,
+              role: "admin",
+              specialty: "CalmTunes Admin Team",
+            };
+          } else {
+            // Regular patient-therapist conversation
+            if (userRole === "patient") {
+              // Patient viewing - show therapist info
+              otherUser = {
+                name: conversation.therapist_name || "Therapist",
+                image: conversation.therapist_image,
+                role: "therapist",
+                specialty: conversation.specialty || "General Practice",
+              };
+            } else {
+              // Therapist viewing - show patient info
+              otherUser = {
+                name: conversation.patient_name || "Patient",
+                image: conversation.patient_image,
+                role: "patient",
+                specialty: "Patient",
+              };
+            }
+          }
+
+          const imageUrl =
+            otherUser.image && !otherUser.image.startsWith("http")
+              ? `/uploads/${otherUser.image}`
+              : otherUser.image;
+
+          const lastMessageTime = conversation.last_message_time
+            ? formatMessageTime(conversation.last_message_time)
+            : formatMessageTime(conversation.created_at);
+
+          const unreadCount = parseInt(conversation.unread_count) || 0;
+
+          // Admin conversation badge
+          const adminBadge = isAdmin
+            ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full ml-2"><i class="fas fa-headset mr-1"></i>Support</span>'
+            : "";
+
+          return `
       <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${
         isAdmin ? "border-blue-500 bg-blue-50/30" : "border-transparent"
       }"
@@ -2373,29 +3091,417 @@
         </div>
       </div>
     `;
-      })
-      .join("");
-  }
+        })
+        .join("");
+    }
 
-  // Initialize chat mode for therapists
-  document.addEventListener("DOMContentLoaded", function () {
-    // Check if we're in therapist mode and set up chat mode switching
-    const userRole = "<%= user && user.role %>";
-    if (userRole === "therapist") {
-      // Set initial state for therapist chat mode buttons
-      const patientBtn = document.getElementById("patient-chat-btn");
-      const adminBtn = document.getElementById("admin-chat-btn");
+    // Video/Audio Call Functions
+    let localStream = null;
+    let peerConnection = null;
+    let currentCall = null; // 'video' or 'audio'
+    let isCallActive = false;
+    let callStartTime = null;
 
-      if (patientBtn && adminBtn) {
-        patientBtn.classList.add("btn-primary");
-        adminBtn.classList.add("btn-secondary");
+    // Function to log call events in chat
+    async function logCallEvent(eventType) {
+      if (!currentConversationId) {
+        console.log('No conversation ID for call logging');
+        return;
       }
 
-      // Override the loadConversations function for therapists
-      const originalLoadConversations = loadConversations;
-      loadConversations = function () {
-        loadConversationsForMode(currentChatMode);
-      };
+      try {
+        let message = '';
+        const timestamp = new Date().toLocaleString();
+
+        switch (eventType) {
+          case 'video_call_started':
+            message = `📹 Video call started at ${timestamp}`;
+            callStartTime = new Date();
+            break;
+          case 'audio_call_started':
+            message = `📞 Phone call started at ${timestamp}`;
+            callStartTime = new Date();
+            break;
+          case 'call_connected':
+            message = `✅ Call connected at ${timestamp}`;
+            break;
+          case 'call_ended':
+            if (callStartTime) {
+              const duration = Math.round((new Date() - callStartTime) / 1000);
+              const minutes = Math.floor(duration / 60);
+              const seconds = duration % 60;
+              const durationStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+              message = `📞 Call ended (Duration: ${durationStr})`;
+            } else {
+              message = `📞 Call ended at ${timestamp}`;
+            }
+            break;
+          default:
+            return;
+        }
+
+        // Use appropriate endpoint based on user role
+        let endpoint;
+        if (userRole === "therapist") {
+          endpoint = `/therapist/api/conversations/${currentConversationId}/messages`;
+        } else {
+          endpoint = `/appointments/chat/${currentConversationId}/send`;
+        }
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: message }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Add message locally for immediate feedback
+            const newMessage = {
+              id: data.message?.id || Date.now(),
+              conversation_id: currentConversationId,
+              sender_id: currentUserId,
+              content: message,
+              created_at: new Date().toISOString(),
+              sender_role: userRole,
+              sender_name: "<%= user.name %>",
+            };
+
+            messages.push(newMessage);
+            displayMessages();
+
+            // Emit via socket for real-time updates
+            if (socket && socket.connected) {
+              socket.emit("new_message", {
+                conversationId: currentConversationId,
+                message: newMessage,
+              });
+            }
+
+            console.log(`Call event logged: ${eventType}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error logging call event:', error);
+      }
     }
-  });
-</script>
+
+    // WebRTC configuration
+    const rtcConfiguration = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    async function startVideoCall() {
+      console.log('Starting video call...');
+      try {
+        // Request camera and microphone permissions
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+
+        currentCall = 'video';
+        showCallInterface('video');
+        isCallActive = true;
+
+        // Initialize peer connection for the other user
+        await initializePeerConnection();
+
+        // Add local stream to peer connection
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+
+        // Create and set local video
+        const localVideo = document.getElementById('local-video');
+        if (localVideo) {
+          localVideo.srcObject = localStream;
+        }
+
+        // Log call start in chat
+        await logCallEvent('video_call_started');
+
+        showToast('Video call started. Waiting for connection...');
+
+      } catch (error) {
+        console.error('Error starting video call:', error);
+        showToast('Failed to start video call: ' + error.message, 'error');
+      }
+    }
+
+    async function startPhoneCall() {
+      console.log('Starting phone call...');
+      try {
+        // Request microphone permission only
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: false,
+          audio: true
+        });
+
+        currentCall = 'audio';
+        showCallInterface('audio');
+        isCallActive = true;
+
+        // Initialize peer connection for the other user
+        await initializePeerConnection();
+
+        // Add local stream to peer connection
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+
+        // Log call start in chat
+        await logCallEvent('audio_call_started');
+
+        showToast('Phone call started. Waiting for connection...');
+
+      } catch (error) {
+        console.error('Error starting phone call:', error);
+        showToast('Failed to start phone call: ' + error.message, 'error');
+      }
+    }
+
+    async function initializePeerConnection() {
+      try {
+        if (peerConnection) {
+          peerConnection.close();
+        }
+
+        peerConnection = new RTCPeerConnection(rtcConfiguration);
+
+        if (!peerConnection) {
+          throw new Error('Failed to create peer connection');
+        }
+
+        // Handle ICE candidates
+        peerConnection.onicecandidate = (event) => {
+          if (event && event.candidate) {
+            // Send ICE candidate to other user via socket
+            if (socket && socket.connected) {
+              socket.emit('webrtc_ice_candidate', {
+                conversationId: currentConversationId,
+                candidate: event.candidate
+              });
+            }
+          }
+        };
+
+        // Handle remote stream
+        peerConnection.ontrack = (event) => {
+          console.log('Received remote stream');
+          if (event && event.streams && event.streams[0]) {
+            const remoteVideo = document.getElementById('remote-video');
+            const remoteAudio = document.getElementById('remote-audio');
+
+            if (currentCall === 'video' && remoteVideo) {
+              remoteVideo.srcObject = event.streams[0];
+            } else if (currentCall === 'audio' && remoteAudio) {
+              remoteAudio.srcObject = event.streams[0];
+            }
+          }
+        };
+
+        // Handle connection state changes
+        peerConnection.onconnectionstatechange = () => {
+          if (peerConnection) {
+            console.log('Connection state:', peerConnection.connectionState);
+            if (peerConnection.connectionState === 'connected') {
+              showToast(`${currentCall === 'video' ? 'Video' : 'Phone'} call connected!`);
+              // Log successful connection
+              logCallEvent('call_connected');
+            } else if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+              endCall();
+              showToast('Call disconnected', 'error');
+            }
+          }
+        };
+
+        console.log('Peer connection initialized successfully');
+      } catch (error) {
+        console.error('Error initializing peer connection:', error);
+        showToast('Failed to initialize call: ' + error.message, 'error');
+        endCall();
+      }
+    }
+
+    function showCallInterface(type) {
+      // Create call interface modal
+      const existingModal = document.getElementById('call-modal');
+      if (existingModal) {
+        existingModal.remove();
+      }
+
+      const modal = document.createElement('div');
+      modal.id = 'call-modal';
+      modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+      modal.innerHTML = `
+        <div class="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-96 overflow-hidden">
+          <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-semibold">${type === 'video' ? 'Video' : 'Phone'} Call</h3>
+            <button onclick="endCall()" class="text-red-500 hover:text-red-700">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          <div class="p-4">
+            ${type === 'video' ? `
+              <div class="relative">
+                <video id="remote-video" autoplay playsinline class="w-full h-64 bg-black rounded-lg"></video>
+                <video id="local-video" autoplay playsinline muted class="absolute bottom-2 right-2 w-24 h-24 bg-gray-800 rounded-lg border-2 border-white"></video>
+              </div>
+            ` : `
+              <div class="text-center">
+                <div class="mb-4">
+                  <i class="fas fa-phone-volume text-6xl text-green-500"></i>
+                </div>
+                <p class="text-lg font-medium">Phone Call in Progress</p>
+                <audio id="remote-audio" autoplay></audio>
+              </div>
+            `}
+            <div class="flex justify-center gap-4 mt-4">
+              <button onclick="toggleMute()" class="p-3 rounded-full ${localStream && localStream.getAudioTracks()[0] && !localStream.getAudioTracks()[0].enabled ? 'bg-red-500' : 'bg-gray-500'} text-white hover:opacity-80">
+                <i class="fas ${localStream && localStream.getAudioTracks()[0] && !localStream.getAudioTracks()[0].enabled ? 'fa-microphone-slash' : 'fa-microphone'}"></i>
+              </button>
+              ${type === 'video' ? `
+                <button onclick="toggleVideo()" class="p-3 rounded-full ${localStream && localStream.getVideoTracks()[0] && !localStream.getVideoTracks()[0].enabled ? 'bg-red-500' : 'bg-gray-500'} text-white hover:opacity-80">
+                  <i class="fas ${localStream && localStream.getVideoTracks()[0] && !localStream.getVideoTracks()[0].enabled ? 'fa-video-slash' : 'fa-video'}"></i>
+                </button>
+              ` : ''}
+              <button onclick="endCall()" class="p-3 rounded-full bg-red-500 text-white hover:bg-red-600">
+                <i class="fas fa-phone-slash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    async function endCall() {
+      console.log('Ending call...');
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+
+      // Remove call modal
+      const modal = document.getElementById('call-modal');
+      if (modal) {
+        modal.remove();
+      }
+
+      // Restore body scroll
+      document.body.style.overflow = '';
+
+      // Log call end in chat
+      await logCallEvent('call_ended');
+
+      isCallActive = false;
+      currentCall = null;
+
+      showToast('Call ended');
+    }
+
+    function toggleMute() {
+      if (localStream && localStream.getAudioTracks().length > 0) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) {
+          audioTrack.enabled = !audioTrack.enabled;
+          console.log('Audio muted:', !audioTrack.enabled);
+        }
+      }
+    }
+
+    function toggleVideo() {
+      if (localStream && localStream.getVideoTracks().length > 0) {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.enabled = !videoTrack.enabled;
+          console.log('Video disabled:', !videoTrack.enabled);
+        }
+      }
+    }
+
+    // Socket event handlers for WebRTC
+    socket.on('webrtc_offer', async (data) => {
+      console.log('Received WebRTC offer:', data);
+      if (data && data.conversationId === currentConversationId && peerConnection && data.offer) {
+        try {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+          if (peerConnection) {
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            if (socket && socket.connected) {
+              socket.emit('webrtc_answer', {
+                conversationId: currentConversationId,
+                answer: answer
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error handling WebRTC offer:', error);
+        }
+      }
+    });
+
+    socket.on('webrtc_answer', async (data) => {
+      console.log('Received WebRTC answer:', data);
+      if (data && data.conversationId === currentConversationId && peerConnection && data.answer) {
+        try {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        } catch (error) {
+          console.error('Error handling WebRTC answer:', error);
+        }
+      }
+    });
+
+    socket.on('webrtc_ice_candidate', async (data) => {
+      console.log('Received ICE candidate:', data);
+      if (data && data.conversationId === currentConversationId && peerConnection && data.candidate) {
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (error) {
+          console.error('Error adding ICE candidate:', error);
+        }
+      }
+    });
+
+    // Initialize chat mode for therapists
+    document.addEventListener("DOMContentLoaded", function () {
+      // Check if we're in therapist mode and set up chat mode switching
+      const userRole = "<%= user && user.role %>";
+      if (userRole === "therapist") {
+        // Set initial state for therapist chat mode buttons
+        const patientBtn = document.getElementById("patient-chat-btn");
+        const adminBtn = document.getElementById("admin-chat-btn");
+
+        if (patientBtn && adminBtn) {
+          patientBtn.classList.add("btn-primary");
+          adminBtn.classList.add("btn-secondary");
+        }
+
+        // Override the loadConversations function for therapists
+        const originalLoadConversations = loadConversations;
+        loadConversations = function () {
+          loadConversationsForMode(currentChatMode);
+        };
+      }
+    });
+  </script>
+</div>

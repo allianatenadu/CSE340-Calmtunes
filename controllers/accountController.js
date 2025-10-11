@@ -87,12 +87,13 @@ const accountController = {
       // Fetch user from database
       const user = await authModel.findUserById(userId);
       console.log("User found in database:", !!user);
-      console.log("User data:", user ? { 
-        id: user.id, 
-        name: user.name, 
-        email: user.email, 
+      console.log("User data:", user ? {
+        id: user.id,
+        name: user.name,
+        email: user.email,
         role: user.role,
-        profile_image: user.profile_image 
+        profile_image: user.profile_image,
+        bio: user.bio
       } : 'null');
 
       if (!user) {
@@ -119,7 +120,8 @@ const accountController = {
         user: user,
         success: req.flash('success'),
         error: req.flash('error'),
-        profileImageUrl: profileImageUrl
+        profileImageUrl: profileImageUrl,
+        layout: "layouts/patient"
       });
     } catch (err) {
       console.error("Error loading account:", err);
@@ -152,21 +154,21 @@ const accountController = {
         return res.redirect("/account");
       }
 
-      // Validate bio for therapists
-      if (validatedRole === 'therapist' && (!bio || bio.trim().length < 50)) {
-        req.flash("error", "A professional bio of at least 50 characters is required for therapists.");
-        return res.redirect("/account");
-      }
-
       // Handle role - it might come as an array from form submission
       let validatedRole = role;
       if (Array.isArray(role)) {
         // Take the last selected role (most recent selection)
         validatedRole = role[role.length - 1];
       }
-      
+
       console.log("Original role:", role);
       console.log("Validated role:", validatedRole);
+
+      // Validate bio for therapists
+      if (validatedRole === 'therapist' && (!bio || bio.trim().length < 50)) {
+        req.flash("error", "A professional bio of at least 50 characters is required for therapists.");
+        return res.redirect("/account");
+      }
       
       // Validate role if provided
       if (validatedRole && !['patient', 'therapist', 'admin'].includes(validatedRole)) {
@@ -183,6 +185,19 @@ const accountController = {
       // Add bio if provided (for therapists)
       if (bio !== undefined) {
         updateData.bio = bio.trim() || null;
+
+        // Also update therapist_applications table for consistency
+        if (validatedRole === 'therapist') {
+          try {
+            await db.query(`
+              UPDATE therapist_applications
+              SET bio = $1, updated_at = CURRENT_TIMESTAMP
+              WHERE user_id = $2
+            `, [bio.trim() || null, userId]);
+          } catch (appError) {
+            console.log('Note: Could not update therapist_applications bio (table may not exist):', appError.message);
+          }
+        }
       }
 
       // Handle profile image
@@ -269,6 +284,8 @@ const accountController = {
       if (updatedUser.bio !== undefined) {
         req.session.user.bio = updatedUser.bio;
       }
+
+      console.log("Updated session bio:", req.session.user.bio);
 
       // Save the session explicitly
       req.session.save((err) => {

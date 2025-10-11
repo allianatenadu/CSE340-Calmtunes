@@ -284,28 +284,18 @@ function initializeQuoteDisplay() {
   // Update quote on page load (this will start the alternating pattern)
   updateDashboardQuote();
 
-  // Add refresh quote functionality
-  const refreshBtn = document.getElementById("refresh-quote-btn");
-  if (refreshBtn) {
-    refreshBtn.addEventListener("click", () => {
-      // Use the alternating function for refresh too
+  // Add refresh quote functionality for both button IDs
+  const refreshBtn1 = document.getElementById("refresh-quote-btn");
+  const refreshBtn2 = document.getElementById("refresh-quote");
+
+  if (refreshBtn1) {
+    refreshBtn1.addEventListener("click", () => {
       updateDashboardQuote();
     });
   }
-}
 
-// Auto-initialize when DOM is ready
-document.addEventListener("DOMContentLoaded", initializeQuoteDisplay);
-// Initialize quote display
-function initializeQuoteDisplay() {
-  // Update quote on page load (this will start the alternating pattern)
-  updateDashboardQuote();
-
-  // Add refresh quote functionality
-  const refreshBtn = document.getElementById("refresh-quote");
-  if (refreshBtn) {
-    refreshBtn.addEventListener("click", () => {
-      // Use the alternating function for refresh too, not random
+  if (refreshBtn2) {
+    refreshBtn2.addEventListener("click", () => {
       updateDashboardQuote();
     });
   }
@@ -324,5 +314,5 @@ if (typeof module !== "undefined" && module.exports) {
   };
 }
 
-// Auto-initialize when DOM is ready
+// Auto-initialize when DOM is ready (only once)
 document.addEventListener("DOMContentLoaded", initializeQuoteDisplay);

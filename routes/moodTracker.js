@@ -18,5 +18,8 @@ function requireAuth(req, res, next) {
 router.get('/mood-tracker', requireAuth, moodTrackerController.getMoodTracker);
 router.post('/mood-tracker', requireAuth, moodTrackerController.postMoodEntry);
 
+// API route for chart data
+router.get('/api/mood-tracker/data', requireAuth, moodTrackerController.getMoodData);
+
 
 module.exports = router;

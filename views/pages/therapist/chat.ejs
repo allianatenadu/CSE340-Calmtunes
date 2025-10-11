@@ -1,116 +1,304 @@
-<!-- Therapist Chat Interface - Uses the same layout as main conversation page -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="mb-8">
-    <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
-      💬 Conversations
-    </h1>
-    <p class="text-xl text-gray-600">
-      Chat with your patients and manage your practice conversations
-    </p>
-  </div>
-
-  <!-- Chat Mode Toggle for Therapists -->
-  <div class="bg-white rounded-xl shadow-md mb-6 p-4">
-    <div class="flex flex-wrap gap-3 items-center justify-between">
-      <div class="flex flex-wrap gap-3">
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-medium text-gray-600">Chat Mode:</span>
-          <button onclick="switchToPatientChat()" id="patient-chat-btn" class="btn-primary">
-            <i class="fas fa-users mr-2"></i>My Patients
-          </button>
-          <button onclick="switchToAdminChat()" id="admin-chat-btn" class="btn-secondary">
-            <i class="fas fa-headset mr-2"></i>Contact Admin
-          </button>
-        </div>
-      </div>
-
-      <!-- Connection Status -->
-      <div id="connection-status" class="flex items-center text-sm text-gray-600">
-        <div id="status-indicator" class="w-2 h-2 rounded-full bg-gray-400 mr-2"></div>
-        <span id="status-text">Connecting...</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Conversations List -->
-  <div id="conversations-container" class="bg-white rounded-xl shadow-md">
-    <div class="p-6 border-b border-gray-200">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-xl font-semibold text-textMain">Active Conversations</h2>
-          <p class="text-sm text-gray-600 mt-1">
-            ${currentChatMode === 'admin' ? 'Your recent messages with admin support' : 'Your recent messages with patients'}
-          </p>
-        </div>
-        <button onclick="refreshConversations()" class="text-gray-500 hover:text-gray-700" title="Refresh conversations">
-          <i class="fas fa-sync-alt"></i>
-        </button>
-      </div>
-    </div>
-
-    <div id="conversations-list" class="divide-y divide-gray-200">
-      <!-- Conversations will be loaded here -->
-    </div>
-
-    <div id="no-conversations" class="text-center py-12 hidden">
-      <div class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-        <i class="fas fa-comments text-3xl text-gray-400"></i>
-      </div>
-      <h3 class="text-xl font-medium text-gray-600 mb-2">No Conversations Yet</h3>
-      <p class="text-gray-500 mb-6">
-        ${currentChatMode === 'admin' ? 'Your admin conversations will appear here.' : 'Your patient conversations will appear here.'}
-      </p>
-    </div>
-
-    <div id="loading-conversations" class="text-center py-8">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      <p class="text-gray-600 mt-2">Loading conversations...</p>
-    </div>
-  </div>
-
-  <!-- Chat View - Hidden by default -->
-  <div id="chat-view" class="hidden bg-white rounded-xl shadow-md mt-6">
-    <div class="p-6 border-b border-gray-200">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <button onclick="backToConversations()" class="btn-secondary mr-4">
-            <i class="fas fa-arrow-left mr-2"></i>Back to Conversations
-          </button>
-          <div id="chat-header" class="flex items-center">
-            <!-- Chat header will be populated by JavaScript -->
+<!-- Enhanced Therapist Chat Interface for therapist layout -->
+<div class="h-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+  <!-- Conversations List Container -->
+  <div class="flex h-full">
+    <!-- Conversations Sidebar -->
+    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <!-- Conversations Header -->
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-xl font-bold text-gray-800" id="main-header">Communication</h1>
+          <div class="flex items-center gap-2">
+            <!-- Enhanced Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200">
+              <div id="status-indicator" class="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
+              <span id="status-text" class="text-xs font-medium text-gray-600">Connecting...</span>
+              <button onclick="reconnectSocket()" id="reconnect-btn" class="hidden w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-200" title="Reconnect">
+                <i class="fas fa-redo text-xs"></i>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="refreshConversations()" class="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200" title="Refresh conversations">
+                <i class="fas fa-sync-alt text-sm"></i>
+              </button>
+              <button onclick="toggleConversationMenu()" class="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200" title="Conversation options">
+                <i class="fas fa-ellipsis-v text-sm"></i>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="flex items-center space-x-2">
-          <button onclick="refreshMessages()" class="btn-secondary px-3 py-2" title="Refresh messages">
-            <i class="fas fa-sync-alt"></i>
+
+        <!-- Chat Mode Toggle -->
+        <div class="flex bg-gray-100 rounded-lg p-1 mb-4">
+          <button onclick="switchToPatientChat()" id="patient-chat-btn" class="flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-all duration-200 flex-1 justify-center btn-primary">
+            <div class="w-6 h-6 bg-gradient-to-br from-green-400 to-blue-500 rounded-md flex items-center justify-center">
+              <i class="fas fa-users text-white text-xs"></i>
+            </div>
+            <span class="text-sm">Client Chat</span>
           </button>
-          <button onclick="startPhoneCall()" class="btn-secondary px-4 py-2">
-            <i class="fas fa-phone mr-2"></i>Phone Call
+          <button onclick="switchToAdminChat()" id="admin-chat-btn" class="flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-all duration-200 flex-1 justify-center">
+            <div class="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
+              <i class="fas fa-headset text-white text-xs"></i>
+            </div>
+            <span class="text-sm">Support</span>
           </button>
-          <button onclick="startVideoCall()" class="btn-primary px-4 py-2">
-            <i class="fas fa-video mr-2"></i>Video Call
-          </button>
+        </div>
+
+        <!-- Enhanced Search Bar -->
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-400 text-sm"></i>
+          </div>
+          <input type="text" id="conversation-search" placeholder="Search conversations, patients, or messages..." class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors duration-200">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+            <button onclick="toggleSearchFilters()" class="w-6 h-6 text-gray-400 hover:text-gray-600 transition-colors duration-200" title="Search filters">
+              <i class="fas fa-filter text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode-Aware Search Filters (Hidden by default) -->
+        <div id="search-filters" class="hidden mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex flex-wrap gap-3 text-sm">
+            <label class="flex items-center">
+              <input type="checkbox" id="search-unread" class="mr-2 text-blue-500">
+              <span class="text-gray-700">Unread only</span>
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" id="search-recent" checked class="mr-2 text-blue-500">
+              <span class="text-gray-700">Recent (24h)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Conversation Management Menu -->
+        <div id="conversation-menu" class="hidden absolute top-16 right-6 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 z-50 min-w-48">
+          <div class="py-1">
+            <button onclick="exportConversations()" class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2">
+              <i class="fas fa-download text-gray-500"></i>
+              Export Conversations
+            </button>
+            <button onclick="archiveAllConversations()" class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2">
+              <i class="fas fa-archive text-gray-500"></i>
+              Archive All
+            </button>
+            <button onclick="markAllAsRead()" class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2">
+              <i class="fas fa-check-double text-gray-500"></i>
+              Mark All as Read
+            </button>
+            <div class="border-t border-gray-200 my-1"></div>
+            <button onclick="showMessageTemplates()" class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2">
+              <i class="fas fa-bookmark text-gray-500"></i>
+              Message Templates
+            </button>
+          </div>
+        </div>
+       </div>
+
+       <!-- Conversations List -->
+       <div id="conversations-container" class="flex-1 overflow-y-auto overflow-x-hidden scroll-container" style="scroll-behavior: smooth; max-height: calc(100vh - 200px);">
+         <div id="conversations-list" class="divide-y divide-gray-200">
+           <!-- Conversations will be loaded here -->
+         </div>
+
+        <div id="no-conversations" class="text-center py-16 hidden px-4">
+          <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+            <i class="fas fa-comments text-2xl text-gray-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-700 mb-2">No Conversations Yet</h3>
+          <p class="text-gray-500 text-sm max-w-md mx-auto">
+            Your patient conversations will appear here when patients reach out to you.
+          </p>
+        </div>
+
+        <div id="loading-conversations" class="text-center py-12 px-4">
+          <div class="relative">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl mx-auto mb-3 flex items-center justify-center shadow-lg">
+              <i class="fas fa-comments text-lg text-white animate-pulse"></i>
+            </div>
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-purple-200 border-t-purple-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+          </div>
+          <p class="text-gray-600 mt-3 text-sm font-medium">Loading conversations...</p>
         </div>
       </div>
     </div>
 
-    <!-- Messages Container -->
-    <div id="messages-container" class="h-96 overflow-y-auto bg-gray-50 p-4 space-y-4">
-      <div class="text-center text-gray-500 py-8" id="chat-loading">
-        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
-        <span class="text-gray-600">Loading messages...</span>
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col">
+
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col">
+    <!-- Chat View -->
+    <div id="chat-view" class="flex-1 flex flex-col bg-white">
+      <!-- Chat Header (Fixed) -->
+      <div class="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <button onclick="backToConversations()"
+                    class="lg:hidden w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <div id="chat-header" class="flex items-center">
+              <!-- Chat header will be populated by JavaScript -->
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="refreshMessages()"
+                    class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200"
+                    title="Refresh messages">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            <div class="flex items-center gap-2">
+              <button onclick="startPhoneCall()"
+                      class="bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow-lg">
+                <i class="fas fa-phone mr-1 sm:mr-2"></i><span class="hidden sm:inline">Call</span>
+              </button>
+              <button onclick="startVideoCall()"
+                      class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-3 sm:px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow-lg">
+                <i class="fas fa-video mr-1 sm:mr-2"></i><span class="hidden sm:inline">Video</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- Messages Container (Scrollable) -->
+      <div id="messages-container" class="flex-1 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-gray-50 to-white p-6 space-y-4 min-h-0 scroll-container" style="scroll-behavior: smooth; max-height: calc(100vh - 300px);" tabindex="0">
+        <div class="text-center text-gray-500 py-16" id="chat-loading">
+          <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+            <i class="fas fa-comments text-2xl text-white animate-pulse"></i>
+          </div>
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-2 border-purple-200 border-t-purple-600 mx-auto mb-4"></div>
+          <p class="text-gray-600 text-lg font-medium">Loading messages...</p>
+        </div>
+      </div>
+
+      <!-- Message Input Form (Fixed at bottom) -->
+      <form id="message-form" class="bg-white border-t border-gray-200 p-6 hidden">
+        <!-- Enhanced File Preview Area -->
+        <div id="file-preview" class="mb-4 hidden">
+          <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+            <div class="flex items-start justify-between">
+              <div class="flex items-start flex-1">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                  <i class="fas fa-file-alt text-white text-sm" id="file-preview-icon"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p id="preview-file-name" class="text-sm font-medium text-gray-700 truncate"></p>
+                  <p id="preview-file-size" class="text-xs text-gray-500 mt-1"></p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <div class="w-16 h-1 bg-gray-200 rounded-full overflow-hidden">
+                      <div id="upload-progress" class="h-full bg-gradient-to-r from-blue-400 to-purple-500 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <span id="upload-progress-text" class="text-xs text-gray-500">Ready to send</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 ml-4">
+                <button type="button" onclick="previewFile()" id="preview-file-btn" class="px-3 py-1 bg-white/50 hover:bg-white/70 text-blue-600 rounded-lg text-xs font-medium transition-colors duration-200">
+                  Preview
+                </button>
+                <button type="button" onclick="removeFile()" class="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-colors duration-200">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reply Preview Area -->
+        <div id="reply-preview" class="mb-4 hidden">
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-xl p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-blue-600 flex items-center">
+                <i class="fas fa-reply mr-1"></i>
+                Replying to:
+              </span>
+              <button type="button" onclick="cancelReply()" class="w-6 h-6 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-full flex items-center justify-center transition-colors duration-200">
+                <i class="fas fa-times text-xs"></i>
+              </button>
+            </div>
+            <p id="reply-content" class="text-sm text-gray-700 bg-white/50 rounded-lg p-2"></p>
+          </div>
+        </div>
+
+        <!-- Enhanced Input Area -->
+        <div class="flex items-end gap-2 sm:gap-3">
+          <!-- File Upload Button -->
+          <button type="button" onclick="document.getElementById('file-input').click()"
+                  class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200 flex-shrink-0"
+                  title="Attach file">
+            <i class="fas fa-paperclip"></i>
+          </button>
+
+          <input type="file" id="file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt,.mp4,.webm,.ogg" />
+
+          <!-- Message Input -->
+          <div class="flex-1 relative">
+            <input type="text" id="message-input"
+                   placeholder="Type your message..."
+                   class="w-full px-3 sm:px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 text-sm resize-none" />
+          </div>
+
+          <!-- Emoji Button -->
+          <button type="button" onclick="toggleEmojiPicker()"
+                  class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200 flex-shrink-0"
+                  title="Add emoji">
+            <i class="fas fa-smile"></i>
+          </button>
+
+          <!-- Send Button -->
+          <button type="submit"
+                  class="w-12 h-10 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl flex items-center justify-center text-white transition-all duration-200 shadow-lg flex-shrink-0"
+                  id="send-btn">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+
+        <!-- Emoji Picker -->
+        <div id="emoji-picker" class="hidden absolute bottom-24 right-6 bg-white border border-gray-200 rounded-2xl shadow-2xl p-4 z-60">
+          <div class="grid grid-cols-8 gap-2 max-w-xs">
+            <button type="button" onclick="addEmoji('😀')" class="text-2xl hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">😀</button>
+            <button type="button" onclick="addEmoji('😂')" class="text-2xl hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">😂</button>
+            <button type="button" onclick="addEmoji('😊')" class="text-2xl hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">😊</button>
+            <button type="button" onclick="addEmoji('😍')" class="text-2xl hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">😍</button>
+            <button type="button" onclick="addEmoji('🥰')" class="text-2xl hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">🥰</button>
+            <button type="button" onclick="addEmoji('😘')" class="text-2xl hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">😘</button>
+            <button type="button" onclick="addEmoji('😉')" class="text-2xl hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">😉</button>
+            <button type="button" onclick="addEmoji('😎')" class="text-2xl hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200">😎</button>
+          </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div id="typing-indicator" class="text-sm text-gray-500 italic hidden mt-3 px-2">
+          <div class="flex items-center gap-2">
+            <div class="flex space-x-1">
+              <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+              <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+              <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>
+            <span class="font-medium">Someone is typing...</span>
+          </div>
+        </div>
+      </form>
     </div>
 
-    <!-- Message Input Form -->
-    <form id="message-form" class="p-6 border-t border-gray-200 hidden">
-      <div class="flex space-x-2">
-        <input type="text" id="message-input" placeholder="Type a message..." class="flex-1 form-input rounded-lg border-gray-300" required />
-        <button type="submit" class="btn-primary px-6" id="send-btn">
-          <i class="fas fa-paper-plane"></i>
-        </button>
+    <!-- Welcome Screen (shown when no chat is selected) -->
+    <div id="welcome-screen" class="flex-1 flex items-center justify-center bg-white">
+      <div class="text-center px-8">
+        <div class="w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-3xl mx-auto mb-8 flex items-center justify-center shadow-lg">
+          <i class="fas fa-comments text-5xl text-blue-400"></i>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to CalmTunes Chat</h2>
+        <p class="text-xl text-gray-600 max-w-md mx-auto leading-relaxed mb-6">
+          Connect with your patients and provide the support they need. Select a conversation from the sidebar to get started.
+        </p>
+        <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm">
+          <i class="fas fa-info-circle"></i>
+          <span>Your conversations will appear here</span>
+        </div>
       </div>
-    </form>
+    </div>
   </div>
 </div>
 
@@ -118,34 +306,182 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-// Therapist Chat JavaScript
+// Enhanced Therapist Chat JavaScript
 let conversations = [];
 let currentConversationId = null;
 let messages = [];
 let socket = null;
 let currentUserId = "<%= user.id %>";
 let currentChatMode = 'patient'; // Default to patient chat
+let selectedFile = null;
+let replyToMessageId = null;
+let typingTimer = null;
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function() {
-  console.log("Initializing therapist chat");
+  console.log("Initializing enhanced chat with admin support");
+
+  // Initialize Socket.IO
   initializeSocket();
-  loadConversations();
+
+  // Set up event listeners
   setupEventListeners();
+
+  // TEMPORARY DEBUG - Check container visibility after page load
+  setTimeout(() => {
+    console.log("=== DEBUG: Container visibility after page load ===");
+    console.log("conversations-container:", document.getElementById("conversations-container")?.style.display);
+    console.log("welcome-screen:", document.getElementById("welcome-screen")?.style.display);
+    console.log("chat-view:", document.getElementById("chat-view")?.style.display);
+    console.log("messages-container:", document.getElementById("messages-container")?.innerHTML?.substring(0, 100));
+
+    // TEMPORARY FIX BUTTON - Add to page for manual testing
+    if (conversationId && conversationId.trim() !== "") {
+      const fixButton = document.createElement('button');
+      fixButton.textContent = 'Fix Chat Display';
+      fixButton.className = 'fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg z-50';
+      fixButton.onclick = function() {
+        console.log("Manual fix triggered");
+        const chatView = document.getElementById("chat-view");
+        const messagesContainer = document.getElementById("messages-container");
+        if (chatView) {
+          chatView.style.display = "block";
+          chatView.classList.remove("hidden");
+        }
+        if (messagesContainer) {
+          messagesContainer.style.display = "block";
+          messagesContainer.style.visibility = "visible";
+        }
+        console.log("Manual fix applied");
+      };
+      document.body.appendChild(fixButton);
+    }
+  }, 1000);
+
+  // Handle direct conversation loading from URL
+  const conversationId = '<%= typeof conversationId !== "undefined" ? conversationId || "" : "" %>';
+
+  if (conversationId && conversationId.trim() !== "") {
+    console.log("=== DIRECT CONVERSATION MODE ===");
+    console.log("Direct conversation access - conversationId:", conversationId);
+    currentConversationId = conversationId;
+
+    // Force show chat view and hide everything else
+    const conversationsContainer = document.getElementById("conversations-container");
+    const welcomeScreen = document.getElementById("welcome-screen");
+    const chatView = document.getElementById("chat-view");
+
+    if (conversationsContainer) {
+      conversationsContainer.classList.add("hidden");
+      conversationsContainer.style.display = "none";
+    }
+    if (welcomeScreen) {
+      welcomeScreen.classList.add("hidden");
+      welcomeScreen.style.display = "none";
+    }
+    if (chatView) {
+      chatView.classList.remove("hidden");
+      chatView.style.display = "block";
+      chatView.style.visibility = "visible";
+    }
+
+    console.log("Container visibility set:");
+    console.log("- conversations-container: hidden");
+    console.log("- welcome-screen: hidden");
+    console.log("- chat-view: visible");
+
+    // Set chat mode to patient by default for direct conversation access
+    currentChatMode = 'patient';
+
+    // Join socket room if socket is connected
+    if (socket && socket.connected) {
+      socket.emit("join_conversation", conversationId);
+    }
+
+    // Load chat data immediately - use patient conversation endpoint for direct access
+    setTimeout(() => {
+      console.log("About to call loadChat with conversationId:", conversationId);
+      loadChat(conversationId);
+    }, 500);
+
+    // Start message polling as fallback
+    startMessagePolling(conversationId);
+  } else {
+    // No direct conversation - load conversations list
+    console.log("No direct conversation - loading conversations list");
+
+    // Start with patient chat mode by default
+    switchToPatientChat();
+
+    setupSidebarBehavior();
+    setupSearchFunctionality();
+
+    // Show welcome screen initially
+    showWelcomeScreen();
+
+    // Setup scroll controls
+    setupScrollControls();
+  }
 });
 
-// Initialize Socket.IO connection
+function showWelcomeScreen() {
+  // Hide chat view and show welcome screen
+  document.getElementById("chat-view").classList.add("hidden");
+  document.getElementById("welcome-screen").classList.remove("hidden");
+
+  // Close therapist sidebar on mobile by default
+  closeTherapistSidebar();
+}
+
+// Enhanced Socket.IO connection with better error handling
 function initializeSocket() {
-  socket = io();
+  // Close existing socket if any
+  if (socket) {
+    socket.disconnect();
+  }
+
+  socket = io({
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    timeout: 20000,
+  });
+
   socket.on("connect", () => {
     console.log("Socket connected:", socket.id);
-    updateConnectionStatus(true);
+    updateConnectionStatus(true, "Connected");
     socket.emit("authenticate", { userId: currentUserId, role: "therapist" });
   });
 
-  socket.on("disconnect", () => {
-    console.log("Socket disconnected");
-    updateConnectionStatus(false);
+  socket.on("disconnect", (reason) => {
+    console.log("Socket disconnected:", reason);
+    updateConnectionStatus(false, "Disconnected");
+  });
+
+  socket.on("connect_error", (error) => {
+    console.error("Socket connection error:", error);
+    updateConnectionStatus(false, "Connection Error");
+  });
+
+  socket.on("reconnect", (attemptNumber) => {
+    console.log("Socket reconnected after", attemptNumber, "attempts");
+    updateConnectionStatus(true, "Reconnected");
+    showToast("Connection restored", "success");
+  });
+
+  socket.on("reconnect_attempt", (attemptNumber) => {
+    console.log("Socket reconnection attempt", attemptNumber);
+    updateConnectionStatus(false, `Reconnecting... (${attemptNumber}/5)`);
+  });
+
+  socket.on("reconnect_error", (error) => {
+    console.error("Socket reconnection error:", error);
+    updateConnectionStatus(false, "Reconnection Failed");
+  });
+
+  socket.on("reconnect_failed", () => {
+    console.error("Socket reconnection failed");
+    updateConnectionStatus(false, "Reconnection Failed");
   });
 
   socket.on("new_message", (data) => {
@@ -154,11 +490,508 @@ function initializeSocket() {
       if (!messageExists) {
         messages.push(data.message);
         displayMessages();
-        showToast("New message received");
+        showToast("New message received", "info");
       }
     }
   });
+
+  // Enhanced message events
+  socket.on("message_reaction", (data) => {
+    if (data && data.messageId) {
+      const message = messages.find(m => m.id == data.messageId);
+      if (message) {
+        message.reactions = data.reactions;
+        displayMessages();
+      }
+    }
+  });
+
+  socket.on("message_reaction_removed", (data) => {
+    if (data && data.messageId) {
+      const message = messages.find(m => m.id == data.messageId);
+      if (message) {
+        message.reactions = data.reactions;
+        displayMessages();
+      }
+    }
+  });
+
+  socket.on("typing_indicator", (data) => {
+    if (data && data.conversationId === currentConversationId) {
+      updateTypingIndicator(data.typingUsers);
+    }
+  });
 }
+
+// Reconnect socket function
+function reconnectSocket() {
+  console.log("Manual reconnection requested");
+  initializeSocket();
+  showToast("Reconnecting...", "info");
+}
+
+// Sidebar behavior functions
+function setupSidebarBehavior() {
+  // Show sidebar on mobile when clicking on conversations button (if needed)
+  // The sidebar is shown by default on desktop, hidden on mobile
+}
+
+function openSidebar() {
+  const sidebar = document.getElementById('therapist-sidebar');
+  const toggleBtn = document.getElementById('sidebar-toggle');
+
+  if (sidebar && window.innerWidth < 1024) { // lg breakpoint
+    sidebar.classList.remove('w-16');
+    sidebar.classList.add('w-64');
+    if (toggleBtn) {
+      const chevronIcon = toggleBtn.querySelector('i');
+      if (chevronIcon) {
+        chevronIcon.classList.remove('fa-chevron-right');
+        chevronIcon.classList.add('fa-chevron-left');
+      }
+    }
+  }
+}
+
+function closeTherapistSidebar() {
+  const sidebar = document.getElementById('therapist-sidebar');
+  const toggleBtn = document.getElementById('sidebar-toggle');
+
+  if (sidebar && window.innerWidth < 1024) { // lg breakpoint
+    sidebar.classList.remove('w-64');
+    sidebar.classList.add('w-16');
+    if (toggleBtn) {
+      const chevronIcon = toggleBtn.querySelector('i');
+      if (chevronIcon) {
+        chevronIcon.classList.remove('fa-chevron-left');
+        chevronIcon.classList.add('fa-chevron-right');
+      }
+    }
+  }
+}
+
+// Enhanced Search functionality
+function setupSearchFunctionality() {
+  const searchInput = document.getElementById('conversation-search');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      performSearch(searchTerm);
+    });
+
+    searchInput.addEventListener('focus', function() {
+      // Show search results or highlight matching conversations
+    });
+
+    // Setup filter checkboxes
+    setupSearchFilters();
+  }
+}
+
+function setupSearchFilters() {
+  const filters = ['search-unread', 'search-recent'];
+
+  filters.forEach(filterId => {
+    const checkbox = document.getElementById(filterId);
+    if (checkbox) {
+      checkbox.addEventListener('change', function() {
+        const searchTerm = document.getElementById('conversation-search').value.toLowerCase();
+        performSearch(searchTerm);
+      });
+    }
+  });
+}
+
+function toggleSearchFilters() {
+  const filters = document.getElementById('search-filters');
+  if (filters) {
+    filters.classList.toggle('hidden');
+  }
+}
+
+function performSearch(searchTerm) {
+  const conversationElements = document.querySelectorAll('#conversations-list > div');
+  let visibleCount = 0;
+
+  // Get filter states
+  const showUnreadOnly = document.getElementById('search-unread')?.checked ?? false;
+  const showRecentOnly = document.getElementById('search-recent')?.checked ?? true;
+
+  conversationElements.forEach(element => {
+    const isVisible = shouldShowConversation(element, searchTerm, {
+      showUnreadOnly,
+      showRecentOnly
+    });
+
+    if (isVisible) {
+      element.classList.remove('hidden');
+      visibleCount++;
+    } else {
+      element.classList.add('hidden');
+    }
+  });
+
+  // Show/hide no results message
+  updateSearchResults(visibleCount, searchTerm);
+}
+
+function shouldShowConversation(element, searchTerm, filters) {
+  // Get conversation data from element
+  const conversationText = element.textContent.toLowerCase();
+  const hasSearchTerm = searchTerm === '' || conversationText.includes(searchTerm);
+
+  if (!hasSearchTerm) return false;
+
+  // Check unread filter
+  if (filters.showUnreadOnly) {
+    const unreadBadge = element.querySelector('.bg-red-500');
+    if (!unreadBadge) return false;
+  }
+
+  // Check recent filter (this would need timestamp data from backend)
+  if (filters.showRecentOnly) {
+    // For now, show all conversations if recent filter is enabled
+    // In a real implementation, you'd check the conversation timestamp
+  }
+
+  return true;
+}
+
+function updateSearchResults(visibleCount, searchTerm) {
+  const noResults = document.getElementById('no-search-results');
+
+  if (visibleCount === 0 && searchTerm.length > 0) {
+    if (!noResults) {
+      const noResultsDiv = document.createElement('div');
+      noResultsDiv.id = 'no-search-results';
+      noResultsDiv.className = 'text-center py-8 px-4';
+      noResultsDiv.innerHTML = `
+        <div class="w-16 h-16 bg-gray-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
+          <i class="fas fa-search text-gray-400 text-lg"></i>
+        </div>
+        <p class="text-gray-500 text-sm">No conversations found matching "${searchTerm}"</p>
+        <button onclick="clearSearch()" class="mt-2 text-blue-500 hover:text-blue-600 text-sm underline">Clear search</button>
+      `;
+      document.getElementById('conversations-list').appendChild(noResultsDiv);
+    } else {
+      noResults.classList.remove('hidden');
+      noResults.querySelector('p').textContent = `No conversations found matching "${searchTerm}"`;
+    }
+  } else if (noResults) {
+    noResults.classList.add('hidden');
+  }
+}
+
+function clearSearch() {
+  const searchInput = document.getElementById('conversation-search');
+  if (searchInput) {
+    searchInput.value = '';
+    performSearch('');
+  }
+}
+
+// Scroll control functions
+function setupScrollControls() {
+  // Setup messages container scrolling
+  const messagesContainer = document.getElementById('messages-container');
+  const conversationsContainer = document.getElementById('conversations-container');
+
+  if (messagesContainer) {
+    // Add scroll event listeners for better UX
+    messagesContainer.addEventListener('scroll', handleMessageScroll);
+    messagesContainer.addEventListener('keydown', handleMessageKeyNavigation);
+  }
+
+  if (conversationsContainer) {
+    conversationsContainer.addEventListener('scroll', handleConversationScroll);
+  }
+}
+
+function handleMessageScroll() {
+  const container = document.getElementById('messages-container');
+  if (!container) return;
+
+  // Auto-load more messages when scrolling to top (for future implementation)
+  if (container.scrollTop === 0) {
+    console.log('Scrolled to top - could load more messages');
+  }
+
+  // Mark messages as read when scrolling
+  const scrollPercentage = container.scrollTop / (container.scrollHeight - container.clientHeight);
+  if (scrollPercentage > 0.8) {
+    // User has scrolled to see most recent messages
+    markVisibleMessagesAsRead();
+  }
+}
+
+function handleConversationScroll() {
+  const container = document.getElementById('conversations-container');
+  if (!container) return;
+
+  // Could implement infinite scroll for conversations in the future
+  if (container.scrollTop === 0) {
+    console.log('Scrolled to top of conversations');
+  }
+}
+
+function handleMessageKeyNavigation(e) {
+  const container = document.getElementById('messages-container');
+  if (!container) return;
+
+  // Arrow key navigation in messages
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    const scrollAmount = 50;
+    const currentScroll = container.scrollTop;
+
+    if (e.key === 'ArrowUp') {
+      container.scrollTop = currentScroll - scrollAmount;
+    } else {
+      container.scrollTop = currentScroll + scrollAmount;
+    }
+  }
+
+  // Page up/down navigation
+  if (e.key === 'PageUp' || e.key === 'PageDown') {
+    e.preventDefault();
+    const scrollAmount = container.clientHeight * 0.8;
+    const currentScroll = container.scrollTop;
+
+    if (e.key === 'PageUp') {
+      container.scrollTop = currentScroll - scrollAmount;
+    } else {
+      container.scrollTop = currentScroll + scrollAmount;
+    }
+  }
+
+  // Home/End navigation
+  if (e.key === 'Home') {
+    e.preventDefault();
+    container.scrollTop = 0;
+  }
+
+  if (e.key === 'End') {
+    e.preventDefault();
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function markVisibleMessagesAsRead() {
+  // This function could mark messages as read when user scrolls to them
+  // Implementation depends on backend requirements
+}
+
+function scrollToBottom() {
+  const container = document.getElementById('messages-container');
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function scrollToTop() {
+  const container = document.getElementById('messages-container');
+  if (container) {
+    container.scrollTop = 0;
+  }
+}
+
+// Enhanced displayMessages with better scroll handling
+function displayMessages() {
+  const container = document.getElementById("messages-container");
+  console.log("displayMessages called");
+  console.log("Container found:", !!container);
+
+  if (!container) {
+    console.error("Messages container not found!");
+    return;
+  }
+
+  if (messages.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-gray-500 py-16">
+        <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+          <i class="fas fa-comments text-3xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">No messages yet</h3>
+        <p class="text-gray-500">Start the conversation!</p>
+      </div>
+    `;
+    return;
+  }
+
+  const messagesHtml = messages.map((msg, index) => {
+    const isOwn = msg.sender_id == currentUserId;
+    const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    // Fix sender name display - use the name from the message data, not hardcoded "Admin Support"
+    const senderName = msg.sender_name || (isOwn ? "You" : "Therapist");
+
+    // Enhanced reactions display
+    const reactionsHtml = msg.reactions && Object.keys(msg.reactions).length > 0 ?
+      `<div class="flex flex-wrap gap-1 mt-3">
+        ${Object.entries(msg.reactions).map(([emoji, count]) =>
+          `<span class="inline-flex items-center bg-white/80 backdrop-blur-sm text-xs px-2 py-1 rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            ${emoji} ${count}
+          </span>`
+        ).join('')}
+       </div>` : '';
+
+    console.log(`Rendering message ${index}:`, msg.content?.substring(0, 50));
+
+    return `
+      <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 group message-fade-in">
+        <div class="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl ${isOwn ? 'ml-auto' : 'mr-auto'}">
+          ${!isOwn ? `<p class="text-xs text-gray-500 mb-2 font-medium">${senderName}</p>` : ''}
+          <div class="relative">
+            <div class="px-4 py-3 rounded-2xl shadow-lg chat-message-bubble ${isOwn
+              ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
+              : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 text-gray-800'} transition-all duration-200 hover:shadow-xl">
+              <p class="text-sm leading-relaxed whitespace-pre-wrap">${msg.content || ""}</p>
+              ${reactionsHtml}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  console.log("Generated HTML length:", messagesHtml.length);
+  console.log("First 200 chars of HTML:", messagesHtml.substring(0, 200));
+
+  // Clear container and insert new HTML
+  container.innerHTML = messagesHtml;
+
+  console.log("HTML inserted into container");
+
+  // Enhanced auto-scroll to bottom after displaying messages
+  setTimeout(() => {
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+      console.log("Scrolled to bottom, container height:", container.scrollHeight);
+
+      // Add visual indicator that new messages loaded
+      const scrollIndicator = document.createElement('div');
+      scrollIndicator.className = 'fixed bottom-32 right-6 bg-green-500 text-white px-3 py-1 rounded-full text-xs shadow-lg animate-bounce';
+      scrollIndicator.textContent = 'New messages loaded';
+      document.body.appendChild(scrollIndicator);
+
+      setTimeout(() => {
+        scrollIndicator.remove();
+      }, 2000);
+
+      // Final debug check
+      console.log("=== FINAL DEBUG ===");
+      console.log("Container visibility:", container.style.display);
+      console.log("Container parent visibility:", container.parentElement?.style.display);
+      console.log("Chat view visibility:", document.getElementById("chat-view")?.style.display);
+    }
+  }, 100);
+}
+
+// Conversation management functions
+function toggleConversationMenu() {
+  const menu = document.getElementById('conversation-menu');
+  if (menu) {
+    menu.classList.toggle('hidden');
+  }
+}
+
+function exportConversations() {
+  showToast("Export feature coming soon! This will allow you to download your conversation history.", "info");
+  document.getElementById('conversation-menu').classList.add('hidden');
+}
+
+function archiveAllConversations() {
+  if (confirm('Are you sure you want to archive all conversations? This action cannot be undone.')) {
+    showToast("Archive feature coming soon! This will move old conversations to an archive.", "info");
+  }
+  document.getElementById('conversation-menu').classList.add('hidden');
+}
+
+function markAllAsRead() {
+  // Mark all conversation badges as read
+  const badges = document.querySelectorAll('.bg-red-500');
+  badges.forEach(badge => {
+    badge.remove();
+  });
+  showToast("All conversations marked as read", "success");
+  document.getElementById('conversation-menu').classList.add('hidden');
+}
+
+function showMessageTemplates() {
+  const modal = document.createElement("div");
+  modal.className = "fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-80 p-4 animate-in fade-in duration-300";
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl max-h-full overflow-auto">
+      <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-800">Message Templates</h3>
+        <button onclick="this.closest('.fixed').remove()"
+                class="w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="grid gap-3">
+          <div class="p-4 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors duration-200"
+               onclick="insertTemplate('Hello! How are you feeling today? I\'m here to support you.')">
+            <p class="text-sm font-medium text-blue-800">Greeting</p>
+            <p class="text-sm text-blue-600 mt-1">Hello! How are you feeling today? I'm here to support you.</p>
+          </div>
+          <div class="p-4 bg-green-50 rounded-lg border border-green-200 cursor-pointer hover:bg-green-100 transition-colors duration-200"
+               onclick="insertTemplate('Thank you for sharing that with me. It takes courage to open up about your feelings.')">
+            <p class="text-sm font-medium text-green-800">Encouragement</p>
+            <p class="text-sm text-green-600 mt-1">Thank you for sharing that with me. It takes courage to open up about your feelings.</p>
+          </div>
+          <div class="p-4 bg-purple-50 rounded-lg border border-purple-200 cursor-pointer hover:bg-purple-100 transition-colors duration-200"
+               onclick="insertTemplate('I understand this is difficult. Remember that healing is a journey, and every step counts.')">
+            <p class="text-sm font-medium text-purple-800">Support</p>
+            <p class="text-sm text-purple-600 mt-1">I understand this is difficult. Remember that healing is a journey, and every step counts.</p>
+          </div>
+          <div class="p-4 bg-orange-50 rounded-lg border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors duration-200"
+               onclick="insertTemplate('Would you like to schedule a session to discuss this further? I have availability this week.')">
+            <p class="text-sm font-medium text-orange-800">Appointment</p>
+            <p class="text-sm text-orange-600 mt-1">Would you like to schedule a session to discuss this further? I have availability this week.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Close on background click
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+
+  document.body.appendChild(modal);
+  document.getElementById('conversation-menu').classList.add('hidden');
+}
+
+function insertTemplate(templateText) {
+  const messageInput = document.getElementById('message-input');
+  if (messageInput) {
+    messageInput.value = templateText;
+    messageInput.focus();
+    document.querySelector('.fixed').remove(); // Close modal
+    showToast("Template inserted", "success");
+  }
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('conversation-menu');
+  const menuButton = e.target.closest('[onclick="toggleConversationMenu()"]');
+
+  if (!menuButton && menu && !menu.contains(e.target)) {
+    menu.classList.add('hidden');
+  }
+
+  // Close emoji picker
+  const emojiPicker = document.getElementById('emoji-picker');
+  if (emojiPicker && !emojiPicker.contains(e.target) && !e.target.onclick?.toString().includes('toggleEmojiPicker')) {
+    emojiPicker.classList.add('hidden');
+  }
+});
 
 // Set up event listeners
 function setupEventListeners() {
@@ -175,123 +1008,478 @@ function setupEventListeners() {
         sendMessage(e);
       }
     });
+
+    // Typing indicator
+    messageInput.addEventListener("input", handleTyping);
+  }
+
+  // File input handler
+  const fileInput = document.getElementById("file-input");
+  if (fileInput) {
+    fileInput.addEventListener("change", handleFileSelect);
+  }
+
+  // Click outside emoji picker to close it
+  document.addEventListener("click", (e) => {
+    const emojiPicker = document.getElementById("emoji-picker");
+    if (emojiPicker && !emojiPicker.contains(e.target) && !e.target.onclick?.toString().includes("toggleEmojiPicker")) {
+      emojiPicker.classList.add("hidden");
+    }
+  });
+}
+
+// Enhanced file handling functions
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (file) {
+    // Validate file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      showToast("File size must be less than 10MB", "error");
+      return;
+    }
+
+    selectedFile = file;
+
+    // Update preview
+    document.getElementById("preview-file-name").textContent = file.name;
+    document.getElementById("preview-file-size").textContent = formatFileSize(file.size);
+
+    // Set appropriate icon based on file type
+    const fileIcon = getFileIcon(file.type, file.name);
+    document.getElementById("file-preview-icon").className = `${fileIcon} text-white text-sm`;
+
+    // Show/hide preview button based on file type
+    const previewBtn = document.getElementById("preview-file-btn");
+    if (file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.startsWith('text/')) {
+      previewBtn.classList.remove("hidden");
+    } else {
+      previewBtn.classList.add("hidden");
+    }
+
+    document.getElementById("file-preview").classList.remove("hidden");
+    showToast(`File selected: ${file.name}`, "info");
   }
 }
 
-// Update connection status indicator
-function updateConnectionStatus(connected) {
+function removeFile() {
+  selectedFile = null;
+  document.getElementById("file-input").value = "";
+  document.getElementById("file-preview").classList.add("hidden");
+  resetUploadProgress();
+  showToast("File removed", "info");
+}
+
+function getFileIcon(mimeType, fileName) {
+  if (mimeType.startsWith('image/')) return 'fas fa-image';
+  if (mimeType === 'application/pdf') return 'fas fa-file-pdf';
+  if (mimeType.startsWith('text/')) return 'fas fa-file-alt';
+  if (mimeType.includes('document') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) return 'fas fa-file-word';
+  if (mimeType.includes('video/')) return 'fas fa-file-video';
+  if (mimeType.includes('audio/')) return 'fas fa-file-audio';
+  return 'fas fa-file';
+}
+
+function previewFile() {
+  if (!selectedFile) return;
+
+  if (selectedFile.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      openImageModal(e.target.result);
+    };
+    reader.readAsDataURL(selectedFile);
+  } else if (selectedFile.type === 'application/pdf') {
+    showToast("PDF preview not available in browser. File will be sent as attachment.", "info");
+  } else if (selectedFile.type.startsWith('text/')) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      showTextPreview(e.target.result);
+    };
+    reader.readAsText(selectedFile);
+  }
+}
+
+function showTextPreview(content) {
+  const modal = document.createElement("div");
+  modal.className = "fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-80 p-4 animate-in fade-in duration-300";
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl max-h-full overflow-auto">
+      <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-800">${selectedFile.name}</h3>
+        <button onclick="this.closest('.fixed').remove()"
+                class="w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-6">
+        <pre class="text-sm text-gray-700 whitespace-pre-wrap max-h-96 overflow-auto">${content}</pre>
+      </div>
+    </div>
+  `;
+
+  // Close on background click
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+
+  document.body.appendChild(modal);
+}
+
+function updateUploadProgress(progress, status = "Uploading...") {
+  const progressBar = document.getElementById("upload-progress");
+  const progressText = document.getElementById("upload-progress-text");
+
+  if (progressBar && progressText) {
+    progressBar.style.width = `${progress}%`;
+    progressText.textContent = status;
+  }
+}
+
+function resetUploadProgress() {
+  updateUploadProgress(0, "Ready to send");
+}
+
+// Emoji functions
+function toggleEmojiPicker() {
+  const emojiPicker = document.getElementById("emoji-picker");
+  emojiPicker.classList.toggle("hidden");
+}
+
+function addEmoji(emoji) {
+  const messageInput = document.getElementById("message-input");
+  messageInput.value += emoji;
+  document.getElementById("emoji-picker").classList.add("hidden");
+  messageInput.focus();
+}
+
+// Reply functions
+function replyToMessage(messageId) {
+  const message = messages.find(m => m.id == messageId);
+  if (message) {
+    replyToMessageId = messageId;
+    document.getElementById("reply-content").textContent = message.content.substring(0, 100) + (message.content.length > 100 ? '...' : '');
+    document.getElementById("reply-preview").classList.remove("hidden");
+    document.getElementById("message-input").focus();
+    showToast("Reply mode enabled");
+  }
+}
+
+function cancelReply() {
+  replyToMessageId = null;
+  document.getElementById("reply-preview").classList.add("hidden");
+  showToast("Reply cancelled");
+}
+
+// Typing indicator functions
+function handleTyping() {
+  if (typingTimer) clearTimeout(typingTimer);
+
+  // Send typing started
+  if (socket && currentConversationId) {
+    socket.emit("typing", { conversationId: currentConversationId });
+  }
+
+  // Auto-stop typing after 2 seconds of inactivity
+  typingTimer = setTimeout(() => {
+    if (socket && currentConversationId) {
+      socket.emit("stop_typing", { conversationId: currentConversationId });
+    }
+  }, 2000);
+}
+
+// Enhanced send message function
+async function sendMessage(event) {
+  event.preventDefault();
+
+  const input = document.getElementById("message-input");
+  const sendBtn = document.getElementById("send-btn");
+  const content = input.value.trim();
+
+  if (!content && !selectedFile) return;
+
+  input.disabled = true;
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+  try {
+    const formData = new FormData();
+    formData.append("content", content);
+    if (replyToMessageId) {
+      formData.append("replyToId", replyToMessageId);
+    }
+    if (selectedFile) {
+      formData.append("file", selectedFile);
+    }
+
+    // Use correct endpoint based on conversation type
+    const isAdminChat = window.currentConversationIsAdmin;
+    const endpoint = isAdminChat
+      ? `/therapist/api/admin-conversations/${currentConversationId}/messages-with-file`
+      : `/therapist/api/conversations/${currentConversationId}/messages-with-file`;
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      credentials: "same-origin",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      input.value = "";
+      removeFile();
+      cancelReply();
+
+      if (data.message) {
+        const messageExists = messages.some(msg => msg.id === data.message.id);
+        if (!messageExists) {
+          messages.push(data.message);
+          displayMessages();
+        }
+      }
+    } else {
+      showToast(data.error || "Failed to send message", "error");
+    }
+  } catch (error) {
+    console.error("Error sending message:", error);
+    showToast("Failed to send message", "error");
+  } finally {
+    input.disabled = false;
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+
+    // Stop typing indicator
+    if (socket && currentConversationId) {
+      socket.emit("stop_typing", { conversationId: currentConversationId });
+    }
+  }
+}
+
+// Reaction functions
+async function addReaction(messageId) {
+  const reaction = prompt("Enter emoji for reaction:");
+  if (reaction && reaction.trim()) {
+    try {
+      const response = await fetch(`/appointments/chat/messages/${messageId}/reactions`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reactionType: reaction.trim() })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Update local message reactions
+        const message = messages.find(m => m.id == messageId);
+        if (message) {
+          message.reactions = data.reactions;
+          displayMessages();
+        }
+      } else {
+        showToast(data.error || "Failed to add reaction", "error");
+      }
+    } catch (error) {
+      console.error("Error adding reaction:", error);
+      showToast("Failed to add reaction", "error");
+    }
+  }
+}
+
+// Utility functions
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function openImageModal(imageUrl) {
+  // Create and show enhanced image modal
+  const modal = document.createElement("div");
+  modal.className = "fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-80 p-4 animate-in fade-in duration-300";
+  modal.innerHTML = `
+    <div class="relative max-w-5xl max-h-full">
+      <img src="${imageUrl}" class="max-w-full max-h-full rounded-2xl shadow-2xl" />
+      <button onclick="this.parentElement.parentElement.remove()"
+              class="absolute -top-4 -right-4 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full flex items-center justify-center text-xl transition-all duration-200 transform hover:scale-105">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
+        Click outside or press ESC to close
+      </div>
+    </div>
+  `;
+
+  // Close on background click
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+
+  // Close on ESC key
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove();
+      document.removeEventListener('keydown', handleKeyDown);
+    }
+  };
+  document.addEventListener('keydown', handleKeyDown);
+
+  document.body.appendChild(modal);
+
+  // Focus trap for accessibility
+  modal.focus();
+}
+
+// Enhanced connection status indicator
+function updateConnectionStatus(connected, statusText = null) {
   const indicator = document.getElementById("status-indicator");
   const text = document.getElementById("status-text");
+  const reconnectBtn = document.getElementById("reconnect-btn");
 
   if (connected) {
-    indicator.className = "w-2 h-2 rounded-full bg-green-400 mr-2";
-    text.textContent = "Connected";
+    indicator.className = "w-2 h-2 rounded-full bg-green-400";
+    indicator.classList.remove("animate-pulse");
+    text.textContent = statusText || "Connected";
+    text.className = "text-xs font-medium text-green-600";
+
+    if (reconnectBtn) {
+      reconnectBtn.classList.add("hidden");
+    }
   } else {
-    indicator.className = "w-2 h-2 rounded-full bg-red-400 mr-2";
-    text.textContent = "Disconnected";
+    indicator.className = "w-2 h-2 rounded-full bg-red-400";
+    if (!statusText || !statusText.includes("Reconnecting")) {
+      indicator.classList.remove("animate-pulse");
+    }
+    text.textContent = statusText || "Disconnected";
+    text.className = "text-xs font-medium text-red-600";
+
+    if (reconnectBtn) {
+      reconnectBtn.classList.remove("hidden");
+    }
   }
 }
 
-// Replace the loadConversations function in your therapist chat template
-// This version loads BOTH patient and admin conversations together
-
-async function loadConversations() {
+// Separate functions for loading specific conversation types
+async function loadPatientConversations() {
   const loadingElement = document.getElementById("loading-conversations");
   const conversationsList = document.getElementById("conversations-list");
 
   if (loadingElement) loadingElement.classList.remove("hidden");
 
   try {
-    // Load BOTH patient conversations and admin conversations
-    const [patientResponse, adminResponse] = await Promise.all([
-      fetch('/therapist/api/conversations', {
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-      }),
-      fetch('/therapist/api/admin-conversations', {
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-      })
-    ]);
-
-    const patientData = await patientResponse.json();
-    const adminData = await adminResponse.json();
-
-    // Combine both types of conversations
-    let allConversations = [];
-    
-    if (patientData.success && patientData.conversations) {
-      // Mark patient conversations
-      allConversations = patientData.conversations.map(conv => ({
-        ...conv,
-        conversation_type: conv.conversation_type || 'patient',
-        is_admin_chat: false
-      }));
-    }
-    
-    if (adminData.success && adminData.conversations) {
-      // Mark admin conversations
-      const adminConvs = adminData.conversations.map(conv => ({
-        ...conv,
-        conversation_type: 'admin',
-        is_admin_chat: true
-      }));
-      allConversations = [...allConversations, ...adminConvs];
-    }
-
-    // Sort by most recent activity
-    allConversations.sort((a, b) => {
-      const aTime = new Date(a.last_message_time || a.created_at);
-      const bTime = new Date(b.last_message_time || b.created_at);
-      return bTime - aTime;
+    const response = await fetch('/therapist/api/conversations', {
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
     });
 
-    // Filter based on current mode if needed
-    if (currentChatMode === 'admin') {
-      conversations = allConversations.filter(c => c.is_admin_chat);
-    } else if (currentChatMode === 'patient') {
-      conversations = allConversations.filter(c => !c.is_admin_chat);
+    const data = await response.json();
+
+    if (data.success && data.conversations) {
+      // Filter to only patient conversations
+      conversations = data.conversations.filter(conv =>
+        !conv.is_admin_chat &&
+        conv.conversation_type !== 'admin'
+      );
+
+      console.log('Loaded patient conversations:', conversations);
+      displayConversations();
     } else {
-      conversations = allConversations; // Show all
+      showNoConversations();
     }
 
-    console.log('Loaded conversations:', conversations);
-    displayConversations();
-    
   } catch (error) {
-    console.error("Error loading conversations:", error);
+    console.error("Error loading patient conversations:", error);
     showNoConversations();
   } finally {
     if (loadingElement) loadingElement.classList.add("hidden");
   }
 }
 
-// Updated displayConversations to properly show both types
+async function loadAdminConversations() {
+  const loadingElement = document.getElementById("loading-conversations");
+  const conversationsList = document.getElementById("conversations-list");
+
+  if (loadingElement) loadingElement.classList.remove("hidden");
+
+  try {
+    console.log("Loading admin conversations...");
+    const response = await fetch('/therapist/api/admin-conversations', {
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await response.json();
+    console.log("Admin conversations API response:", data);
+
+    if (data.success && data.conversations && data.conversations.length > 0) {
+      // Only admin conversations
+      conversations = data.conversations.filter(conv =>
+        conv.is_admin_chat ||
+        conv.conversation_type === 'admin'
+      );
+
+      console.log('Filtered admin conversations:', conversations);
+      displayConversations();
+    } else {
+      console.log("No admin conversations found:", data);
+
+      // If no conversations exist, show the create option
+      if (data.success && (!data.conversations || data.conversations.length === 0)) {
+        console.log("No admin conversations exist yet - showing create option");
+      }
+
+      showNoConversations();
+    }
+
+  } catch (error) {
+    console.error("Error loading admin conversations:", error);
+    showToast("Error loading admin conversations. Please check your connection and try again.", "error");
+    showNoConversations();
+  } finally {
+    if (loadingElement) loadingElement.classList.add("hidden");
+  }
+}
+
+// Keep the original loadConversations for backward compatibility
+async function loadConversations() {
+  if (currentChatMode === 'patient') {
+    await loadPatientConversations();
+  } else if (currentChatMode === 'admin') {
+    await loadAdminConversations();
+  } else {
+    await loadPatientConversations(); // Default to patient conversations
+  }
+}
+
+// Enhanced displayConversations with proper mode-specific styling
 function displayConversations() {
   const container = document.getElementById("conversations-list");
   const noConversations = document.getElementById("no-conversations");
 
   if (!conversations || conversations.length === 0) {
     container.innerHTML = "";
-    noConversations.classList.remove("hidden");
+    showNoConversations();
     return;
   }
 
   noConversations.classList.add("hidden");
 
   container.innerHTML = conversations.map(conversation => {
-    // Determine if this is an admin conversation
-    const isAdminChat = conversation.is_admin_chat || conversation.conversation_type === 'admin';
-    
+    // Determine conversation type based on current mode
+    const isAdminMode = currentChatMode === 'admin';
+    const isAdminChat = isAdminMode || conversation.is_admin_chat || conversation.conversation_type === 'admin';
+
     // Get the other user info
     let otherUser;
     if (isAdminChat) {
       // Admin conversation
       otherUser = {
-        name: conversation.other_user_name || "Admin Support",
+        name: conversation.other_user_name || conversation.admin_name || "Admin Support",
         role: "admin",
-        specialty: conversation.other_user_specialty || "CalmTunes Admin Team",
-        email: conversation.other_user_email || "admin@calmtunes.com"
+        specialty: "CalmTunes Admin Team",
+        email: "admin@calmtunes.com"
       };
     } else {
       // Patient conversation
@@ -299,7 +1487,7 @@ function displayConversations() {
         name: conversation.other_user_name || conversation.patient_name || "Patient",
         role: "patient",
         specialty: "Patient",
-        email: conversation.other_user_email || ""
+        email: ""
       };
     }
 
@@ -310,45 +1498,114 @@ function displayConversations() {
     const unreadCount = parseInt(conversation.unread_count) || 0;
 
     return `
-      <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${
-        isAdminChat ? "border-blue-500 bg-blue-50/30" : "border-green-500 bg-green-50/30"
-      }" onclick="openConversation('${conversation.id}', ${isAdminChat})">
+      <div class="p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200 border-l-4 ${
+        isAdminChat ? "border-blue-500 bg-blue-50/20 hover:bg-blue-50/40" : "border-green-500 bg-green-50/20 hover:bg-green-50/40"
+      } group" onclick="openConversation('${conversation.id}', ${isAdminChat})">
         <div class="flex items-center justify-between">
-          <div class="flex items-center flex-1">
-            <div class="w-12 h-12 bg-gradient-to-br ${
-              isAdminChat
-                ? "from-blue-500 to-purple-600"
-                : "from-green-400 to-blue-500"
-            } rounded-full flex items-center justify-center mr-4">
-              <i class="fas ${isAdminChat ? 'fa-headset' : 'fa-user'} text-white"></i>
+          <div class="flex items-center flex-1 min-w-0">
+            <div class="relative">
+              <div class="w-12 h-12 bg-gradient-to-br ${
+                isAdminChat
+                  ? "from-blue-500 to-purple-600"
+                  : "from-green-400 to-blue-500"
+              } rounded-xl flex items-center justify-center mr-3 shadow-md group-hover:scale-105 transition-transform duration-200">
+                <i class="fas ${isAdminChat ? 'fa-headset' : 'fa-user'} text-white text-sm"></i>
+              </div>
+              ${unreadCount > 0 ? `<div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">${unreadCount > 99 ? "99+" : unreadCount}</div>` : ''}
             </div>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between mb-1">
                 <div class="flex items-center gap-2">
-                  <h3 class="font-semibold text-textMain truncate">${otherUser.name}</h3>
-                  ${isAdminChat
-                    ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Admin Support</span>'
-                    : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Patient</span>'}
+                  <h3 class="font-semibold text-gray-900 truncate">${otherUser.name}</h3>
+                  <span class="px-2 py-1 rounded-full text-xs font-medium ${
+                    isAdminChat
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-green-100 text-green-700'
+                  }">
+                    ${isAdminChat ? 'Support' : 'Client'}
+                  </span>
                 </div>
-                <div class="flex items-center space-x-2 ml-2">
-                  ${unreadCount > 0 ? `<span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">${unreadCount > 99 ? "99+" : unreadCount}</span>` : ''}
-                  <span class="text-sm text-gray-500">${lastMessageTime}</span>
-                </div>
+                <span class="text-xs text-gray-500">${lastMessageTime}</span>
               </div>
-              <p class="text-sm ${isAdminChat ? 'text-blue-600' : 'text-gray-500'} mb-1">${otherUser.specialty}</p>
-              <p class="text-gray-600 truncate">${conversation.last_message || "No messages yet"}</p>
+              <p class="text-xs ${isAdminChat ? 'text-blue-600' : 'text-gray-600'} mb-1">${otherUser.specialty}</p>
+              <p class="text-sm text-gray-600 truncate">${conversation.last_message || "No messages yet"}</p>
             </div>
-          </div>
-          <div class="ml-4">
-            <i class="fas fa-chevron-right text-gray-400"></i>
           </div>
         </div>
       </div>
     `;
   }).join("");
+
+  // Auto-scroll to bottom of conversations list to show most recent
+  setTimeout(() => {
+    const conversationsContainer = document.getElementById('conversations-container');
+    if (conversationsContainer) {
+      conversationsContainer.scrollTop = conversationsContainer.scrollHeight;
+    }
+  }, 100);
 }
 
-// Chat mode switching functions
+function showNoConversations() {
+  const container = document.getElementById("conversations-list");
+  const noConversations = document.getElementById("no-conversations");
+
+  if (currentChatMode === 'admin') {
+    container.innerHTML = `
+      <div class="text-center py-16 px-4">
+        <div class="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+          <i class="fas fa-headset text-2xl text-blue-400"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">No Admin Conversations</h3>
+        <p class="text-gray-500 text-sm max-w-md mx-auto mb-4">
+          Contact admin support for assistance with your therapist account and practice.
+        </p>
+        <button onclick="createAdminConversation()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+          <i class="fas fa-plus mr-2"></i>Start Admin Chat
+        </button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="text-center py-16 px-4">
+        <div class="w-24 h-24 bg-gradient-to-br from-green-100 to-blue-100 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+          <i class="fas fa-users text-2xl text-green-400"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">No Patient Conversations</h3>
+        <p class="text-gray-500 text-sm max-w-md mx-auto">
+          Your patient conversations will appear here when patients reach out to you.
+        </p>
+      </div>
+    `;
+  }
+
+  noConversations.classList.add("hidden");
+}
+
+async function createAdminConversation() {
+  try {
+    showToast("Creating admin conversation...", "info");
+
+    const response = await fetch('/therapist/api/admin-conversations', {
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Reload admin conversations
+      await loadAdminConversations();
+      showToast("Admin conversation ready!", "success");
+    } else {
+      showToast("Failed to create admin conversation. Please try again.", "error");
+    }
+  } catch (error) {
+    console.error("Error creating admin conversation:", error);
+    showToast("Error creating admin conversation", "error");
+  }
+}
+
+// Enhanced Chat mode switching functions with proper filtering
 function switchToPatientChat() {
   currentChatMode = 'patient';
 
@@ -358,14 +1615,13 @@ function switchToPatientChat() {
   document.getElementById('admin-chat-btn').classList.remove('btn-primary');
   document.getElementById('admin-chat-btn').classList.add('btn-secondary');
 
-  // Update page title and description
-  document.querySelector('h1').innerHTML = '💬 Patient Conversations';
-  document.querySelector('.text-xl').textContent = 'Chat with your patients and manage your practice conversations';
+  // Update header text
+  document.getElementById('main-header').textContent = 'Communication';
 
-  // Reload conversations for patient chat mode
-  loadConversations();
+  // Load ONLY patient conversations
+  loadPatientConversations();
 
-  showToast('Switched to Patient Chat Mode');
+  showToast('Switched to Patient Chat');
 }
 
 function switchToAdminChat() {
@@ -377,20 +1633,19 @@ function switchToAdminChat() {
   document.getElementById('patient-chat-btn').classList.remove('btn-primary');
   document.getElementById('patient-chat-btn').classList.add('btn-secondary');
 
-  // Update page title and description
-  document.querySelector('h1').innerHTML = '💬 Admin Support';
-  document.querySelector('.text-xl').textContent = 'Contact admin support for assistance with your therapist account and practice';
+  // Update header text
+  document.getElementById('main-header').textContent = 'Communication';
 
-  // Load admin conversations
-  loadConversations();
+  // Load ONLY admin conversations
+  loadAdminConversations();
 
-  showToast('Switched to Admin Chat Mode');
+  showToast('Switched to Admin Support');
 }
 
 // Updated openConversation to handle both types
 function openConversation(conversationId, isAdminChat) {
   currentConversationId = conversationId;
-  
+
   // Store whether this is an admin conversation
   window.currentConversationIsAdmin = isAdminChat;
 
@@ -398,22 +1653,28 @@ function openConversation(conversationId, isAdminChat) {
     socket.emit("join_conversation", conversationId);
   }
 
-  document.getElementById("conversations-container").classList.add("hidden");
+  // Hide welcome screen and show chat view
+  document.getElementById("welcome-screen").classList.add("hidden");
   document.getElementById("chat-view").classList.remove("hidden");
+
+  // Close therapist sidebar on mobile
+  closeTherapistSidebar();
 
   loadChat(conversationId, isAdminChat);
 }
 
 // Updated loadChat to use correct endpoint
-async function loadChat(conversationId, isAdminChat) {
+async function loadChat(conversationId, isAdminChat = false) {
   const loadingElement = document.getElementById("chat-loading");
   if (loadingElement) loadingElement.style.display = "block";
 
   try {
-    // Use the appropriate endpoint
+    // Use the correct messages endpoint
     const endpoint = isAdminChat
-      ? `/therapist/api/admin-conversations/${conversationId}/messages`
-      : `/therapist/api/conversations/${conversationId}/messages`;
+      ? `/therapist/api/admin-conversations/${conversationId}/enhanced-messages`
+      : `/appointments/chat/conversations/${conversationId}/messages`;
+
+    console.log("Loading chat from endpoint:", endpoint);
 
     const response = await fetch(endpoint, {
       credentials: "same-origin",
@@ -421,14 +1682,53 @@ async function loadChat(conversationId, isAdminChat) {
     });
 
     const data = await response.json();
+    console.log("Chat load response:", data);
 
     if (data.success) {
       messages = data.messages || [];
-      displayChatHeader(isAdminChat);
+
+      // Fix admin conversation detection - only check for actual admin conversations
+      const isActuallyAdmin = data.conversation?.conversation_type === "admin" ||
+                             data.conversation?.other_user?.role === "admin" ||
+                             data.isAdminConversation === true;
+
+      displayChatHeader(isActuallyAdmin);
       displayMessages();
 
+      // Ensure chat header is visible
+      const chatHeader = document.getElementById("chat-header");
+      if (chatHeader) {
+        chatHeader.style.display = "block";
+        chatHeader.style.visibility = "visible";
+        console.log("Chat header displayed");
+      }
+
       const messageForm = document.getElementById("message-form");
-      if (messageForm) messageForm.classList.remove("hidden");
+      if (messageForm) {
+        messageForm.classList.remove("hidden");
+        messageForm.style.display = "block";
+        messageForm.style.visibility = "visible";
+        console.log("Message form shown");
+
+        // Also ensure message input is enabled
+        const messageInput = document.getElementById("message-input");
+        if (messageInput) {
+          messageInput.disabled = false;
+          messageInput.style.display = "block";
+          console.log("Message input enabled");
+        }
+      }
+
+      console.log("Loaded messages:", messages.length);
+      console.log("Is admin conversation:", isActuallyAdmin);
+      console.log("Conversation data:", data.conversation);
+
+      // Additional debug: Check if messages container has content
+      const messagesContainer = document.getElementById("messages-container");
+      if (messagesContainer) {
+        console.log("Messages container HTML length:", messagesContainer.innerHTML.length);
+        console.log("Messages container first 200 chars:", messagesContainer.innerHTML.substring(0, 200));
+      }
     } else {
       console.error("Failed to load chat:", data.error);
       showToast("Failed to load messages", "error");
@@ -441,40 +1741,84 @@ async function loadChat(conversationId, isAdminChat) {
   }
 }
 
-// Updated displayChatHeader
+// Typing indicator update function
+function updateTypingIndicator(typingUsers) {
+  const indicator = document.getElementById("typing-indicator");
+
+  if (!typingUsers || typingUsers.length === 0) {
+    indicator.classList.add("hidden");
+    return;
+  }
+
+  const userNames = typingUsers.map(user => user.name).join(", ");
+  indicator.textContent = `${userNames} ${typingUsers.length === 1 ? 'is' : 'are'} typing...`;
+  indicator.classList.remove("hidden");
+}
+
+// Enhanced displayChatHeader
 function displayChatHeader(isAdminChat) {
   const header = document.getElementById("chat-header");
-  if (!header) return;
+  console.log("displayChatHeader called with isAdminChat:", isAdminChat);
+  console.log("Chat header element found:", !!header);
+
+  if (!header) {
+    console.error("Chat header element not found!");
+    return;
+  }
 
   const currentConv = conversations.find(c => c.id === currentConversationId);
-  
+
+  // Fix admin conversation detection - use the corrected logic
+  const actuallyAdmin = isAdminChat ||
+                      currentConv?.conversation_type === "admin" ||
+                      currentConv?.other_user?.role === "admin";
+
   let otherUser;
-  if (isAdminChat) {
+  if (actuallyAdmin) {
     otherUser = {
-      name: currentConv?.other_user_name || "Admin Support",
+      name: currentConv?.other_user_name || currentConv?.admin_name || "Admin Support",
       specialty: currentConv?.other_user_specialty || "CalmTunes Admin Team",
       role: "admin"
     };
   } else {
     otherUser = {
-      name: currentConv?.other_user_name || currentConv?.patient_name || "Patient",
-      specialty: "Patient",
-      role: "patient"
+      name: currentConv?.other_user_name || currentConv?.therapist_name || "Therapist",
+      specialty: currentConv?.other_user_specialty || "Mental Health Professional",
+      role: "therapist"
     };
   }
 
-  header.innerHTML = `
-    <div class="w-10 h-10 bg-gradient-to-br ${
-      isAdminChat ? "from-blue-500 to-purple-600" : "from-green-400 to-blue-500"
-    } rounded-full flex items-center justify-center mr-3">
-      <i class="fas ${isAdminChat ? 'fa-headset' : 'fa-user'} text-white text-sm"></i>
+  const headerHtml = `
+    <div class="relative">
+      <div class="w-12 h-12 bg-gradient-to-br ${
+        actuallyAdmin ? "from-blue-500 to-purple-600" : "from-green-400 to-blue-500"
+      } rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+        <i class="fas ${actuallyAdmin ? 'fa-headset' : 'fa-user'} text-white"></i>
+      </div>
+      <div class="absolute -bottom-1 -right-1 w-4 h-4 ${actuallyAdmin ? 'bg-blue-400' : 'bg-green-400'} border-2 border-white rounded-full"></div>
     </div>
-    <div>
-      <h3 class="font-semibold text-textMain">${otherUser.name}</h3>
-      <p class="text-sm ${isAdminChat ? 'text-blue-600' : 'text-gray-500'}">${otherUser.specialty}</p>
-      ${isAdminChat ? '<p class="text-xs text-blue-600 font-medium">Admin Support</p>' : ''}
+    <div class="flex-1">
+      <div class="flex items-center gap-2 mb-1">
+        <h3 class="font-bold text-gray-800 text-lg">${otherUser.name}</h3>
+        <span class="px-2 py-1 rounded-full text-xs font-medium ${
+          actuallyAdmin
+            ? 'bg-blue-100 text-blue-700'
+            : 'bg-green-100 text-green-700'
+        }">
+          ${actuallyAdmin ? 'Support' : 'Therapist'}
+        </span>
+      </div>
+      <p class="text-sm ${actuallyAdmin ? 'text-blue-600' : 'text-gray-600'} font-medium">${otherUser.specialty}</p>
+      <div class="flex items-center gap-1 mt-1">
+        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+        <span class="text-xs text-gray-500">Online</span>
+      </div>
     </div>
   `;
+
+  console.log("Setting chat header HTML:", headerHtml.substring(0, 100) + "...");
+  header.innerHTML = headerHtml;
+  console.log("Chat header HTML set, length:", header.innerHTML.length);
 }
 
 function displayMessages() {
@@ -483,30 +1827,138 @@ function displayMessages() {
 
   if (messages.length === 0) {
     container.innerHTML = `
-      <div class="text-center text-gray-500 py-8">
-        <i class="fas fa-comments text-4xl mb-2 text-gray-400"></i>
-        <p class="text-gray-600">No messages yet. Start the conversation!</p>
+      <div class="text-center text-gray-500 py-16">
+        <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+          <i class="fas fa-comments text-3xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">No messages yet</h3>
+        <p class="text-gray-500">Start the conversation!</p>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = messages.map(msg => {
+  container.innerHTML = messages.map((msg, index) => {
     const isOwn = msg.sender_id == currentUserId;
     const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+    // Enhanced reactions display
+    const reactionsHtml = msg.reactions && Object.keys(msg.reactions).length > 0 ?
+      `<div class="flex flex-wrap gap-1 mt-3">
+        ${Object.entries(msg.reactions).map(([emoji, count]) =>
+          `<span class="inline-flex items-center bg-white/80 backdrop-blur-sm text-xs px-2 py-1 rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            ${emoji} ${count}
+          </span>`
+        ).join('')}
+       </div>` : '';
+
+    // Enhanced file attachment display
+    let fileHtml = '';
+    if (msg.file_url) {
+      if (msg.message_type === 'image' && msg.thumbnail_url) {
+        fileHtml = `
+          <div class="mt-3">
+            <div class="relative group">
+              <img src="${msg.thumbnail_url}" alt="${msg.file_name}"
+                   class="max-w-xs rounded-xl cursor-pointer shadow-lg transition-transform duration-200 hover:scale-105 border border-gray-200"
+                   onclick="openImageModal('${msg.file_url}')" />
+              <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all duration-200"></div>
+            </div>
+          </div>
+        `;
+      } else {
+        fileHtml = `
+          <div class="mt-3 flex items-center bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+              <i class="fas fa-file-alt text-white text-sm"></i>
+            </div>
+            <div class="flex-1">
+              <a href="${msg.file_url}" target="_blank" class="text-blue-600 hover:text-blue-700 font-medium text-sm block hover:underline">
+                ${msg.file_name}
+              </a>
+              <span class="text-xs text-gray-500">${formatFileSize(msg.file_size)}</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Enhanced message status indicator with better visual feedback
+     let statusIcon = '';
+     let statusText = '';
+     if (msg.message_status === 'read') {
+       statusIcon = 'fas fa-check-double text-blue-500';
+       statusText = 'Read';
+     } else if (msg.message_status === 'delivered') {
+       statusIcon = 'fas fa-check-double text-gray-400';
+       statusText = 'Delivered';
+     } else if (msg.message_status === 'sent') {
+       statusIcon = 'fas fa-check text-green-400';
+       statusText = 'Sent';
+     } else {
+       statusIcon = 'fas fa-clock text-gray-400';
+       statusText = 'Sending...';
+     }
+
+    // Enhanced reply indicator
+    const replyHtml = msg.reply_to_id ? `
+      <div class="mb-3 p-3 bg-gray-50/80 backdrop-blur-sm rounded-xl border-l-4 border-blue-400 text-xs">
+        <div class="flex items-center gap-2 text-blue-600 mb-1">
+          <i class="fas fa-reply text-xs"></i>
+          <span class="font-medium">Replying to a message</span>
+        </div>
+        <p class="text-gray-600">Previous message content...</p>
+      </div>
+    ` : '';
+
     return `
-      <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4">
-        <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm ${isOwn ? 'bg-primary text-white ml-auto' : 'bg-white border ml-0'}">
-          <p class="text-sm">${msg.content || "No content"}</p>
-          <p class="text-xs ${isOwn ? 'text-primary/70' : 'text-gray-500'} mt-1">${time}</p>
+      <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 group">
+        <div class="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl ${isOwn ? 'ml-auto' : 'mr-auto'}">
+          ${!isOwn ? `<p class="text-xs text-gray-500 mb-2 font-medium">${senderName}</p>` : ''}
+          <div class="relative">
+            <div class="px-4 py-3 rounded-2xl shadow-lg chat-message-bubble ${isOwn
+              ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
+              : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 text-gray-800'} transition-all duration-200 hover:shadow-xl">
+              ${replyHtml}
+              <p class="text-sm leading-relaxed whitespace-pre-wrap">${msg.content || ""}</p>
+              ${fileHtml}
+              ${reactionsHtml}
+              <div class="flex items-center justify-between mt-2">
+                <div class="flex items-center gap-2">
+                  <p class="text-xs ${isOwn ? 'text-white/70' : 'text-gray-500'} opacity-80">${time}</p>
+                  ${isOwn && msg.message_status ? `<span class="text-xs ${isOwn ? 'text-white/60' : 'text-gray-400'} opacity-60">${statusText}</span>` : ''}
+                </div>
+                ${isOwn ? `<div class="flex items-center gap-1" title="${statusText}">
+                  <i class="${statusIcon} text-xs"></i>
+                </div>` : ''}
+              </div>
+            </div>
+            <!-- Enhanced Message actions (show on hover) -->
+            <div class="absolute ${isOwn ? 'left-0' : 'right-0'} top-0 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/95 backdrop-blur-sm shadow-xl rounded-xl border border-gray-200/50 text-xs transform translate-y-2 group-hover:translate-y-0">
+              <div class="flex">
+                <button onclick="replyToMessage('${msg.id}')"
+                        class="px-3 py-2 hover:bg-gray-50 rounded-l-xl transition-colors duration-200 flex items-center gap-1">
+                  <i class="fas fa-reply"></i>
+                  <span>Reply</span>
+                </button>
+                <button onclick="addReaction('${msg.id}')"
+                        class="px-3 py-2 hover:bg-gray-50 rounded-r-xl transition-colors duration-200 flex items-center gap-1">
+                  <i class="fas fa-smile"></i>
+                  <span>React</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     `;
   }).join("");
 
+  // Auto-scroll to bottom after displaying messages
   setTimeout(() => {
-    container.scrollTop = container.scrollHeight;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, 100);
 }
 
@@ -570,14 +2022,31 @@ function backToConversations() {
     socket.emit("leave_conversation", currentConversationId);
   }
 
+  // Hide chat view and show conversations
   document.getElementById("chat-view").classList.add("hidden");
-  document.getElementById("conversations-container").classList.remove("hidden");
+  document.getElementById("welcome-screen").classList.remove("hidden");
 
-  loadConversations();
+  // Close therapist sidebar on mobile
+  closeTherapistSidebar();
+
+  // Reload conversations based on current mode
+  if (currentChatMode === 'patient') {
+    loadPatientConversations();
+  } else if (currentChatMode === 'admin') {
+    loadAdminConversations();
+  } else {
+    loadConversations();
+  }
 }
 
 function refreshConversations() {
-  loadConversations();
+  if (currentChatMode === 'patient') {
+    loadPatientConversations();
+  } else if (currentChatMode === 'admin') {
+    loadAdminConversations();
+  } else {
+    loadConversations();
+  }
   showToast("Conversations refreshed");
 }
 
@@ -615,18 +2084,29 @@ function formatMessageTime(timestamp) {
 
 function showToast(message, type = "success") {
   const toast = document.createElement("div");
-  toast.className = `fixed top-4 right-4 ${type === "error" ? "bg-red-500" : "bg-green-500"} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+  toast.className = `fixed top-6 right-6 ${type === "error" ? "bg-red-500" : type === "info" ? "bg-blue-500" : "bg-green-500"} text-white px-6 py-4 rounded-xl shadow-2xl z-70 transform translate-x-full transition-transform duration-300`;
   toast.innerHTML = `
-    <div class="flex items-center">
-      <i class="fas ${type === "error" ? "fa-exclamation-circle" : "fa-check-circle"} mr-2"></i>
-      <span>${message}</span>
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+        <i class="fas ${type === "error" ? "fa-exclamation-circle" : type === "info" ? "fa-info-circle" : "fa-check-circle"}"></i>
+      </div>
+      <span class="font-medium">${message}</span>
     </div>
   `;
 
   document.body.appendChild(toast);
 
+  // Animate in
   setTimeout(() => {
-    toast.remove();
+    toast.classList.remove("translate-x-full");
+  }, 100);
+
+  // Animate out and remove
+  setTimeout(() => {
+    toast.classList.add("translate-x-full");
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
   }, 3000);
 }
 
@@ -638,4 +2118,224 @@ function startPhoneCall() {
 function startVideoCall() {
   showToast("Video calling feature coming soon!", "info");
 }
+
+// Message polling function for fallback when socket fails
+let messagePollingInterval = null;
+
+function startMessagePolling(conversationId) {
+  if (messagePollingInterval) {
+    clearInterval(messagePollingInterval);
+  }
+
+  messagePollingInterval = setInterval(async () => {
+    try {
+      const response = await fetch(`/appointments/chat/conversations/${conversationId}/messages`, {
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.messages) {
+        // Check if we have new messages
+        if (data.messages.length !== messages.length) {
+          messages = data.messages;
+          displayMessages();
+          console.log("Loaded messages via polling:", messages.length);
+        }
+      }
+    } catch (error) {
+      console.error("Error polling messages:", error);
+    }
+  }, 5000); // Poll every 5 seconds
+}
+
+function stopMessagePolling() {
+  if (messagePollingInterval) {
+    clearInterval(messagePollingInterval);
+    messagePollingInterval = null;
+  }
+}
 </script>
+
+<style>
+/* Enhanced scrollbar for chat messages */
+#messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+#messages-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+#messages-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+#messages-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Enhanced scrollbar for conversations */
+#conversations-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+#conversations-container::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+#conversations-container::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 2px;
+}
+
+/* Enhanced responsive design and scrolling */
+#chat-view {
+  height: calc(100vh - 0px); /* Full viewport height */
+}
+
+#messages-container {
+  height: calc(100vh - 300px); /* Fixed height for proper scrolling */
+  max-height: calc(100vh - 300px);
+}
+
+#conversations-container {
+  height: calc(100vh - 200px); /* Fixed height for conversations */
+  max-height: calc(100vh - 200px);
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  .conversations-container {
+    width: 100% !important;
+  }
+
+  #messages-container {
+    height: calc(100vh - 220px); /* More space for mobile input area */
+  }
+
+  .chat-message-bubble {
+    max-width: 85% !important; /* Prevent messages from being too wide on mobile */
+  }
+
+  /* Improve touch targets */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better spacing for mobile */
+  .p-6 {
+    padding: 1rem !important;
+  }
+
+  /* Hide text on very small screens for some buttons */
+  @media (max-width: 480px) {
+    .btn-text {
+      display: none;
+    }
+  }
+}
+
+/* Enhanced scrollbar for better mobile experience */
+#messages-container::-webkit-scrollbar,
+#conversations-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+#messages-container::-webkit-scrollbar-track,
+#conversations-container::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+}
+
+#messages-container::-webkit-scrollbar-thumb,
+#conversations-container::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 2px;
+}
+
+#messages-container::-webkit-scrollbar-thumb:hover,
+#conversations-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
+}
+
+/* Smooth animations for better UX */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Enhanced focus states for accessibility */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Better contrast for status indicators */
+.status-indicator {
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+/* Enhanced scroll containers */
+.scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+/* Smooth focus transitions */
+#messages-container:focus {
+  outline: none;
+}
+
+#messages-container:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: -2px;
+}
+
+/* Enhanced message loading animation */
+.message-fade-in {
+  animation: messageFadeIn 0.3s ease-out;
+}
+
+@keyframes messageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

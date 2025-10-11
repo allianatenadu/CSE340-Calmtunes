@@ -1,23 +1,24 @@
-<!-- Panic Support Page with Enhanced Recording UI -->
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+ <!-- Main Content Area -->
+ <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
   <!-- Emergency Banner -->
   <div
     id="emergency-banner"
-    class="fixed top-0 left-0 right-0 bg-red-600 text-white p-4 z-50 shadow-xl"
+    class="fixed top-0 left-0 right-0 bg-red-600 text-white p-3 sm:p-4 z-50 shadow-xl"
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <div class="flex items-center">
+      <div class="flex items-center min-w-0 flex-1">
         <i
-          class="fas fa-exclamation-triangle mr-3 text-yellow-300 text-2xl"
+          class="fas fa-exclamation-triangle mr-2 sm:mr-3 text-yellow-300 text-lg sm:text-2xl flex-shrink-0"
         ></i>
-        <div>
-          <h1 class="text-xl font-bold">🚨 Emergency Panic Support</h1>
-          <p class="text-sm">You're not alone - help is here</p>
+        <div class="min-w-0 flex-1">
+          <h1 class="text-base sm:text-xl font-bold truncate">🚨 Emergency Panic Support</h1>
+          <p class="text-xs sm:text-sm truncate">You're not alone - help is here</p>
         </div>
       </div>
       <button
         onclick="closeBanner()"
-        class="text-white hover:text-gray-200 text-xl"
+        class="text-white hover:text-gray-200 text-lg sm:text-xl flex-shrink-0 ml-2"
       >
         <i class="fas fa-times"></i>
       </button>
@@ -30,184 +31,162 @@
   <!-- Session Info Panel -->
   <div id="session-info" class="fixed top-20 left-4 right-4 z-30"></div>
 
-  <div class="max-w-7xl mx-auto px-4 py-8 pt-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pt-16 sm:pt-20">
     <!-- Hero Section -->
-    <div class="text-center mb-12">
-      <h1 class="text-4xl font-bold text-gray-800 mb-4">Breathe & Get Help</h1>
-      <p class="text-xl text-gray-600 mb-8">
+    <div class="text-center mb-8 sm:mb-12">
+      <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-3 sm:mb-4">Breathe & Get Help</h1>
+      <p class="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 px-4">
         Immediate tools for panic attacks and emergency support
       </p>
-      <div class="flex justify-center space-x-4 mb-8">
+      <div class="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mb-6 sm:mb-8 px-4">
         <button
-          onclick="startBreathing()"
-          class="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-blue-700 transition-all"
+          onclick="startBreathing(); showRecordingPanel();"
+          class="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center"
         >
-          <i class="fas fa-lungs mr-2"></i>Start Breathing Exercise
+          <i class="fas fa-lungs mr-2"></i><span class="hidden sm:inline">Start Breathing Exercise</span><span class="sm:hidden">Breathing</span>
         </button>
         <button
           onclick="syncFailedSessions()"
           id="sync-btn"
-          class="hidden bg-orange-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-orange-700 transition-all"
+          class="w-full sm:w-auto bg-orange-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold shadow-lg hover:bg-orange-700 transition-all flex items-center justify-center"
         >
-          <i class="fas fa-sync mr-2"></i>Sync Failed Sessions
+          <i class="fas fa-sync mr-2"></i><span class="hidden sm:inline">Sync Failed Sessions</span><span class="sm:hidden">Sync</span>
         </button>
         <button
           onclick="scrollToEmergency()"
-          class="bg-red-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-red-700 transition-all"
+          class="w-full sm:w-auto bg-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold shadow-lg hover:bg-red-700 transition-all flex items-center justify-center"
         >
-          <i class="fas fa-phone mr-2"></i>Emergency Contacts
+          <i class="fas fa-phone mr-2"></i><span class="hidden sm:inline">Emergency Contacts</span><span class="sm:hidden">Emergency</span>
         </button>
         <button
-          onclick="initializePanicSession('manual')"
-          class="bg-green-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-green-700 transition-all"
+          onclick="initializePanicSession('manual'); showRecordingPanel();"
+          class="w-full sm:w-auto bg-green-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold shadow-lg hover:bg-green-700 transition-all flex items-center justify-center"
         >
-          <i class="fas fa-record-vinyl mr-2"></i>Start Recording Session
+          <i class="fas fa-record-vinyl mr-2"></i><span class="hidden sm:inline">Start Recording Session</span><span class="sm:hidden">Record</span>
+        </button>
+        <button
+          onclick="startPanicAttackAudioGuide()"
+          class="w-full sm:w-auto bg-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold shadow-lg hover:bg-purple-700 transition-all flex items-center justify-center"
+        >
+          <i class="fas fa-female mr-2"></i><span class="hidden sm:inline">Panic Attack Audio Guide</span><span class="sm:hidden">Audio Guide</span>
         </button>
       </div>
     </div>
 
-    <!-- Session Recording Panel (Initially Hidden) -->
-    <div id="session-recording-panel" class="hidden mb-8">
-      <div class="bg-white rounded-2xl shadow-xl p-6">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center">
+
+    <!-- Main Content - Side by Side Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8 sm:mb-12">
+      <!-- Left Side: Breathing Exercise & Recording -->
+      <section class="space-y-6">
+        <!-- Breathing Exercise -->
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+          <h2 class="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-4 sm:mb-6">
+            4-7-8 Breathing Technique
+          </h2>
+          <p class="text-center text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base px-2">
+            This technique can help calm your nerves and reduce anxiety. Follow the visual guide below.
+          </p>
+
+          <div class="flex justify-center items-center mb-6 sm:mb-8">
             <div
-              class="w-4 h-4 bg-red-500 rounded-full mr-3 animate-pulse"
-            ></div>
-            <h2 class="text-xl font-bold text-gray-800">
-              Active Session Recording
-            </h2>
+              id="breathing-circle"
+              class="w-40 h-40 sm:w-48 sm:h-48 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-lg sm:text-xl font-bold shadow-2xl relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-3xl"
+            >
+              <div id="breath-text" class="text-center">
+                <div class="text-2xl mb-1">Breathe in</div>
+                <div class="text-lg opacity-80">4s</div>
+              </div>
+              <div
+                id="breath-progress"
+                class="absolute inset-0 rounded-full bg-white opacity-30 scale-0 transition-transform duration-1000 origin-center"
+              ></div>
+              <!-- Animated ring -->
+              <div id="breathing-ring" class="absolute inset-0 rounded-full border-4 border-white opacity-60 animate-ping"></div>
+            </div>
           </div>
+
+          <div class="text-center space-y-4">
+            <p id="instruction-text" class="text-lg font-medium text-gray-700">
+              Inhale for 4 seconds, hold for 7, exhale for 8
+            </p>
+            <div class="flex justify-center items-center space-x-6 text-sm text-gray-500">
+              <span class="flex items-center">
+                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                <span>Phase: <span id="phase-display" class="font-medium text-gray-700">Ready</span></span>
+              </span>
+              <span class="flex items-center">
+                <i class="fas fa-clock mr-1"></i>
+                <span>Time: <span id="timer-display" class="font-medium text-gray-700">0s</span></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-6 p-4 bg-blue-50 rounded-xl">
+            <h3 class="font-semibold text-blue-800 mb-2">How to Use:</h3>
+            <ul class="text-sm text-blue-700 space-y-1 list-disc list-inside">
+              <li>Find a comfortable position</li>
+              <li>Place one hand on your belly</li>
+              <li>Follow the circle: Inhale (expand), Hold, Exhale (contract)</li>
+              <li>Repeat the cycle 4 times</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Session Recording Controls -->
+        <div class="bg-white rounded-2xl shadow-xl p-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-record-vinyl text-red-500 mr-3"></i>
+            Session Recording
+          </h3>
+
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-blue-600" id="session-duration">00:00</div>
+              <div class="text-sm text-gray-500">Duration</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-green-600" id="recording-status">Ready</div>
+              <div class="text-sm text-gray-500">Status</div>
+            </div>
+          </div>
+
           <div class="flex space-x-3">
             <button
-              onclick="pauseRecording()"
-              id="pause-recording-btn"
-              class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
+              onclick="initializePanicSession('breathing_exercise')"
+              class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center"
             >
-              <i class="fas fa-pause mr-1"></i>Pause
+              <i class="fas fa-play mr-2"></i>Start
             </button>
             <button
               onclick="endPanicSession()"
-              class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+              id="stop-recording-btn"
+              class="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors items-center justify-center"
             >
-              <i class="fas fa-stop mr-1"></i>End Session
+              <i class="fas fa-stop mr-2"></i>Stop
             </button>
           </div>
         </div>
-
-        <div class="grid md:grid-cols-3 gap-4">
-          <div class="bg-blue-50 p-4 rounded-lg">
-            <div class="flex items-center">
-              <i class="fas fa-clock text-blue-600 mr-2"></i>
-              <div>
-                <p class="text-sm text-blue-700">Duration</p>
-                <p class="font-bold text-blue-800" id="session-duration">
-                  0:00
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-green-50 p-4 rounded-lg">
-            <div class="flex items-center">
-              <i class="fas fa-microphone text-green-600 mr-2"></i>
-              <div>
-                <p class="text-sm text-green-700">Audio Status</p>
-                <p class="font-bold text-green-800" id="audio-status">
-                  Recording...
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-purple-50 p-4 rounded-lg">
-            <div class="flex items-center">
-              <i class="fas fa-heartbeat text-purple-600 mr-2"></i>
-              <div>
-                <p class="text-sm text-purple-700">Activities</p>
-                <p class="font-bold text-purple-800" id="activities-count">
-                  0 completed
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Content - Side by Side Layout -->
-    <div class="grid lg:grid-cols-2 gap-8 mb-12">
-      <!-- Left Side: Breathing Exercise -->
-      <section
-        id="breathing-section"
-        class="bg-white rounded-2xl shadow-xl p-10"
-      >
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">
-          4-7-8 Breathing Technique
-        </h2>
-        <p class="text-center text-gray-600 mb-8">
-          Inhale for 4 seconds, hold for 7, exhale for 8. Repeat 4 times.
-        </p>
-
-        <div class="flex justify-center items-center">
-          <div
-            id="breathing-circle"
-            class="w-64 h-64 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-2xl relative overflow-hidden cursor-pointer"
-          >
-            <div id="breath-text">Click to Start</div>
-            <div
-              id="breath-progress"
-              class="absolute inset-0 rounded-full bg-white opacity-20"
-              style="width: 0%"
-            ></div>
-          </div>
-        </div>
-
-        <div class="text-center mt-8 space-y-4">
-          <p id="instruction-text" class="text-lg font-medium text-gray-700">
-            Get ready to breathe
-          </p>
-          <div class="flex justify-center space-x-4 text-sm text-gray-500">
-            <span>Phase: <span id="phase-display">Ready</span></span>
-            <span>Time: <span id="timer-display">0s</span></span>
-          </div>
-          <button
-            onclick="stopBreathing()"
-            id="stop-btn"
-            class="hidden bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-colors"
-          >
-            <i class="fas fa-stop mr-2"></i>Stop
-          </button>
-        </div>
-
-        <div class="mt-8 p-4 bg-blue-50 rounded-xl">
-          <h3 class="font-semibold text-blue-800 mb-2">How to Use:</h3>
-          <ul class="text-sm text-blue-700 space-y-1 list-disc list-inside">
-            <li>Find a comfortable position</li>
-            <li>Place one hand on your belly</li>
-            <li>Follow the circle: Inhale (expand), Hold, Exhale (contract)</li>
-            <li>Repeat the cycle 4 times</li>
-          </ul>
-        </div>
       </section>
 
-      <!-- Right Side: Emergency Contacts -->
-      <section
-        id="emergency-section"
-        class="bg-white rounded-2xl shadow-xl p-10"
-      >
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-gray-800">Emergency Contacts</h2>
-          <button
-            onclick="openAddContactModal()"
-            class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center"
-          >
-            <i class="fas fa-plus mr-2"></i>Add Contact
-          </button>
-        </div>
-        <p class="text-center text-gray-600 mb-6">
-          Call immediately if you feel unsafe or need urgent help
-        </p>
+      <!-- Right Side: Emergency Contacts & Session Management -->
+      <section class="space-y-6">
+
+        <!-- Emergency Contacts -->
+        <div
+          id="emergency-section"
+          class="bg-white rounded-2xl shadow-xl p-6"
+        >
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center">
+              <i class="fas fa-phone text-red-600 mr-3"></i>Emergency Contacts
+            </h2>
+            <button
+              onclick="openAddContactModal()"
+              class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center text-sm"
+            >
+              <i class="fas fa-plus mr-2"></i>Add Contact
+            </button>
+          </div>
 
         <div class="space-y-4">
           <% emergencyContacts.forEach(contact => { %> <% if
@@ -295,15 +274,28 @@
     <!-- Session Recordings Section -->
     <section
       id="session-recordings-section"
-      class="bg-white rounded-2xl shadow-xl p-8 mb-8"
-      style="display: none"
+      class="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8"
     >
-      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <i class="fas fa-headphones mr-3 text-blue-600"></i>Session Recordings
-      </h2>
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 sm:mb-6">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+          <i class="fas fa-headphones mr-3 text-blue-600"></i>Session Recordings
+        </h2>
+        <button
+          onclick="refreshSessionRecordings()"
+          class="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center text-sm w-full sm:w-auto"
+        >
+          <i class="fas fa-sync mr-2"></i>Refresh
+        </button>
+      </div>
 
       <div id="session-recordings" class="space-y-4">
         <!-- Recordings will be populated dynamically -->
+      </div>
+
+      <!-- Loading placeholder -->
+      <div id="loading-recordings" class="text-center py-8" style="display: none;">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-2 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading session recordings...</p>
       </div>
 
       <!-- No recordings placeholder -->
@@ -317,11 +309,11 @@
     </section>
 
     <!-- Therapist Support Section - Full Width -->
-    <section class="bg-white rounded-2xl shadow-xl p-8">
-      <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">
+    <section class="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+      <h2 class="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-6 sm:mb-8">
         Professional Support
       </h2>
-      <div class="grid md:grid-cols-2 gap-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
         <div class="text-center">
           <% if (hasTherapist) { %>
           <div class="mb-6">
@@ -497,7 +489,7 @@
     id="recording-control-modal"
     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4"
   >
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+    <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl">
       <div class="p-6">
         <div class="text-center mb-6">
           <div
@@ -540,6 +532,11 @@
       </div>
     </div>
   </div>
+
+  <!-- Panic Attack Audio Guide -->
+  <audio id="panic-attack-audio" loop preload="auto">
+    <source src="/audio/panic-audio.mp3" type="audio/mpeg" />
+  </audio>
 
   <!-- Breathing Audio (optional ambient sounds) -->
   <audio id="ambient-sound" loop preload="auto">
@@ -747,6 +744,296 @@
       }, 3000);
     }
 
+    // Session recordings functions
+    async function loadSessionRecordings() {
+      const recordingsContainer = document.getElementById("session-recordings");
+      const noRecordingsPlaceholder = document.getElementById("no-recordings-placeholder");
+      const loadingElement = document.getElementById("loading-recordings");
+
+      if (!recordingsContainer) return;
+
+      // Show loading state
+      if (loadingElement) loadingElement.style.display = "block";
+      if (noRecordingsPlaceholder) noRecordingsPlaceholder.style.display = "none";
+
+      try {
+        const response = await fetch("/panic/sessions", {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.sessions && data.sessions.length > 0) {
+          displaySessionRecordings(data.sessions);
+        } else {
+          showNoRecordings();
+        }
+      } catch (error) {
+        console.error("Error loading session recordings:", error);
+        showNoRecordings();
+        showTempMessage("Error loading recordings. Please try again.", "error");
+      } finally {
+        if (loadingElement) loadingElement.style.display = "none";
+      }
+    }
+
+    function displaySessionRecordings(sessions) {
+      const recordingsContainer = document.getElementById("session-recordings");
+      const noRecordingsPlaceholder = document.getElementById("no-recordings-placeholder");
+
+      if (!recordingsContainer) return;
+
+      // Hide no recordings placeholder
+      if (noRecordingsPlaceholder) {
+        noRecordingsPlaceholder.style.display = "none";
+      }
+
+      recordingsContainer.innerHTML = sessions.map(session => {
+        const startTime = new Date(session.start_time);
+        const durationMinutes = Math.floor((session.duration || 0) / 60000);
+        const durationSeconds = Math.floor(((session.duration || 0) % 60000) / 1000);
+        const durationText = durationMinutes > 0
+          ? `${durationMinutes}m ${durationSeconds}s`
+          : `${durationSeconds}s`;
+
+        const hasAudio = session.audio_recordings && session.audio_recordings.length > 0;
+        const breathingIcon = session.breathing_used ? "text-green-600" : "text-gray-400";
+        const emergencyIcon = session.emergency_contacts_used && session.emergency_contacts_used.length > 0
+          ? "text-red-600"
+          : "text-gray-400";
+
+        return `
+          <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center flex-1">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                  <i class="fas fa-microphone text-blue-600"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="font-semibold text-gray-800">Panic Session</h3>
+                    <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                      ${session.trigger_method || 'manual'}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                    <span class="flex items-center">
+                      <i class="fas fa-clock mr-1"></i>
+                      ${startTime.toLocaleDateString()} ${startTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                    <span class="flex items-center">
+                      <i class="fas fa-hourglass-half mr-1"></i>
+                      ${durationText}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="flex items-center text-xs">
+                      <i class="fas fa-lungs ${breathingIcon} mr-1"></i>
+                      Breathing ${session.breathing_used ? 'Used' : 'Not Used'}
+                    </span>
+                    <span class="flex items-center text-xs">
+                      <i class="fas fa-phone ${emergencyIcon} mr-1"></i>
+                      Emergency ${session.emergency_contacts_used && session.emergency_contacts_used.length > 0 ? 'Used' : 'Not Used'}
+                    </span>
+                    ${hasAudio ? `<span class="flex items-center text-xs text-green-600">
+                      <i class="fas fa-volume-up mr-1"></i>
+                      Audio Available
+                    </span>` : ''}
+                  </div>
+                  ${session.session_notes ? `<p class="text-sm text-gray-600 mt-2 italic">"${session.session_notes}"</p>` : ''}
+                </div>
+              </div>
+              <div class="flex flex-col gap-2">
+                ${hasAudio ? `
+                  <button onclick="playSessionRecording('${session.session_id}')"
+                          class="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm flex items-center">
+                    <i class="fas fa-play mr-1"></i>Play
+                  </button>
+                ` : ''}
+                <button onclick="deleteSessionRecording('${session.id}')"
+                        class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm flex items-center">
+                  <i class="fas fa-trash mr-1"></i>Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function showNoRecordings() {
+      const recordingsContainer = document.getElementById("session-recordings");
+      const noRecordingsPlaceholder = document.getElementById("no-recordings-placeholder");
+
+      if (recordingsContainer) recordingsContainer.innerHTML = "";
+      if (noRecordingsPlaceholder) {
+        noRecordingsPlaceholder.style.display = "block";
+      }
+    }
+
+    function refreshSessionRecordings() {
+      // Show loading state
+      const recordingsContainer = document.getElementById("session-recordings");
+      const loadingElement = document.getElementById("loading-recordings");
+      const noRecordingsPlaceholder = document.getElementById("no-recordings-placeholder");
+
+      if (loadingElement) loadingElement.style.display = "block";
+      if (recordingsContainer) recordingsContainer.innerHTML = "";
+      if (noRecordingsPlaceholder) noRecordingsPlaceholder.style.display = "none";
+
+      // Reload the page to refresh recordings
+      setTimeout(() => {
+        loadSessionRecordings();
+      }, 500);
+
+      showTempMessage("Refreshing session recordings...", "info");
+    }
+
+    async function playSessionRecording(sessionId) {
+      try {
+        // Get the specific session for playback
+        const response = await fetch(`/panic/sessions/${sessionId}/playback`, {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.session) {
+          const session = data.session;
+
+          if (session.audio_recordings && session.audio_recordings.length > 0) {
+            // Play the first audio recording
+            const audioRecording = session.audio_recordings[0];
+
+            if (audioRecording.filename) {
+              // Use the stored audio file
+              const audioUrl = `/panic/audio/${audioRecording.filename}`;
+
+              // Create audio player modal
+              const audioModal = document.createElement('div');
+              audioModal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+              audioModal.innerHTML = `
+                <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+                  <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <i class="fas fa-play text-blue-600 text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Session Recording</h2>
+                    <p class="text-gray-600">Session: ${sessionId.slice(-8)}</p>
+                    <p class="text-sm text-gray-500">Duration: ${Math.round(audioRecording.duration / 1000)}s • Size: ${Math.round(audioRecording.size / 1024)}KB</p>
+                    <p class="text-xs text-purple-600 mt-1">Recorded on ${new Date(session.start_time).toLocaleDateString()}</p>
+                  </div>
+
+                  <audio id="session-audio-player" controls class="w-full mb-4" style="height: 40px;">
+                    <source src="${audioUrl}" type="audio/webm">
+                    Your browser does not support audio playback.
+                  </audio>
+
+                  <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-2">Session Details</h3>
+                    <div class="text-sm text-gray-600 space-y-1">
+                      <p><strong>Trigger:</strong> ${session.trigger_method?.replace('_', ' ') || 'Manual'}</p>
+                      <p><strong>Duration:</strong> ${Math.round(session.duration / 60000)}m ${Math.round((session.duration % 60000) / 1000)}s</p>
+                      <p><strong>Breathing:</strong> ${session.breathing_used ? 'Used' : 'Not used'}</p>
+                      <p><strong>Emergency:</strong> ${session.emergency_contacts_used?.length || 0} contacts</p>
+                    </div>
+                  </div>
+
+                  <div class="flex space-x-3">
+                    <button onclick="downloadSessionAudio('${sessionId}', '${audioRecording.filename}')" class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700">
+                      <i class="fas fa-download mr-2"></i>Download
+                    </button>
+                    <button onclick="closeAudioModal()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400">
+                      Close
+                    </button>
+                  </div>
+                </div>
+              `;
+
+              // Add to DOM
+              document.body.appendChild(audioModal);
+
+              // Handle close
+              window.closeAudioModal = () => {
+                const audioPlayer = document.getElementById('session-audio-player');
+                if (audioPlayer) {
+                  audioPlayer.pause();
+                  audioPlayer.currentTime = 0;
+                }
+                document.body.removeChild(audioModal);
+                delete window.closeAudioModal;
+                delete window.downloadSessionAudio;
+              };
+
+              // Close on background click
+              audioModal.onclick = (e) => {
+                if (e.target === audioModal) {
+                  closeAudioModal();
+                }
+              };
+
+              showTempMessage("Loading session recording...", "success");
+            } else {
+              showTempMessage("Audio file not available for playback", "warning");
+            }
+          } else {
+            showTempMessage("No audio recordings found for this session", "warning");
+          }
+        } else {
+          showTempMessage("Session not found or access denied", "error");
+        }
+      } catch (error) {
+        console.error("Error playing recording:", error);
+        showTempMessage("Error loading recording. Please try again.", "error");
+      }
+    }
+
+    function downloadSessionAudio(sessionId, filename) {
+      // Create download link
+      const downloadUrl = `/panic/audio/${filename}`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `panic_session_${sessionId.slice(-8)}.webm`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showTempMessage("Audio file downloaded", "success");
+    }
+
+    async function deleteSessionRecording(sessionId) {
+      if (!confirm("Are you sure you want to delete this session recording? This action cannot be undone.")) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/panic/sessions/${sessionId}`, {
+          method: "DELETE",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showTempMessage("Session recording deleted successfully", "success");
+          loadSessionRecordings(); // Refresh the list
+        } else {
+          showTempMessage(data.error || "Failed to delete recording", "error");
+        }
+      } catch (error) {
+        console.error("Error deleting recording:", error);
+        showTempMessage("Error deleting recording", "error");
+      }
+    }
+
     // Recording UI functions
     function showRecordingPanel() {
       const panel = document.getElementById("session-recording-panel");
@@ -760,6 +1047,9 @@
       if (recordingsSection) {
         recordingsSection.style.display = "block";
       }
+
+      // Start real-time duration updates
+      startDurationUpdates();
     }
 
     function hideRecordingPanel() {
@@ -767,9 +1057,18 @@
       if (panel) {
         panel.classList.add("hidden");
       }
+
+      // Stop real-time duration updates
+      stopDurationUpdates();
     }
 
     function updateSessionUI() {
+      // Only update if we have an active session
+      if (!sessionData.sessionId) {
+        console.log("Session UI updated for: null (no active session)");
+        return;
+      }
+
       const duration = sessionData.startTime
         ? Math.floor(
             (Date.now() - new Date(sessionData.startTime).getTime()) / 1000
@@ -801,6 +1100,31 @@
       const audioStatusEl = document.getElementById("audio-status");
       if (audioStatusEl) {
         audioStatusEl.textContent = isRecording ? "Recording..." : "Paused";
+      }
+
+      // Update recording status display
+      const recordingStatusEl = document.getElementById("recording-status-display");
+      if (recordingStatusEl) {
+        recordingStatusEl.textContent = isRecording ? "Active" : "Inactive";
+      }
+    }
+
+    // Add real-time duration updates for active recordings
+    let durationInterval = null;
+
+    function startDurationUpdates() {
+      if (durationInterval) clearInterval(durationInterval);
+      durationInterval = setInterval(updateSessionUI, 1000);
+    }
+
+    function stopDurationUpdates() {
+      if (durationInterval) {
+        clearInterval(durationInterval);
+        durationInterval = null;
+      }
+      if (window.durationInterval) {
+        clearInterval(window.durationInterval);
+        window.durationInterval = null;
       }
     }
 
@@ -862,15 +1186,124 @@
       recordingsList.appendChild(recordingElement);
     }
 
+    // Audio recording functions for panic.ejs (variables declared in panic.js)
+
     // Recording control functions
     function pauseRecording() {
-      // This will be implemented in the main panic.js
-      console.log("Pause recording requested");
+      if (isRecording && mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.pause();
+        isRecording = false;
+        updateRecordingStatus();
+        showTempMessage("Recording paused", "info");
+        console.log("⏸️ Recording paused");
+      }
     }
 
     function resumeRecording() {
-      // This will be implemented in the main panic.js
-      console.log("Resume recording requested");
+      if (mediaRecorder && mediaRecorder.state === 'paused') {
+        mediaRecorder.resume();
+        isRecording = true;
+        updateRecordingStatus();
+        showTempMessage("Recording resumed", "success");
+        console.log("▶️ Recording resumed");
+      }
+    }
+
+    // Enhanced end session function
+    function endPanicSession() {
+      console.log("🏁 Ending panic session:", sessionData.sessionId);
+
+      // Stop recording if active
+      if (isRecording) {
+        stopAudioRecording();
+      }
+
+      // Stop breathing exercise if active
+      if (isBreathing) {
+        stopBreathing();
+      }
+
+      // Stop patient audio monitoring
+      if (patientRecordingAudio) {
+        patientRecordingAudio.close();
+        patientRecordingAudio = null;
+      }
+
+      // Stop panic attack audio
+      const panicAudio = document.getElementById('panic-attack-audio');
+      if (panicAudio) {
+        panicAudio.pause();
+        panicAudio.currentTime = 0;
+      }
+
+      // Stop ambient audio
+      const ambientAudio = document.getElementById('ambient-sound');
+      if (ambientAudio) {
+        ambientAudio.pause();
+        ambientAudio.currentTime = 0;
+      }
+
+      // Calculate total duration
+      sessionData.duration = Date.now() - new Date(sessionData.startTime).getTime();
+
+      // Save session data
+      savePanicSession();
+
+      // Hide recording controls
+      hideRecordingControls();
+
+      // NO MODAL - Just show a simple success message
+      showTempMessage(`Session ended! ${sessionData.audioRecordings.length} recording(s) saved`, 'success');
+
+      // Clean up
+      localStorage.removeItem('active_panic_session');
+      resetSessionData();
+    }
+
+    function hideRecordingControls() {
+      const startButton = document.querySelector('.session-recording-controls .bg-green-600');
+      const stopButton = document.getElementById('stop-recording-btn');
+
+      if (startButton) startButton.classList.remove('hidden');
+      if (stopButton) stopButton.classList.add('hidden');
+
+      // Reset recording status
+      updateRecordingStatus();
+    }
+
+    // Helper functions for audio recording
+    function stopAudioRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        isRecording = false;
+
+        // Stop the stream
+        if (recordingStream) {
+          recordingStream.getTracks().forEach(track => track.stop());
+        }
+
+        console.log("⏹️ Audio recording stopped");
+        updateRecordingUI(false);
+      }
+    }
+
+    function updateRecordingStatus() {
+      const statusElement = document.getElementById('recording-status');
+      const durationElement = document.getElementById('session-duration');
+
+      if (statusElement) {
+        statusElement.textContent = isRecording ? 'Recording' : 'Ready';
+        statusElement.className = isRecording
+          ? 'text-2xl font-bold text-red-600 recording-pulse'
+          : 'text-2xl font-bold text-green-600';
+      }
+
+      if (durationElement && sessionData.startTime) {
+        const elapsed = Math.floor((Date.now() - new Date(sessionData.startTime).getTime()) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        durationElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }
     }
 
     // Utility functions
@@ -889,9 +1322,114 @@
       }
     }
 
-    // Load existing contacts when page loads
+    // REMOVE/DISABLE the session summary modal completely
+    function showSessionSummary() {
+      // DO NOTHING - Modal removed
+      console.log("Session summary disabled - no modal will appear");
+      return;
+    }
+
+    // Remove any existing modals if they're already on the page
+    function removeExistingModals() {
+      // Remove any existing session summary modals
+      const modals = document.querySelectorAll('[class*="fixed inset-0 bg-black bg-opacity"]');
+      modals.forEach(modal => {
+        if (modal.textContent.includes('Session Complete') ||
+            modal.textContent.includes('Session Summary')) {
+          modal.remove();
+          console.log("Removed existing session modal");
+        }
+      });
+    }
+
+    // Load existing contacts and session recordings when page loads
     document.addEventListener('DOMContentLoaded', function() {
       loadExistingContacts();
+      loadSessionRecordings();
+      removeExistingModals();
+      console.log("Session summary modals disabled");
     });
   </script>
-</div>
+
+  <!-- Panic Page Styles -->
+  <style>
+    /* Breathing Animation Styles */
+    #breathing-circle.breathing {
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% {
+        transform: scale(1);
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      }
+      25% {
+        transform: scale(1.1);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+      75% {
+        transform: scale(0.9);
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      }
+    }
+
+    #breathing-ring {
+      animation: ring-pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes ring-pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 0.3;
+      }
+    }
+
+    /* Recording indicator pulse */
+    @keyframes record-pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+      }
+    }
+
+    .recording-pulse {
+      animation: record-pulse 1.5s ease-in-out infinite;
+    }
+
+    /* Session recording styles */
+    .session-card {
+      transition: all 0.2s ease;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .session-card:hover {
+      transform: translateX(2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .session-card.recording {
+      border-left-color: #ef4444;
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    }
+
+    /* Emergency contact styles */
+    .emergency-contact {
+      transition: all 0.2s ease;
+    }
+
+    .emergency-contact:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+  </style>
+    </div>
+  </div>
+

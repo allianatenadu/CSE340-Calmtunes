@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // Book a new appointment
 exports.bookAppointment = async (req, res) => {
-    const { therapistId, preferredDate, preferredTime, sessionType, notes } = req.body;
+    const { therapistId, preferredDate, preferredTime, sessionType = 'video', notes } = req.body;
     const patientId = req.session.user.id;
     
     try {
@@ -89,13 +89,15 @@ exports.bookAppointment = async (req, res) => {
 exports.getUserAppointments = async (req, res) => {
     const userId = req.session.user.id;
     const userRole = req.session.user.role;
-    
+
     try {
+        console.log(`Fetching appointments for user ${userId} with role ${userRole}`);
+
         let query;
         if (userRole === 'therapist') {
             query = `
-                SELECT a.*, 
-                       u.name as patient_name, 
+                SELECT a.*,
+                       u.name as patient_name,
                        u.email as patient_email,
                        u.profile_image as patient_image
                 FROM appointments a
@@ -105,27 +107,34 @@ exports.getUserAppointments = async (req, res) => {
             `;
         } else {
             query = `
-                SELECT a.*, 
-                       u.name as therapist_name, 
+                SELECT a.*,
+                       u.name as therapist_name,
                        u.email as therapist_email,
                        ta.profile_image as therapist_image,
-                       ta.specialty
+                       ta.specialty,
+                       c.id as conversation_id
                 FROM appointments a
                 JOIN users u ON a.therapist_id = u.id
                 LEFT JOIN therapist_applications ta ON u.id = ta.user_id
+                LEFT JOIN conversations c ON c.patient_id = a.patient_id AND c.therapist_id = a.therapist_id
                 WHERE a.patient_id = $1
                 ORDER BY a.appointment_date DESC, a.appointment_time DESC
             `;
         }
-        
+
         const result = await db.query(query, [userId]);
         const appointments = result.rows || [];
-        
+
+        console.log(`Found ${appointments.length} appointments for user ${userId}`);
+        if (appointments.length > 0) {
+            console.log('Sample appointment:', appointments[0]);
+        }
+
         res.json({
             success: true,
             appointments
         });
-        
+
     } catch (error) {
         console.error("Error fetching appointments:", error);
         res.status(500).json({
@@ -162,21 +171,24 @@ exports.confirmAppointment = async (req, res) => {
         
         // Update appointment status
         const updateQuery = `
-            UPDATE appointments 
-            SET status = 'confirmed', updated_at = CURRENT_TIMESTAMP 
-            WHERE id = $1 
+            UPDATE appointments
+            SET status = 'confirmed', updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
             RETURNING *
         `;
-        
+
         const result = await db.query(updateQuery, [appointmentId]);
-        
+
+        // Create or get existing conversation between therapist and patient
+        const conversationId = await ensureConversationExists(appointment.patient_id, therapistId);
+
         // Notify patient
         await createNotification(
             appointment.patient_id,
             'appointment_confirmed',
             'Appointment Confirmed',
             `Your appointment with ${req.session.user.name} on ${appointment.appointment_date} at ${appointment.appointment_time} has been confirmed.`,
-            { appointmentId: appointmentId }
+            { appointmentId: appointmentId, conversationId: conversationId }
         );
         
         res.json({
@@ -300,11 +312,44 @@ async function createNotification(userId, type, title, message, data = {}) {
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id
     `;
-    
+
     try {
         await db.query(query, [userId, type, title, message, JSON.stringify(data)]);
     } catch (error) {
         console.error("Error creating notification:", error);
+    }
+}
+
+// Helper function to ensure conversation exists between patient and therapist
+async function ensureConversationExists(patientId, therapistId) {
+    try {
+        // Check if conversation already exists
+        const existingQuery = `
+            SELECT id FROM conversations
+            WHERE patient_id = $1 AND therapist_id = $2
+                AND (status IS NULL OR status = 'active')
+        `;
+
+        const existingResult = await db.query(existingQuery, [patientId, therapistId]);
+
+        if (existingResult.rows && existingResult.rows.length > 0) {
+            return existingResult.rows[0].id;
+        }
+
+        // Create new conversation
+        const conversationId = uuidv4();
+        const createQuery = `
+            INSERT INTO conversations (id, patient_id, therapist_id, status, created_at, updated_at)
+            VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            RETURNING id
+        `;
+
+        const result = await db.query(createQuery, [conversationId, patientId, therapistId]);
+        return result.rows[0].id;
+
+    } catch (error) {
+        console.error("Error ensuring conversation exists:", error);
+        return null;
     }
 }
 
@@ -834,8 +879,8 @@ exports.rejectAppointment = async (req, res) => {
 
         // Update appointment status
         const updateQuery = `
-            UPDATE appointments 
-            SET status = 'cancelled', 
+            UPDATE appointments
+            SET status = 'rejected',
                 cancellation_reason = $1,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 AND therapist_id = $3
@@ -845,13 +890,16 @@ exports.rejectAppointment = async (req, res) => {
         const result = await db.query(updateQuery, [reason || 'Rejected by therapist', appointmentId, therapistId]);
 
         if (result.rows.length > 0) {
+            // Create conversation for patient-therapist communication even for rejected appointments
+            const conversationId = await ensureConversationExists(appointment.patient_id, therapistId);
+
             // Notify patient
             await createNotification(
                 appointment.patient_id,
                 'appointment_rejected',
                 'Appointment Request Rejected',
                 `Your appointment request for ${appointment.appointment_date} at ${appointment.appointment_time} has been rejected. ${reason ? 'Reason: ' + reason : ''}`,
-                { appointmentId: appointmentId, reason: reason }
+                { appointmentId: appointmentId, reason: reason, conversationId: conversationId }
             );
 
             res.json({

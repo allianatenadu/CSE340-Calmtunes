@@ -35,11 +35,33 @@ const dashboardController = {
           SELECT table_name
           FROM information_schema.tables
           WHERE table_schema = 'public'
-          AND table_name IN ('mood_entries', 'music_sessions', 'drawing_sessions', 'panic_sessions', 'user_activities')
+          AND table_name IN ('mood_entries', 'music_sessions', 'drawing_sessions', 'panic_sessions', 'user_activities', 'appointments')
         `;
 
         const existingTables = await pool.query(tableCheckQuery);
         const tableNames = existingTables.rows.map((row) => row.table_name);
+
+        // Get next upcoming appointment for "Your Next Session" section
+        if (tableNames.includes("appointments")) {
+          queryPromises.push(
+            pool
+              .query(
+                `SELECT a.*, u.name as therapist_name, ta.specialty
+                 FROM appointments a
+                 JOIN users u ON a.therapist_id = u.id
+                 LEFT JOIN therapist_applications ta ON u.id = ta.user_id
+                 WHERE a.patient_id = $1 AND a.status IN ('confirmed', 'pending')
+                 AND a.appointment_date >= CURRENT_DATE
+                 ORDER BY a.appointment_date ASC, a.appointment_time ASC
+                 LIMIT 1`,
+                [user.id]
+              )
+              .then((result) => ({ type: "nextAppointment", data: result.rows[0] || null }))
+              .catch(() => ({ type: "nextAppointment", data: null }))
+          );
+        } else {
+          queryPromises.push(Promise.resolve({ type: "nextAppointment", data: null }));
+        }
 
         // Query mood_entries if it exists - get latest one only
         if (tableNames.includes("mood_entries")) {
@@ -129,12 +151,27 @@ if (drawingQuery && drawingQuery.data && drawingQuery.data.length > 0) {
   });
 }
 
+// Process next appointment data
+const appointmentQuery = queryPromises.find(p => p.type === 'nextAppointment');
+if (appointmentQuery && appointmentQuery.data) {
+  dashboardData.nextAppointment = appointmentQuery.data;
+} else {
+  // Provide sample appointment data if no real appointment exists
+  dashboardData.nextAppointment = {
+    therapist_name: "Dr. Evelyn Reed",
+    appointment_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Tomorrow
+    appointment_time: "14:00:00",
+    session_type: "video",
+    status: "confirmed"
+  };
+}
+
 // Around line 160 - Sort and limit
 recentActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
 dashboardData.recentActivities = recentActivities.slice(0, 10); // Show 10 most recent
 
-        // If no activities found, provide sample data
-        if (dashboardData.recentActivities.length === 0) {
+// If no activities found, provide sample data
+if (dashboardData.recentActivities.length === 0) {
           dashboardData.recentActivities = [
             {
               type: "mood",
@@ -190,13 +227,17 @@ dashboardData.recentActivities = recentActivities.slice(0, 10); // Show 10 most 
         ];
       }
 
-      res.render("pages/dashboard", dashboardData);
+      res.render("pages/dashboard", {
+        ...dashboardData,
+        layout: 'layouts/patient'
+      });
     } catch (error) {
       console.error("Dashboard error:", error);
       res.render("pages/dashboard", {
         title: "Dashboard - CalmTunes",
         user: req.session.user,
         role: req.session.user?.role || "patient",
+        layout: 'layouts/patient',
         recentActivities: [
           {
             type: "error",
@@ -216,6 +257,7 @@ dashboardData.recentActivities = recentActivities.slice(0, 10); // Show 10 most 
     res.render("pages/panic", {
       title: "Panic Relief - CalmTunes",
       user: req.session.user,
+      layout: "layouts/patient",
     });
   },
 };

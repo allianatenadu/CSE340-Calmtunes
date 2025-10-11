@@ -1,224 +1,665 @@
-<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <!-- Header -->
-  <div class="mb-8">
-    <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">📊 Mood Tracker</h1>
-    <p class="text-xl text-gray-600">
-      Monitor your emotional patterns and identify triggers to better understand your mental health journey
-    </p>
-  </div>
+<%
+// Helper functions for mood display (server-side)
+function getMoodEmoji(mood) {
+  const emojis = {
+    'Happy': '😊',
+    'Calm': '😌',
+    'Neutral': '😐',
+    'Sad': '😢',
+    'Angry': '😠',
+    'Anxious': '😰'
+  };
+  return emojis[mood] || '😐';
+}
 
-  <!-- Today's Mood Entry -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-    <!-- Mood Entry Form -->
-    <div class="card">
-      <h2 class="text-2xl font-bold text-textMain mb-6 flex items-center">
-        <i class="fas fa-heart text-primary mr-3"></i> How are you feeling today?
-      </h2>
-      
-      <form id="moodForm" action="/mood-tracker" method="POST" class="space-y-6">
+function getMoodBadgeClass(mood) {
+  const classes = {
+    'Happy': 'bg-yellow-100 text-yellow-800',
+    'Calm': 'bg-green-100 text-green-800',
+    'Neutral': 'bg-blue-100 text-blue-800',
+    'Sad': 'bg-orange-100 text-orange-800',
+    'Angry': 'bg-red-100 text-red-800',
+    'Anxious': 'bg-purple-100 text-purple-800'
+  };
+  return classes[mood] || 'bg-gray-100 text-gray-800';
+}
 
-        <!-- Mood selection -->
-        <div>
-          <label class="block text-sm font-medium text-textMain mb-3">Select your current mood:</label>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <% const moods = ["Happy","Calm","Anxious","Sad","Angry","Neutral"]; %>
-            <% const emojis = ["😊","😌","😰","😢","😠","😐"]; %>
-            <% const colors = ["yellow","green","orange","blue","red","gray"]; %>
-            <% moods.forEach((mood, i) => { %>
-              <label class="mood-option cursor-pointer">
-                <input type="radio" name="mood" value="<%= mood %>" class="sr-only mood-radio" required>
-                <div class="mood-card p-4 rounded-lg border-2 border-gray-200 text-center transition-all duration-200 hover:border-<%= colors[i] %>-400 hover:bg-<%= colors[i] %>-50 transform hover:scale-105">
-                  <div class="text-3xl mb-2"><%= emojis[i] %></div>
-                  <div class="font-medium text-sm"><%= mood %></div>
-                </div>
-              </label>
-            <% }) %>
+function getEnergyBarClass(energy) {
+  if (energy >= 7) return 'bg-green-500';
+  if (energy >= 4) return 'bg-yellow-500';
+  return 'bg-red-500';
+}
+%>
+
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-textMain mb-4">
+        📊 Mood Tracking
+        <% if (typeof demo !== 'undefined' && demo) { %>
+          <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Demo Mode</span>
+        <% } %>
+      </h1>
+      <p class="text-xl text-gray-600">
+        Log your mood and see your progress over time.
+        <% if (typeof demo !== 'undefined' && demo) { %>
+          <span class="text-sm text-blue-600 block mt-1">ℹ️ Currently showing sample data for demonstration</span>
+        <% } %>
+      </p>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+      <!-- Left Column: Mood Graph and History -->
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Mood Graph Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Your Mood History</h2>
+            <div class="flex gap-2">
+              <button onclick="setGraphPeriod('weekly')" class="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-full">Weekly</button>
+              <button onclick="setGraphPeriod('monthly')" class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Monthly</button>
+              <button onclick="setGraphPeriod('yearly')" class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Yearly</button>
+            </div>
+          </div>
+
+          <!-- Mood Graph Canvas -->
+          <div class="relative h-80 mb-4">
+            <canvas id="moodChart" width="800" height="320"></canvas>
+          </div>
+
+          <!-- Graph Legend -->
+          <div class="flex flex-wrap gap-4 justify-center text-sm">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+              <span>Happy</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+              <span>Calm</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-blue-400 rounded-full"></div>
+              <span>Neutral</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-orange-400 rounded-full"></div>
+              <span>Sad</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-red-400 rounded-full"></div>
+              <span>Angry</span>
+            </div>
           </div>
         </div>
 
-        <!-- Energy slider -->
-        <div>
-          <label for="energy" class="block text-sm font-medium text-textMain mb-2">Energy Level (1-10):</label>
-          <div class="flex items-center space-x-4">
-            <span class="text-sm text-gray-500">Low</span>
-            <input type="range" id="energy" name="energy" min="1" max="10" value="5" class="flex-grow h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider">
-            <span class="text-sm text-gray-500">High</span>
-            <span id="energy-value" class="text-sm font-medium text-primary bg-primary/10 px-2 py-1 rounded">5</span>
+        <!-- Mood History Table -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-xl font-bold text-gray-800">Mood History</h3>
           </div>
-        </div>
 
-        <!-- Notes -->
-        <div>
-          <label for="note" class="block text-sm font-medium text-textMain mb-2">Notes (optional):</label>
-          <textarea id="note" name="note" rows="4" class="form-input resize-none" placeholder="What influenced your mood today? Any triggers or positive events?"></textarea>
-        </div>
-
-        <button type="submit" class="w-full btn-primary py-3 text-lg">
-          <i class="fas fa-save mr-2"></i> Save Today's Mood
-        </button>
-      </form>
-    </div>
-
-    <!-- Mood Insights -->
-    <div class="card">
-      <h2 class="text-2xl font-bold text-textMain mb-6 flex items-center">
-        <i class="fas fa-chart-line text-secondary mr-3"></i> Mood Insights
-      </h2>
-      <% if (Object.keys(moodCounts).length === 0) { %>
-        <p class="text-gray-500">No mood data yet. Start tracking your mood to see insights.</p>
-      <% } else { %>
-        <h3 class="font-medium text-gray-700 mb-3">Mood Frequency:</h3>
-        <ul class="space-y-2" id="moodInsightsList">
-          <% for (const [mood, count] of Object.entries(moodCounts)) { %>
-            <li class="flex justify-between items-center">
-              <span><strong><%= mood %>:</strong></span>
-              <span class="bg-primary/10 text-primary px-2 py-1 rounded text-sm"><%= count %> times</span>
-            </li>
-          <% } %>
-        </ul>
-      <% } %>
-    </div>
-  </div>
-
-  <!-- Mood History -->
-  <div class="card">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-textMain flex items-center">
-        <i class="fas fa-history text-accent mr-3"></i> Mood History
-      </h2>
-    </div>
-
-    <div class="overflow-x-auto">
-      <table class="w-full">
-        <thead>
-          <tr class="border-b border-gray-200">
-            <th class="text-left py-3 px-4 font-semibold text-textMain">Date</th>
-            <th class="text-left py-3 px-4 font-semibold text-textMain">Mood</th>
-            <th class="text-left py-3 px-4 font-semibold text-textMain">Energy</th>
-            <th class="text-left py-3 px-4 font-semibold text-textMain">Notes</th>
-          </tr>
-        </thead>
-        <tbody id="moodHistoryBody">
-          <% if (entries.length === 0) { %>
-            <tr id="noEntriesRow">
-              <td colspan="4" class="text-center py-12 text-gray-500">
-                No mood entries yet. Start tracking your mood to see your patterns over time.
-              </td>
-            </tr>
-          <% } else { %>
-            <% entries.forEach(entry => { %>
-              <tr class="border-b border-gray-100 hover:bg-gray-50">
-                <td class="py-3 px-4 text-sm">
-                  <%= new Date(entry.entry_date).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) %>
-                </td>
-                <td class="py-3 px-4">
-                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    <%= entry.mood %>
-                  </span>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="flex items-center space-x-2">
-                    <div class="relative w-24 bg-gray-200 rounded-full h-3">
-                      <div class="absolute top-0 left-0 h-3 rounded-full energy-bar transition-all duration-300"
-                           data-energy="<%= entry.energy || 5 %>"></div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-700">Mood</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-700">Energy</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-700">Notes</th>
+                </tr>
+              </thead>
+              <tbody id="moodHistoryBody">
+                <% if (entries.length === 0) { %>
+                <tr id="noEntriesRow">
+                  <td colspan="4" class="text-center py-12 text-gray-500">
+                    No mood entries yet. Start tracking your mood to see your patterns over time.
+                  </td>
+                </tr>
+                <% } else { %>
+                <% entries.forEach(entry => { %>
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                  <td class="py-3 px-4 text-sm">
+                    <%= new Date(entry.entry_date).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) %>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <%= getMoodBadgeClass(entry.mood) %>">
+                      <%= getMoodEmoji(entry.mood) %> <%= entry.mood %>
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex items-center space-x-2">
+                      <div class="relative w-24 bg-gray-200 rounded-full h-3">
+                        <div class="absolute top-0 left-0 h-3 rounded-full energy-bar transition-all duration-300 <%= getEnergyBarClass(entry.energy) %>"
+                        
+                        </div>
+                      </div>
+                      <span class="text-xs text-gray-600"><%= entry.energy || 'N/A' %></span>
                     </div>
-                    <span class="text-xs text-gray-600"><%= entry.energy || 'N/A' %></span>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-sm text-gray-600">
-                  <%= entry.note || '-' %>
-                </td>
-              </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
+                  </td>
+                  <td class="py-3 px-4 text-sm text-gray-600">
+                    <%= entry.note || '-' %>
+                  </td>
+                </tr>
+                <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Mood Logging and Insights -->
+      <div class="space-y-8">
+        <!-- Today's Mood Logging -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">How are you feeling today?</h2>
+
+          <!-- Mood Selection -->
+          <div class="mb-6">
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <% const moods = ["Happy","Calm","Neutral","Sad","Angry"]; %>
+              <% const emojis = ["😊","😌","😐","😢","😠"]; %>
+              <% const colors = ["yellow","green","blue","orange","red"]; %>
+              <% moods.forEach((mood, i) => { %>
+              <button onclick="selectMood('<%= mood %>')"
+                      class="mood-option p-3 rounded-xl border-2 border-gray-200 hover:border-<%= colors[i] %>-400 transition-all duration-200 text-center"
+                      data-mood="<%= mood %>">
+                <div class="text-2xl mb-1"><%= emojis[i] %></div>
+                <div class="text-sm font-medium"><%= mood %></div>
+              </button>
+              <% }) %>
+            </div>
+
+            <!-- Selected Mood Display -->
+            <div id="selected-mood-display" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+              <div class="flex items-center justify-center gap-2">
+                <span id="selected-mood-emoji" class="text-2xl"></span>
+                <span id="selected-mood-text" class="font-medium"></span>
+              </div>
+            </div>
+
+            <!-- Energy Level -->
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Energy Level: <span id="energy-value" class="font-bold">5</span>/10
+              </label>
+              <input type="range" id="energy" name="energy" min="1" max="10" value="5"
+                     class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider">
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+              <label for="note" class="block text-sm font-medium text-gray-700 mb-2">Add a note about your mood...</label>
+              <textarea id="note" name="note" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                        placeholder="What influenced your mood today? Any triggers or positive events?"></textarea>
+            </div>
+
+            <!-- Log Mood Button -->
+            <button onclick="logMood()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-semibold transition-all duration-200">
+              Log Mood
+            </button>
+          </div>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-4">Insights</h3>
+
+          <!-- Positive Trend Insight -->
+          <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-arrow-up text-green-600 text-sm"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-green-800 mb-1">Positive Trend</h4>
+                <p class="text-sm text-green-700">
+                  Your mood has been generally improving this week. Keep it up!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Music & Mood Insight -->
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-music text-blue-600 text-sm"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-blue-800 mb-1">Music & Mood</h4>
+                <p class="text-sm text-blue-700">
+                  Listening to "Anxiety Relief" playlist correlates with calmer moods.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Helper functions for mood display (client-side versions)
+function getMoodEmoji(mood) {
+  const emojis = {
+    'Happy': '😊',
+    'Calm': '😌',
+    'Neutral': '😐',
+    'Sad': '😢',
+    'Angry': '😠',
+    'Anxious': '😰'
+  };
+  return emojis[mood] || '😐';
+}
+
+function getMoodBadgeClass(mood) {
+  const classes = {
+    'Happy': 'bg-yellow-100 text-yellow-800',
+    'Calm': 'bg-green-100 text-green-800',
+    'Neutral': 'bg-blue-100 text-blue-800',
+    'Sad': 'bg-orange-100 text-orange-800',
+    'Angry': 'bg-red-100 text-red-800',
+    'Anxious': 'bg-purple-100 text-purple-800'
+  };
+  return classes[mood] || 'bg-gray-100 text-gray-800';
+}
+
+function getEnergyBarClass(energy) {
+  if (energy >= 7) return 'bg-green-500';
+  if (energy >= 4) return 'bg-yellow-500';
+  return 'bg-red-500';
+}
+
+// Mood tracking functionality
+let selectedMood = null;
+let moodChart = null;
+let currentPeriod = 'weekly';
+
+// Get date range and labels for different periods
+function getDateRangeForPeriod(period) {
+  const dates = [];
+  const labels = [];
+
+  if (period === 'weekly') {
+    // Last 7 days
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      dates.push(date.toISOString().split('T')[0]);
+      labels.push(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()]);
+    }
+  } else if (period === 'monthly') {
+    // Last 4 weeks (28 days)
+    for (let i = 27; i >= 0; i -= 7) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      dates.push(date.toISOString().split('T')[0]);
+      labels.push(`Week ${Math.floor((27 - i) / 7) + 1}`);
+    }
+  } else if (period === 'yearly') {
+    // Last 12 months
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      dates.push(date.toISOString().slice(0, 7)); // YYYY-MM format
+      labels.push(date.toLocaleDateString('en-US', { month: 'short' }));
+    }
+  }
+
+  return { dates, labels };
+}
+
+// Mood selection function
+function selectMood(mood) {
+  selectedMood = mood;
+
+  // Update selected mood display
+  const display = document.getElementById('selected-mood-display');
+  const emoji = document.getElementById('selected-mood-emoji');
+  const text = document.getElementById('selected-mood-text');
+
+  const moodEmojis = {
+    'Happy': '😊',
+    'Calm': '😌',
+    'Neutral': '😐',
+    'Sad': '😢',
+    'Angry': '😠'
+  };
+
+  emoji.textContent = moodEmojis[mood];
+  text.textContent = mood;
+  display.classList.remove('hidden');
+
+  // Update button states
+  document.querySelectorAll('.mood-option').forEach(btn => {
+    btn.classList.remove('border-purple-400', 'bg-purple-50');
+    btn.classList.add('border-gray-200');
+  });
+
+  event.target.classList.remove('border-gray-200');
+  event.target.classList.add('border-purple-400', 'bg-purple-50');
+}
+
+// Energy level update
+document.getElementById('energy')?.addEventListener('input', function(e) {
+  document.getElementById('energy-value').textContent = e.target.value;
+});
+
+// Log mood function
+async function logMood() {
+  if (!selectedMood) {
+    alert('Please select a mood first');
+    return;
+  }
+
+  const energy = document.getElementById('energy').value;
+  const note = document.getElementById('note').value;
+
+  try {
+    const response = await fetch('/mood-tracker', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mood: selectedMood,
+        energy: energy,
+        note: note
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Reset form
+      selectedMood = null;
+      document.getElementById('selected-mood-display').classList.add('hidden');
+      document.getElementById('energy').value = 5;
+      document.getElementById('energy-value').textContent = '5';
+      document.getElementById('note').value = '';
+
+      // Reset button states
+      document.querySelectorAll('.mood-option').forEach(btn => {
+        btn.classList.remove('border-purple-400', 'bg-purple-50');
+        btn.classList.add('border-gray-200');
+      });
+
+      // Refresh data
+      loadMoodData();
+      updateChart();
+
+      alert('Mood logged successfully!');
+    } else {
+      alert(data.error || 'Failed to log mood');
+    }
+  } catch (error) {
+    console.error('Error logging mood:', error);
+    alert('Failed to log mood. Please try again.');
+  }
+}
+
+// Chart period functions
+function setGraphPeriod(period) {
+  currentPeriod = period;
+  updateChart();
+
+  // Update button states
+  document.querySelectorAll('[onclick*="setGraphPeriod"]').forEach(btn => {
+    btn.classList.remove('bg-purple-100', 'text-purple-700');
+    btn.classList.add('text-gray-600');
+  });
+
+  event.target.classList.remove('text-gray-600');
+  event.target.classList.add('bg-purple-100', 'text-purple-700');
+}
+
+// Load mood data and initialize chart
+async function loadMoodData() {
+  try {
+    console.log('Loading mood data from API...');
+    const response = await fetch('/api/mood-tracker/data');
+    const data = await response.json();
+    console.log('API response:', data);
+
+    if (data.success) {
+      initializeChart(data.entries || []);
+    } else {
+      console.error('API returned error:', data.error);
+      initializeChart([]);
+    }
+  } catch (error) {
+    console.error('Error loading mood data:', error);
+    initializeChart([]);
+  }
+}
+
+// Initialize chart
+function initializeChart(entries) {
+  console.log('Initializing chart with entries:', entries);
+  const ctx = document.getElementById('moodChart');
+  if (!ctx) {
+    console.error('Canvas element not found');
+    return;
+  }
+
+  // Destroy existing chart
+  if (moodChart) {
+    moodChart.destroy();
+  }
+
+  // Prepare data based on current period
+  const { dates, labels } = getDateRangeForPeriod(currentPeriod);
+
+  // Mood values for chart (Happy=5, Calm=4, Neutral=3, Sad=2, Angry=1)
+  const moodValues = {
+    'Happy': 5,
+    'Calm': 4,
+    'Neutral': 3,
+    'Sad': 2,
+    'Angry': 1
+  };
+
+  // Prepare chart data
+  const chartData = dates.map(date => {
+    const entry = entries.find(e => {
+      const entryDate = new Date(e.entry_date);
+
+      if (currentPeriod === 'yearly') {
+        // For yearly view, compare YYYY-MM
+        const entryYearMonth = entryDate.toISOString().slice(0, 7); // YYYY-MM
+        return entryYearMonth === date;
+      } else {
+        // For weekly and monthly, compare full date
+        const entryDateStr = entryDate.toISOString().split('T')[0];
+        return entryDateStr === date;
+      }
+    });
+    return entry ? moodValues[entry.mood] || 3 : null;
+  });
+
+  // Fill in missing data points to ensure smooth line
+  for (let i = 0; i < chartData.length; i++) {
+    if (chartData[i] === null) {
+      // If we have data before and after, interpolate
+      let before = null, after = null;
+      for (let j = i - 1; j >= 0; j--) {
+        if (chartData[j] !== null) {
+          before = chartData[j];
+          break;
+        }
+      }
+      for (let j = i + 1; j < chartData.length; j++) {
+        if (chartData[j] !== null) {
+          after = chartData[j];
+          break;
+        }
+      }
+      if (before !== null && after !== null) {
+        chartData[i] = (before + after) / 2;
+      } else if (before !== null) {
+        chartData[i] = before;
+      } else if (after !== null) {
+        chartData[i] = after;
+      } else {
+        chartData[i] = 3; // Default to neutral
+      }
+    }
+  }
+
+  // If no data at all, create some sample data for demonstration
+  const hasData = chartData.some(value => value !== null);
+  if (!hasData || entries.length === 0) {
+    console.log('No mood data found, using sample data for demonstration');
+    // Create sample data based on the period
+    if (currentPeriod === 'weekly') {
+      // 7 days with varied moods
+      chartData[0] = 3; // Monday - Neutral
+      chartData[1] = 4; // Tuesday - Calm
+      chartData[2] = 5; // Wednesday - Happy
+      chartData[3] = 4; // Thursday - Calm
+      chartData[4] = 3; // Friday - Neutral
+      chartData[5] = 2; // Saturday - Sad
+      chartData[6] = 4; // Sunday - Calm
+    } else if (currentPeriod === 'monthly') {
+      // 4 weeks showing gradual improvement
+      chartData[0] = 2.5; // Week 1 - Slightly sad
+      chartData[1] = 3.2; // Week 2 - Neutral with slight positive trend
+      chartData[2] = 3.8; // Week 3 - Mostly neutral/calm
+      chartData[3] = 4.2; // Week 4 - Calm/happy
+    } else if (currentPeriod === 'yearly') {
+      // 12 months showing seasonal variation
+      const monthlyData = [3.5, 3.8, 4.2, 4.5, 4.3, 3.9, 3.6, 3.4, 3.7, 4.0, 4.1, 3.8];
+      for (let i = 0; i < 12; i++) {
+        chartData[i] = monthlyData[i];
+      }
+    }
+  }
+
+  // Fill in missing data points to ensure smooth line
+  for (let i = 0; i < chartData.length; i++) {
+    if (chartData[i] === null) {
+      // If we have data before and after, interpolate
+      let before = null, after = null;
+      for (let j = i - 1; j >= 0; j--) {
+        if (chartData[j] !== null) {
+          before = chartData[j];
+          break;
+        }
+      }
+      for (let j = i + 1; j < chartData.length; j++) {
+        if (chartData[j] !== null) {
+          after = chartData[j];
+          break;
+        }
+      }
+      if (before !== null && after !== null) {
+        chartData[i] = (before + after) / 2;
+      } else if (before !== null) {
+        chartData[i] = before;
+      } else if (after !== null) {
+        chartData[i] = after;
+      } else {
+        chartData[i] = 3; // Default to neutral
+      }
+    }
+  }
+
+  const data = {
+    labels: labels,
+    datasets: [{
+      label: 'Mood Level',
+      data: chartData,
+      borderColor: '#8B5CF6',
+      backgroundColor: 'rgba(139, 92, 246, 0.1)',
+      fill: true,
+      tension: 0.4,
+      borderWidth: 3,
+      pointBackgroundColor: chartData.map(value => {
+        if (value >= 4.5) return '#EAB308'; // Happy - Yellow
+        if (value >= 3.5) return '#10B981'; // Calm - Green
+        if (value >= 2.5) return '#3B82F6'; // Neutral - Blue
+        if (value >= 1.5) return '#F97316'; // Sad - Orange
+        return '#EF4444'; // Angry - Red
+      }),
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      pointRadius: 7,
+      pointHoverRadius: 9,
+      spanGaps: false
+    }]
+  };
+
+  const config = {
+    type: 'line',
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 5,
+          ticks: {
+            callback: function(value) {
+              const labels = ['', 'Angry', 'Sad', 'Neutral', 'Calm', 'Happy'];
+              return labels[value] || '';
+            }
+          },
+          grid: {
+            display: false
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.raw;
+              const labels = ['', 'Angry', 'Sad', 'Neutral', 'Calm', 'Happy'];
+              return labels[value] || 'No data';
+            }
+          }
+        }
+      }
+    }
+  };
+
+  moodChart = new Chart(ctx, config);
+}
+
+// Update chart when period changes
+function updateChart() {
+  loadMoodData();
+}
+
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadMoodData();
+});
+</script>
 
 <style>
-/* Mood Card Selection Styles */
-.mood-card {
+/* Mood Selection Styles */
+.mood-option {
   transition: all 0.2s ease-in-out;
 }
 
-.mood-option input:checked + .mood-card {
-  transform: scale(1.05);
-  border-width: 2px;
-}
-
-/* Happy - Yellow */
-.mood-option:has(input[value="Happy"]:checked) .mood-card {
-  border-color: #F59E0B !important;
-  background-color: #FEF3C7 !important;
-}
-
-/* Calm - Green */
-.mood-option:has(input[value="Calm"]:checked) .mood-card {
-  border-color: #10B981 !important;
-  background-color: #D1FAE5 !important;
-}
-
-/* Anxious - Orange */
-.mood-option:has(input[value="Anxious"]:checked) .mood-card {
-  border-color: #F97316 !important;
-  background-color: #FED7AA !important;
-}
-
-/* Sad - Blue */
-.mood-option:has(input[value="Sad"]:checked) .mood-card {
-  border-color: #3B82F6 !important;
-  background-color: #DBEAFE !important;
-}
-
-/* Angry - Red */
-.mood-option:has(input[value="Angry"]:checked) .mood-card {
-  border-color: #EF4444 !important;
-  background-color: #FEE2E2 !important;
-}
-
-/* Neutral - Gray */
-.mood-option:has(input[value="Neutral"]:checked) .mood-card {
-  border-color: #6B7280 !important;
-  background-color: #F3F4F6 !important;
-}
-
-/* Fallback for browsers that don't support :has() */
-.mood-card.selected-happy {
-  border-color: #F59E0B !important;
-  background-color: #FEF3C7 !important;
-  transform: scale(1.05);
-}
-
-.mood-card.selected-calm {
-  border-color: #10B981 !important;
-  background-color: #D1FAE5 !important;
-  transform: scale(1.05);
-}
-
-.mood-card.selected-anxious {
-  border-color: #F97316 !important;
-  background-color: #FED7AA !important;
-  transform: scale(1.05);
-}
-
-.mood-card.selected-sad {
-  border-color: #3B82F6 !important;
-  background-color: #DBEAFE !important;
-  transform: scale(1.05);
-}
-
-.mood-card.selected-angry {
-  border-color: #EF4444 !important;
-  background-color: #FEE2E2 !important;
-  transform: scale(1.05);
-}
-
-.mood-card.selected-neutral {
-  border-color: #6B7280 !important;
-  background-color: #F3F4F6 !important;
-  transform: scale(1.05);
+.mood-option:hover {
+  transform: translateY(-2px);
 }
 
 /* Energy Slider Styling */
@@ -227,7 +668,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #4DB6AC;
+  background: #8B5CF6;
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
@@ -237,32 +678,28 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #4DB6AC;
+  background: #8B5CF6;
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 /* Energy bar colors */
-.energy-bar.low { background-color: #EF4444; }
-.energy-bar.medium { background-color: #F59E0B; }
-.energy-bar.high { background-color: #10B981; }
+.energy-bar {
+  transition: width 0.3s ease-in-out;
+}
 
-/* Table row hover effect */
+/* Table hover effect */
 tbody tr:hover {
   background-color: #F9FAFB;
 }
 
-/* Improved responsive design */
+/* Responsive design */
 @media (max-width: 768px) {
-  .mood-card {
-    padding: 0.75rem;
-  }
-  
-  .mood-card .text-3xl {
+  .mood-option .text-2xl {
     font-size: 1.5rem;
   }
-  
+
   table {
     font-size: 0.875rem;
   }

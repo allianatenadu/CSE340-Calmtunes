@@ -1,3 +1,4 @@
+<!-- Admin chat page content for therapist layout -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-textMain">💬 Chat with Admin</h1>
@@ -26,7 +27,7 @@
           <h2 class="text-lg font-semibold">Admin Conversations</h2>
           <p class="text-sm text-gray-600">Chat with administrators</p>
         </div>
-        <div id="adminConversationsList" class="max-h-96 overflow-y-auto">
+        <div id="adminConversationsList" class="max-h-96 overflow-y-auto" style="scroll-behavior: smooth;">
           <!-- Conversations will be loaded here -->
           <div class="p-4 text-center text-gray-500">
             <i class="fas fa-spinner fa-spin mb-2"></i>
@@ -208,6 +209,14 @@
     `
       )
       .join("");
+
+    // Auto-scroll to bottom of conversations list to show most recent
+    setTimeout(() => {
+      const adminConversationsList = document.getElementById('adminConversationsList');
+      if (adminConversationsList) {
+        adminConversationsList.scrollTop = adminConversationsList.scrollHeight;
+      }
+    }, 100);
   }
 
   // Open admin conversation

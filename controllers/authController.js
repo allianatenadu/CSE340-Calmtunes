@@ -5,6 +5,7 @@ const db = require('../config/database');
 exports.getSignup = (req, res) => {
   res.render('pages/signup', {
     title: 'Sign Up - CalmTunes',
+    layout: false,
     error: req.flash('error'),
     success: req.flash('success')
   });
@@ -90,8 +91,9 @@ exports.postSignup = async (req, res) => {
 
 // Show login form
 exports.getLogin = (req, res) => {
-  res.render('pages/login', { 
+  res.render('pages/login', {
     title: 'Login - CalmTunes',
+    layout: false,
     error: req.flash('error'),
     success: req.flash('success')
   });
@@ -131,7 +133,14 @@ exports.postLogin = async (req, res) => {
       role: user.role,
       profile_image: user.profile_image
     };
-    
+
+    // Debug logging for session creation
+    console.log('✅ Session created:', {
+      userId: req.session.user.id,
+      role: req.session.user.role,
+      sessionID: req.session.id
+    });
+
     // Extend session if remember me is checked
     if (remember) {
       req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days

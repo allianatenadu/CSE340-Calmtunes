@@ -79,7 +79,64 @@
           }
         });
       });
-   
+
+      // Therapist Sidebar Collapse/Expand Functionality
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const therapistSidebar = document.getElementById('therapist-sidebar');
+      const mainContent = document.getElementById('main-content');
+
+      if (sidebarToggle && therapistSidebar) {
+        sidebarToggle.addEventListener('click', function() {
+          const chevronIcon = sidebarToggle.querySelector('i');
+
+          // Toggle sidebar width
+          if (therapistSidebar.classList.contains('w-64')) {
+            therapistSidebar.classList.remove('w-64');
+            therapistSidebar.classList.add('w-16');
+            if (chevronIcon) {
+              chevronIcon.classList.remove('fa-chevron-left');
+              chevronIcon.classList.add('fa-chevron-right');
+            }
+            sidebarToggle.setAttribute('title', 'Expand Sidebar');
+          } else {
+            therapistSidebar.classList.remove('w-16');
+            therapistSidebar.classList.add('w-64');
+            if (chevronIcon) {
+              chevronIcon.classList.remove('fa-chevron-right');
+              chevronIcon.classList.add('fa-chevron-left');
+            }
+            sidebarToggle.setAttribute('title', 'Collapse Sidebar');
+          }
+        });
+
+        // Collapse sidebar when clicking on main content
+        if (mainContent) {
+          mainContent.addEventListener('click', (e) => {
+            // Don't collapse if clicking on sidebar elements
+            if (e.target.closest('.sidebar-nav-item') || e.target.closest('#sidebar-toggle')) {
+              return;
+            }
+
+            // Only collapse if sidebar is currently expanded
+            if (therapistSidebar.classList.contains('w-64')) {
+              therapistSidebar.classList.remove('w-64');
+              therapistSidebar.classList.add('w-16');
+              const chevronIcon = sidebarToggle.querySelector('i');
+              if (chevronIcon) {
+                chevronIcon.classList.remove('fa-chevron-left');
+                chevronIcon.classList.add('fa-chevron-right');
+              }
+              sidebarToggle.setAttribute('title', 'Expand Sidebar');
+            }
+          });
+        }
+
+        // Prevent sidebar collapse when clicking inside sidebar
+        therapistSidebar.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+      }
+
       //<!-- Flash Message JavaScript -->
     
       document.addEventListener('DOMContentLoaded', function() {

@@ -2,12 +2,22 @@ const express = require("express");
 const router = express.Router();
 const panicController = require("../controllers/panicController");
 const { requireAuth, requirePatient } = require("../middleware/auth");
+const db = require("../config/database");
 
 // Only authenticated patients can access Panic Support
 router.get("/", requireAuth, requirePatient, panicController.getPanicPage);
 
 // Save panic session
 router.post("/save-session", requireAuth, requirePatient, panicController.savePanicSession);
+
+// Get user's panic sessions
+router.get("/sessions", requireAuth, requirePatient, panicController.getPanicSessions);
+
+// Get specific session for playback
+router.get("/sessions/:sessionId/playback", requireAuth, requirePatient, panicController.getSessionForPlayback);
+
+// Delete a panic session by database ID
+router.delete("/sessions/:id", requireAuth, requirePatient, panicController.deletePanicSession);
 
 // Serve panic session audio files securely
 router.get('/audio/:filename', requireAuth, panicController.serveAudioFile);
