@@ -38,8 +38,25 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: function (origin, callback) {
+      // Allow requests from localhost during development and production domain
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "https://ces40-calmtunes.onrender.com",
+        "https://www.ces40-calmtunes.onrender.com"
+      ];
+
+      // Allow requests with no origin (mobile apps, etc.)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -122,23 +139,13 @@ app.use(async (req, res, next) => {
     // If session doesn't have profile_image, fetch it from database
     if (req.session.user.profile_image === undefined) {
       try {
-        const { Pool } = require("pg");
-        const pool = new Pool({
-          user: process.env.DB_USER || "your_db_user",
-          host: process.env.DB_HOST || "localhost",
-          database: process.env.DB_NAME || "your_db_name",
-          password: process.env.DB_PASSWORD || "your_password",
-          port: process.env.DB_PORT || 5432,
-        });
-
-        const result = await pool.query(
+        const result = await db.query(
           "SELECT profile_image FROM users WHERE id = $1",
           [req.session.user.id]
         );
         if (result.rows.length > 0) {
           req.session.user.profile_image = result.rows[0].profile_image;
         }
-        pool.end();
       } catch (error) {
         console.error("Error fetching profile image:", error);
       }
@@ -224,16 +231,9 @@ app.use("/", indexRoutes);
 // Health check endpoint for database connectivity
 app.get("/api/health", async (req, res) => {
   try {
-    const { Pool } = require("pg");
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-    });
-
-    const client = await pool.connect();
+    const client = await db.connect();
     await client.query("SELECT 1");
     client.release();
-    await pool.end();
 
     res.json({
       success: true,

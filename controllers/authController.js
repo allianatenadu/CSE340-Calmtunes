@@ -84,7 +84,15 @@ exports.postSignup = async (req, res) => {
     
   } catch (error) {
     console.error('Signup error:', error);
-    req.flash('error', 'An error occurred while creating your account. Please try again.');
+
+    // Handle database connection errors specifically
+    if (error.message && error.message.includes('searchParams')) {
+      console.error('Database URL parsing error - check DATABASE_URL format');
+      req.flash('error', 'Database connection error. Please contact support.');
+    } else {
+      req.flash('error', 'An error occurred while creating your account. Please try again.');
+    }
+
     res.redirect('/signup');
   }
 };
@@ -167,7 +175,15 @@ exports.postLogin = async (req, res) => {
     
   } catch (error) {
     console.error('Login error:', error);
-    req.flash('error', 'An error occurred during login. Please try again.');
+
+    // Handle database connection errors specifically
+    if (error.message && error.message.includes('searchParams')) {
+      console.error('Database URL parsing error - check DATABASE_URL format');
+      req.flash('error', 'Database connection error. Please contact support.');
+    } else {
+      req.flash('error', 'An error occurred during login. Please try again.');
+    }
+
     res.redirect('/login');
   }
 };

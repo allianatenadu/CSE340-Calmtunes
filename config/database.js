@@ -5,13 +5,29 @@ dotenv.config();
 
 // Create a connection pool with retry logic
 const createPool = () => {
+  // Handle Render's DATABASE_URL format
+  let connectionConfig = {};
+
+  if (process.env.DATABASE_URL) {
+    // For Render deployment - use the full DATABASE_URL
+    connectionConfig = {
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    };
+  } else {
+    // For local development - use individual env vars
+    connectionConfig = {
+      connectionString: `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    };
+  }
+
   return new Pool({
-    connectionString:
-      process.env.DATABASE_URL ||
-      `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
-    ssl: {
-      rejectUnauthorized: false,
-    },
+    ...connectionConfig,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
