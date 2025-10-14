@@ -3816,59 +3816,93 @@
           }
         };
 
-        // Handle remote stream - ENHANCED VERSION
+        // Handle remote stream - FORCE PLAY VERSION
         peerConnection.ontrack = (event) => {
           console.log('🎥 Received remote track:', event.track.kind, 'for call type:', currentCall);
           console.log('🔍 Track details:', {
             kind: event.track.kind,
             id: event.track.id,
             enabled: event.track.enabled,
+            muted: event.track.muted,
             readyState: event.track.readyState,
             streams: event.streams.length
           });
 
           if (event && event.streams && event.streams[0]) {
-            const track = event.track;
-            const remoteVideo = document.getElementById('remote-video');
-            const remoteAudio = document.getElementById('remote-audio');
+            const stream = event.streams[0];
 
-            // CRITICAL FIX: Always set the ENTIRE stream, not individual tracks
             if (currentCall === 'video') {
+              const remoteVideo = document.getElementById('remote-video');
+
               if (remoteVideo) {
-                console.log('📹 Setting remote video stream...');
-                remoteVideo.srcObject = event.streams[0];
+                console.log('📹 Setting remote video stream and FORCING play...');
 
-                // Force video to play
-                remoteVideo.play().then(() => {
-                  console.log('✅ Remote video playing successfully');
+                // Set the stream
+                remoteVideo.srcObject = stream;
 
-                  // Update UI to show video is working
-                  const connectionInfo = document.getElementById('connection-info');
-                  if (connectionInfo) {
-                    connectionInfo.textContent = 'Video connected!';
-                  }
-                }).catch(err => {
-                  console.error('❌ Error playing remote video:', err);
-                  // Try one more time
-                  setTimeout(() => remoteVideo.play(), 500);
+                // CRITICAL: Unmute and set volume
+                remoteVideo.muted = false;
+                remoteVideo.volume = 1.0;
+
+                // Log stream tracks
+                const videoTracks = stream.getVideoTracks();
+                const audioTracks = stream.getAudioTracks();
+                console.log('📺 Stream tracks:', {
+                  video: videoTracks.length,
+                  audio: audioTracks.length,
+                  videoEnabled: videoTracks[0]?.enabled,
+                  audioEnabled: audioTracks[0]?.enabled
                 });
+
+                // FORCE video to play - multiple attempts
+                const forcePlay = async () => {
+                  try {
+                    await remoteVideo.play();
+                    console.log('✅ Remote video playing successfully!');
+
+                    // Update UI
+                    const connectionInfo = document.getElementById('connection-info');
+                    if (connectionInfo) {
+                      connectionInfo.textContent = '✅ Video streaming!';
+                    }
+
+                    // Clear the remote stream timeout
+                    if (window.remoteStreamTimeout) {
+                      clearTimeout(window.remoteStreamTimeout);
+                      window.remoteStreamTimeout = null;
+                    }
+
+                    showToast('✅ Video connected!');
+                  } catch (err) {
+                    console.error('❌ Play attempt failed:', err.name, err.message);
+
+                    // Try again after 500ms
+                    setTimeout(forcePlay, 500);
+                  }
+                };
+
+                // Start playing immediately
+                forcePlay();
+
+                // Also try after small delays
+                setTimeout(forcePlay, 100);
+                setTimeout(forcePlay, 300);
+                setTimeout(forcePlay, 500);
+
               } else {
                 console.error('❌ Remote video element not found!');
               }
             }
 
-            // Also set audio stream
+            // Handle audio
+            const remoteAudio = document.getElementById('remote-audio');
             if (remoteAudio) {
               console.log('🎵 Setting remote audio stream...');
-              remoteAudio.srcObject = event.streams[0];
+              remoteAudio.srcObject = stream;
               remoteAudio.play().catch(err => {
                 console.error('❌ Error playing remote audio:', err);
               });
             }
-
-            console.log('✅ Remote stream attached successfully');
-          } else {
-            console.warn('⚠️ No remote stream in ontrack event:', event);
           }
         };
 
@@ -3976,13 +4010,27 @@
                   class="absolute bottom-4 right-4 w-32 h-24 bg-gray-800 rounded-lg border-2 border-white shadow-lg object-cover"
                   style="background: #374151;"
                 ></video>
+
+                <!-- Status badges -->
                 <div class="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
                   <i class="fas fa-circle text-red-500 animate-pulse mr-2"></i>
                   <span id="call-status">Connecting...</span>
                 </div>
+
                 <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                  <span id="connection-info">Waiting for connection...</span>
+                  <span id="connection-info">Waiting for video...</span>
                 </div>
+
+                <!-- EMERGENCY PLAY BUTTON -->
+                <button
+                  id="emergency-play-btn"
+                  onclick="emergencyPlayVideo()"
+                  class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-lg"
+                  style="display: none;"
+                >
+                  <i class="fas fa-play mr-2"></i>
+                  Click to Play Video
+                </button>
               </div>
             ` : `
               <div class="text-center py-12">
@@ -4438,13 +4486,24 @@
           if (peerConnection) {
             const connectionInfo = document.getElementById('connection-info');
             const remoteVideo = document.getElementById('remote-video');
+            const emergencyBtn = document.getElementById('emergency-play-btn');
 
             console.log('🔍 Connection state check:', {
               connectionState: peerConnection.connectionState,
               iceConnectionState: peerConnection.iceConnectionState,
               signalingState: peerConnection.signalingState,
-              remoteVideoStream: !!remoteVideo?.srcObject
+              remoteVideoStream: !!remoteVideo?.srcObject,
+              videoPaused: remoteVideo?.paused,
+              videoReadyState: remoteVideo?.readyState
             });
+
+            // If we have stream but video is paused, show emergency button
+            if (remoteVideo && remoteVideo.srcObject && remoteVideo.paused) {
+              if (emergencyBtn) {
+                console.log('⚠️ Video has stream but is paused - showing emergency button');
+                emergencyBtn.style.display = 'block';
+              }
+            }
 
             // Update connection info display
             if (connectionInfo) {
@@ -4789,6 +4848,110 @@
     }
 
     window.verifyAudioCall = verifyAudioCall;
+
+    // Emergency function to force video play
+    async function emergencyPlayVideo() {
+      console.log('🚨 Emergency play triggered by user');
+
+      const remoteVideo = document.getElementById('remote-video');
+      const emergencyBtn = document.getElementById('emergency-play-btn');
+
+      if (!remoteVideo) {
+        console.error('❌ Remote video element not found');
+        return;
+      }
+
+      console.log('🔍 Video element state:', {
+        srcObject: !!remoteVideo.srcObject,
+        paused: remoteVideo.paused,
+        muted: remoteVideo.muted,
+        volume: remoteVideo.volume,
+        readyState: remoteVideo.readyState
+      });
+
+      if (remoteVideo.srcObject) {
+        // Unmute and play
+        remoteVideo.muted = false;
+        remoteVideo.volume = 1.0;
+
+        try {
+          await remoteVideo.play();
+          console.log('✅ Video playing after emergency trigger!');
+
+          // Hide the button
+          if (emergencyBtn) {
+            emergencyBtn.style.display = 'none';
+          }
+
+          // Update UI
+          const connectionInfo = document.getElementById('connection-info');
+          if (connectionInfo) {
+            connectionInfo.textContent = '✅ Video streaming!';
+          }
+
+          showToast('✅ Video playing!');
+        } catch (error) {
+          console.error('❌ Emergency play failed:', error);
+          showToast('Failed to play video: ' + error.message, 'error');
+        }
+      } else {
+        console.error('❌ No video stream available');
+        showToast('No video stream available', 'error');
+      }
+    }
+
+    // Make it globally available
+    window.emergencyPlayVideo = emergencyPlayVideo;
+
+    // Debug video element state
+    function debugVideoState() {
+      const remoteVideo = document.getElementById('remote-video');
+
+      if (!remoteVideo) {
+        console.error('❌ Remote video element not found');
+        return;
+      }
+
+      console.log('📹 Remote Video Element State:');
+      console.log('  - Has srcObject:', !!remoteVideo.srcObject);
+      console.log('  - Paused:', remoteVideo.paused);
+      console.log('  - Muted:', remoteVideo.muted);
+      console.log('  - Volume:', remoteVideo.volume);
+      console.log('  - ReadyState:', remoteVideo.readyState, ['HAVE_NOTHING', 'HAVE_METADATA', 'HAVE_CURRENT_DATA', 'HAVE_FUTURE_DATA', 'HAVE_ENOUGH_DATA'][remoteVideo.readyState]);
+      console.log('  - NetworkState:', remoteVideo.networkState, ['NETWORK_EMPTY', 'NETWORK_IDLE', 'NETWORK_LOADING', 'NETWORK_NO_SOURCE'][remoteVideo.networkState]);
+      console.log('  - CurrentTime:', remoteVideo.currentTime);
+      console.log('  - VideoWidth:', remoteVideo.videoWidth);
+      console.log('  - VideoHeight:', remoteVideo.videoHeight);
+
+      if (remoteVideo.srcObject) {
+        const stream = remoteVideo.srcObject;
+        console.log('📺 Stream State:');
+        console.log('  - ID:', stream.id);
+        console.log('  - Active:', stream.active);
+
+        const videoTracks = stream.getVideoTracks();
+        console.log('  - Video Tracks:', videoTracks.length);
+        videoTracks.forEach((track, index) => {
+          console.log(`    Track ${index}:`, {
+            id: track.id,
+            label: track.label,
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState
+          });
+        });
+      }
+
+      // Try to force play
+      console.log('🔧 Attempting to force play...');
+      remoteVideo.play().then(() => {
+        console.log('✅ Video playing!');
+      }).catch(err => {
+        console.error('❌ Cannot play:', err);
+      });
+    }
+
+    window.debugVideoState = debugVideoState;
 
     // Initialize chat mode for therapists
     document.addEventListener("DOMContentLoaded", function () {
