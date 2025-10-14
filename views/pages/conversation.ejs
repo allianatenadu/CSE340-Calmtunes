@@ -206,6 +206,26 @@
           </div>
         </div>
 
+        <!-- Active Call Status Indicator -->
+        <div id="active-call-indicator" class="hidden px-4 py-2 bg-green-50 border-b border-green-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="text-sm font-medium text-green-800">
+                <span id="active-call-type">Video</span> Call Active
+              </span>
+              <span class="text-xs text-green-600" id="active-call-timer">00:00</span>
+            </div>
+            <button
+              onclick="endCall()"
+              class="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full transition-colors"
+              title="End Call"
+            >
+              <i class="fas fa-phone-slash mr-1"></i>End Call
+            </button>
+          </div>
+        </div>
+
         <!-- Video/Phone Call Buttons -->
         <div
           class="flex justify-between gap-2 px-4 py-3 border-b border-gray-200 flex-shrink-0"
@@ -3577,6 +3597,9 @@
         // Show call interface
         showCallInterface('video');
 
+        // Show active call indicator
+        showActiveCallIndicator('video');
+
         // Set local video with proper muting
         const localVideo = document.getElementById('local-video');
         if (localVideo) {
@@ -3623,6 +3646,7 @@
       } catch (error) {
         console.error('❌ Error starting video call:', error);
         showToast('Failed to start video call: ' + error.message, 'error');
+        hideActiveCallIndicator(); // Hide indicator on failure
         endCall();
       }
     }
@@ -3731,6 +3755,9 @@
         // Show call interface
         showCallInterface('audio');
 
+        // Show active call indicator
+        showActiveCallIndicator('audio');
+
         // Set up caller status monitoring for audio calls
         window.callerStatusInterval = setInterval(() => {
           if (peerConnection) {
@@ -3777,6 +3804,7 @@
           showToast('Failed to start phone call: ' + error.message, 'error');
         }
 
+        hideActiveCallIndicator(); // Hide indicator on failure
         endCall();
       }
     }
@@ -3928,6 +3956,7 @@
               if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 console.error('❌ Connection failed or disconnected');
               }
+              hideActiveCallIndicator(); // Hide indicator on connection failure
               endCall();
               showToast('Call disconnected', 'error');
             }
@@ -4200,6 +4229,7 @@
           ringtone.loop = true;
           ringtone.play().catch(e => console.log('Could not play ringtone:', e));
           modal.dataset.ringtone = 'playing';
+          modal.dataset.ringtoneElement = ringtone; // Store reference to stop later
         } catch (e) {
           console.log('Ringtone not available');
         }
@@ -4209,6 +4239,7 @@
           const modalElement = document.getElementById('incoming-call-modal');
           if (modalElement && modalElement.classList.contains('flex')) {
             console.log('⏰ Call timeout - auto declining');
+            stopRingtone(); // Stop ringtone on timeout
             declineCall();
           }
         }, 30000);
@@ -4239,7 +4270,15 @@
 
         // Stop ringtone
         if (modal.dataset.ringtone === 'playing') {
+          const ringtone = modal.dataset.ringtoneElement;
+          if (ringtone) {
+            console.log('🛑 Stopping ringtone...');
+            ringtone.pause();
+            ringtone.currentTime = 0;
+            ringtone.loop = false;
+          }
           modal.dataset.ringtone = '';
+          modal.dataset.ringtoneElement = '';
         }
 
         // Clear timeout
@@ -4253,6 +4292,24 @@
         console.log('⚠️ Incoming call modal not found');
       }
     }
+
+    // Function to stop ringtone (can be called independently)
+    function stopRingtone() {
+      const modal = document.getElementById('incoming-call-modal');
+      if (modal && modal.dataset.ringtone === 'playing') {
+        const ringtone = modal.dataset.ringtoneElement;
+        if (ringtone) {
+          console.log('🛑 Stopping ringtone...');
+          ringtone.pause();
+          ringtone.currentTime = 0;
+          ringtone.loop = false;
+        }
+        modal.dataset.ringtone = '';
+        modal.dataset.ringtoneElement = '';
+      }
+    }
+
+    window.stopRingtone = stopRingtone;
 
     async function answerCall() {
       console.log('✅ Answering call...');
@@ -4268,7 +4325,8 @@
       }
 
       try {
-        console.log('📞 Hiding incoming call modal before answering...');
+        console.log('📞 Hiding incoming call modal and stopping ringtone before answering...');
+        stopRingtone(); // Stop ringtone immediately when answering
         hideIncomingCallModal();
 
         // Request media permissions based on call type
@@ -4552,6 +4610,7 @@
               }
               clearInterval(window.statusCheckInterval);
               window.statusCheckInterval = null;
+              hideActiveCallIndicator(); // Hide indicator on connection failure
               showToast('❌ Call connection failed', 'error');
             }
           }
@@ -4600,6 +4659,7 @@
         return;
       }
 
+      stopRingtone(); // Stop ringtone when declining
       hideIncomingCallModal();
 
       // Notify caller that call was declined
@@ -4685,6 +4745,9 @@
       if (currentConversationId) {
         await logCallEvent('call_ended');
       }
+
+      // Hide active call indicator
+      hideActiveCallIndicator();
 
       // Reset call state
       console.log('🔄 Resetting call state...');
@@ -4952,6 +5015,76 @@
     }
 
     window.debugVideoState = debugVideoState;
+
+    // Call timer variables
+    let callTimerInterval = null;
+    let callIndicatorStartTime = null;
+
+    // Show active call indicator
+    function showActiveCallIndicator(callType) {
+      const indicator = document.getElementById('active-call-indicator');
+      const callTypeEl = document.getElementById('active-call-type');
+
+      if (indicator && callTypeEl) {
+        callTypeEl.textContent = callType === 'video' ? 'Video' : 'Phone';
+        indicator.classList.remove('hidden');
+        console.log(`📞 Active ${callType} call indicator shown`);
+
+        // Start call timer
+        startCallTimer();
+      }
+    }
+
+    // Hide active call indicator
+    function hideActiveCallIndicator() {
+      const indicator = document.getElementById('active-call-indicator');
+
+      if (indicator) {
+        indicator.classList.add('hidden');
+        console.log('📞 Active call indicator hidden');
+
+        // Stop call timer
+        stopCallTimer();
+      }
+    }
+
+    // Start call timer
+    function startCallTimer() {
+      callIndicatorStartTime = new Date();
+
+      if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+      }
+
+      callTimerInterval = setInterval(() => {
+        const timerEl = document.getElementById('active-call-timer');
+        if (timerEl && callIndicatorStartTime) {
+          const elapsed = Math.floor((new Date() - callIndicatorStartTime) / 1000);
+          const minutes = Math.floor(elapsed / 60);
+          const seconds = elapsed % 60;
+          timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+      }, 1000);
+    }
+
+    // Stop call timer
+    function stopCallTimer() {
+      if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+        callTimerInterval = null;
+      }
+      callIndicatorStartTime = null;
+
+      // Reset timer display
+      const timerEl = document.getElementById('active-call-timer');
+      if (timerEl) {
+        timerEl.textContent = '00:00';
+      }
+    }
+
+    // Make functions globally available
+    window.showActiveCallIndicator = showActiveCallIndicator;
+    window.hideActiveCallIndicator = hideActiveCallIndicator;
 
     // Initialize chat mode for therapists
     document.addEventListener("DOMContentLoaded", function () {
