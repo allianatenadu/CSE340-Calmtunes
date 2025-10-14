@@ -872,6 +872,7 @@
       <div
         id="incoming-call-modal"
         class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+        style="display: none !important;"
       >
         <div class="bg-white rounded-lg max-w-md w-full mx-4">
           <div class="p-6 border-b border-gray-200">
@@ -1020,6 +1021,7 @@
         const adminButton = document.getElementById("admin-chat-button");
         if (adminButton) {
           // Show admin button for therapist conversations, hide for admin conversations
+          const isAdminConversation = conv?.conversation_type === "admin";
           const shouldShowAdminButton = !isAdminConversation;
           if (shouldShowAdminButton) {
             adminButton.classList.remove("hidden");
@@ -1180,8 +1182,12 @@
       // Handle incoming call notification
       socket.on('incoming_call', (data) => {
         console.log('📲 Incoming call event received:', data);
+        console.log('🔍 Current conversation ID:', currentConversationId);
+        console.log('📞 Call conversation ID:', data.conversationId);
+
         if (data && data.conversationId === currentConversationId) {
           console.log('✅ Call is for current conversation, showing modal');
+
           // Store complete call data including callType
           incomingCallData = {
             conversationId: data.conversationId,
@@ -1190,7 +1196,11 @@
             fromUserId: data.fromUserId
           };
           console.log('💾 Stored incoming call data:', incomingCallData);
-          showIncomingCallModal(data);
+
+          // Show modal immediately
+          setTimeout(() => {
+            showIncomingCallModal(data);
+          }, 100);
         } else {
           console.log('⚠️ Call is for different conversation:', data.conversationId, 'vs', currentConversationId);
         }
@@ -3794,7 +3804,7 @@
       const callType = document.getElementById('incoming-call-type');
       const avatar = document.getElementById('incoming-call-avatar');
 
-      if (modal && callerName && callType) {
+      if (modal && callerName && callType && avatar) {
         callerName.textContent = data.fromUser || 'Unknown Caller';
         callType.textContent = data.callType === 'video' ? '📹 Video Call' : '📞 Phone Call';
 
@@ -3807,10 +3817,27 @@
         // Store incoming call data
         incomingCallData = data;
 
+        // Ensure modal is visible - try multiple methods
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        modal.style.display = 'flex !important';
+        modal.style.zIndex = '9999';
 
-        console.log('✅ Incoming call modal shown');
+        // Force visibility with direct style override
+        modal.setAttribute('style', `
+          display: flex !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          background-color: rgba(0, 0, 0, 0.5) !important;
+          align-items: center !important;
+          justify-content: center !important;
+          z-index: 9999 !important;
+        `);
+
+        console.log('✅ Incoming call modal shown and styled');
 
         // Play ringtone (optional)
         try {
@@ -3824,7 +3851,8 @@
 
         // Auto-decline after 30 seconds
         const timeoutId = setTimeout(() => {
-          if (document.getElementById('incoming-call-modal').classList.contains('flex')) {
+          const modalElement = document.getElementById('incoming-call-modal');
+          if (modalElement && modalElement.classList.contains('flex')) {
             console.log('⏰ Call timeout - auto declining');
             declineCall();
           }
@@ -3832,7 +3860,12 @@
 
         modal.dataset.timeoutId = timeoutId;
       } else {
-        console.error('❌ Incoming call modal elements not found');
+        console.error('❌ Incoming call modal elements not found:', {
+          modal: !!modal,
+          callerName: !!callerName,
+          callType: !!callType,
+          avatar: !!avatar
+        });
       }
     }
 
