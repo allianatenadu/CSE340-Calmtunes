@@ -2718,6 +2718,19 @@
         return;
       }
 
+      // Debug message data in development
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('🔍 Displaying messages with profile data:', messages.map(msg => ({
+          id: msg.id,
+          sender_name: msg.sender_name,
+          sender_role: msg.sender_role,
+          sender_user_profile_image: msg.sender_user_profile_image,
+          sender_therapist_profile_image: msg.sender_therapist_profile_image,
+          profile_image: msg.profile_image,
+          isOwn: msg.sender_id == currentUserId
+        })));
+      }
+
       const messagesHtml = messages
         .map((msg) => {
           if (!msg || !msg.content) {
@@ -2726,12 +2739,15 @@
 
           const isOwn = msg.sender_id == currentUserId;
 
-          // FIXED: Get avatar URL from the message data itself
+          // Enhanced avatar URL handling with better debugging
           let avatarUrl = "";
+          let imageSource = "";
 
           if (isOwn) {
             // Own message - use current user's profile image from session
             const userProfileImage = "<%= user.profile_image || '' %>";
+            imageSource = "session";
+
             if (userProfileImage && userProfileImage.trim() !== "" && userProfileImage !== "null") {
               if (userProfileImage.startsWith("http")) {
                 avatarUrl = userProfileImage;
@@ -2742,47 +2758,45 @@
               } else {
                 avatarUrl = "/uploads/profiles/" + userProfileImage;
               }
-              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log("Own message - Using profile image:", avatarUrl);
-              }
+              console.log("💬 Own message - Using profile image:", avatarUrl);
+            } else {
+              console.log("💬 Own message - No profile image in session");
             }
           } else {
-            // FIXED: Other user message - use the new simplified image fields
-            let imageFilename = null;
- 
-            if (msg.sender_therapist_profile_image && msg.sender_therapist_profile_image.trim() !== "" && msg.sender_therapist_profile_image !== "null") {
-              imageFilename = msg.sender_therapist_profile_image;
-              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log("Other user message - Using therapist profile image:", imageFilename);
-              }
-            } else if (msg.sender_user_profile_image && msg.sender_user_profile_image.trim() !== "" && msg.sender_user_profile_image !== "null") {
-              imageFilename = msg.sender_user_profile_image;
-              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log("Other user message - Using user profile image:", imageFilename);
-              }
-            } else {
-              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log("Other user message - No profile image found, using fallback");
+            // Other user message - use message data with enhanced logic
+            imageSource = "message_data";
+
+            // Try multiple image fields in order of priority
+            const imageFields = [
+              { field: 'sender_therapist_profile_image', source: 'therapist_profile' },
+              { field: 'sender_user_profile_image', source: 'user_profile' },
+              { field: 'profile_image', source: 'generic_profile' }
+            ];
+
+            for (const { field, source } of imageFields) {
+              if (msg[field] && msg[field].trim() !== "" && msg[field] !== "null") {
+                imageFilename = msg[field];
+                imageSource = source;
+                console.log(`💬 Other user message - Using ${source}:`, imageFilename);
+                break;
               }
             }
- 
+
             if (imageFilename) {
               if (imageFilename.startsWith("http")) {
                 avatarUrl = imageFilename;
               } else if (imageFilename.startsWith("/uploads/profiles/")) {
-                // Already a complete path - use as is
                 avatarUrl = imageFilename;
               } else if (imageFilename.startsWith("/uploads")) {
                 avatarUrl = imageFilename;
               } else if (imageFilename.startsWith("uploads/")) {
                 avatarUrl = "/" + imageFilename;
               } else {
-                // Just a filename - add the profiles path
                 avatarUrl = "/uploads/profiles/" + imageFilename;
               }
-              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log("Other user message - Final avatar URL:", avatarUrl);
-              }
+              console.log("💬 Other user message - Final avatar URL:", avatarUrl);
+            } else {
+              console.log("💬 Other user message - No profile image found in message data");
             }
           }
 
@@ -2792,18 +2806,19 @@
             : (msg.sender_name || otherUser.name || "User");
           const firstLetter = senderName.charAt(0).toUpperCase();
 
-          // Create avatar HTML
+          // Create avatar HTML with enhanced error handling and debugging
           let avatarHtml = "";
           if (avatarUrl) {
             avatarHtml = `
               <div
                 class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 shrink-0"
                 style="background-image: url('${avatarUrl}');"
-                onerror="this.style.backgroundImage=''; this.innerHTML='<div class=\\'w-10 h-10 ${isOwn ? 'bg-blue-500' : 'bg-gray-500'} rounded-full flex items-center justify-center\\'><span class=\\'text-white font-semibold\\'>${firstLetter}</span></div>'"
+                onerror="console.error('❌ Avatar image failed to load:', '${avatarUrl}', 'for user:', '${msg.sender_name || 'Unknown'}'); this.style.backgroundImage=''; this.innerHTML='<div class=\\'w-10 h-10 ${isOwn ? 'bg-blue-500' : 'bg-gray-500'} rounded-full flex items-center justify-center\\'><span class=\\'text-white font-semibold\\'>${firstLetter}</span></div>'"
               ></div>
             `;
+            console.log(`💬 Avatar HTML created for ${msg.sender_name || 'Unknown'} (${imageSource}):`, avatarUrl);
           } else {
-            // Fallback to letter avatar with role-based colors
+            // Enhanced fallback to letter avatar with role-based colors and debugging
             const bgColor = isOwn
               ? "bg-blue-500"
               : (msg.sender_role === "therapist" ? "bg-blue-500" : "bg-green-500");
@@ -2813,6 +2828,7 @@
                 <span class="text-white font-semibold">${firstLetter}</span>
               </div>
             `;
+            console.log(`💬 Using letter avatar for ${msg.sender_name || 'Unknown'} (${msg.sender_role || 'unknown'}) - no image URL available from ${imageSource}`);
           }
 
           const messageBubbleClass = isOwn
@@ -3761,21 +3777,41 @@
           console.log('🎥 Received remote track:', event.track.kind, 'for call type:', currentCall);
 
           if (event && event.streams && event.streams[0]) {
-            console.log('✅ Setting remote stream for', currentCall, 'call');
-
+            const track = event.track;
             const remoteVideo = document.getElementById('remote-video');
             const remoteAudio = document.getElementById('remote-audio');
 
-            if (currentCall === 'video' && remoteVideo) {
-              console.log('📹 Setting remote video stream');
-              remoteVideo.srcObject = event.streams[0];
-              console.log('✅ Remote video stream set successfully');
-            } else if (currentCall === 'audio' && remoteAudio) {
-              console.log('🎵 Setting remote audio stream');
+            console.log('🔍 Track details:', {
+              kind: track.kind,
+              id: track.id,
+              label: track.label,
+              enabled: track.enabled,
+              readyState: track.readyState
+            });
+
+            if (track.kind === 'video' && remoteVideo) {
+              console.log('📹 Setting remote video track');
+              // For video calls, set the entire stream to remote video
+              if (currentCall === 'video') {
+                remoteVideo.srcObject = event.streams[0];
+                console.log('✅ Remote video stream set successfully');
+              }
+            } else if (track.kind === 'audio' && remoteAudio) {
+              console.log('🎵 Setting remote audio track');
+              // For audio calls or video call audio track, set to remote audio
               remoteAudio.srcObject = event.streams[0];
               console.log('✅ Remote audio stream set successfully');
             } else {
-              console.warn('⚠️ No appropriate remote element found for call type:', currentCall);
+              console.warn('⚠️ No appropriate remote element found for track kind:', track.kind);
+            }
+
+            // Additional handling for video calls - ensure both elements get their streams
+            if (currentCall === 'video') {
+              if (track.kind === 'video' && remoteVideo) {
+                remoteVideo.srcObject = event.streams[0];
+              } else if (track.kind === 'audio' && remoteAudio) {
+                remoteAudio.srcObject = event.streams[0];
+              }
             }
           } else {
             console.warn('⚠️ No remote stream received in ontrack event');
