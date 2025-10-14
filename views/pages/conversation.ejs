@@ -1357,19 +1357,25 @@
         }
       });
 
-      // Handle call ended
+      // Handle call ended - ENHANCED VERSION
       socket.on('call_ended', (data) => {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          console.log('📞 Call ended by remote user:', data);
-        }
-        if (data && data.conversationId === currentConversationId && isCallActive) {
+        console.log('📞 Call ended by remote user:', data);
+
+        // Check if this is for our current conversation
+        if (data && data.conversationId === currentConversationId) {
           console.log('🛑 Ending call due to remote user action');
+
+          // End the call on our side
           endCall();
-          showToast('Call ended by other user');
-        } else {
-          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log('⚠️ Ignoring call_ended event - not active or wrong conversation');
+
+          // Show appropriate message based on who ended it
+          if (data.reason === 'declined') {
+            showToast('❌ Call was declined', 'error');
+          } else {
+            showToast('📞 Call ended by other user');
           }
+        } else {
+          console.log('⚠️ Ignoring call_ended event - not our conversation or no active call');
         }
       });
 
@@ -4179,35 +4185,34 @@
 
     function showIncomingCallModal(data) {
       console.log('📲 Showing incoming call modal:', data);
-
+    
       // Hide any existing incoming call modal first
       hideIncomingCallModal();
-
+    
       const modal = document.getElementById('incoming-call-modal');
       const callerName = document.getElementById('incoming-caller-name');
       const callType = document.getElementById('incoming-call-type');
       const avatar = document.getElementById('incoming-call-avatar');
-
+    
       if (modal && callerName && callType && avatar) {
         callerName.textContent = data.fromUser || 'Unknown Caller';
         callType.textContent = data.callType === 'video' ? '📹 Video Call' : '📞 Phone Call';
-
+    
         // Update avatar
         if (data.fromUser) {
           const firstLetter = data.fromUser.charAt(0).toUpperCase();
           avatar.innerHTML = `<span class="text-white font-semibold text-2xl">${firstLetter}</span>`;
         }
-
+    
         // Store incoming call data
         incomingCallData = data;
-
-        // Ensure modal is visible - try multiple methods
+    
+        // Ensure modal is visible
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         modal.style.display = 'flex !important';
         modal.style.zIndex = '9999';
-
-        // Force visibility with direct style override
+    
         modal.setAttribute('style', `
           display: flex !important;
           position: fixed !important;
@@ -4220,43 +4225,66 @@
           justify-content: center !important;
           z-index: 9999 !important;
         `);
-
+    
         console.log('✅ Incoming call modal shown and styled');
-
-        // Play ringtone (optional)
+    
+        // Play ringtone - FIXED VERSION
         try {
-          const ringtone = new Audio('/audio/ringtone.mp3');
-          ringtone.loop = true;
-          ringtone.play().catch(e => console.log('Could not play ringtone:', e));
-          modal.dataset.ringtone = 'playing';
-          modal.dataset.ringtoneElement = ringtone; // Store reference to stop later
+          // Create global ringtone if it doesn't exist
+          if (!window.callRingtone) {
+            window.callRingtone = new Audio('/sounds/ringtone.mp3');
+            window.callRingtone.loop = true;
+          }
+          
+          // Play ringtone
+          window.callRingtone.play().then(() => {
+            console.log('🔔 Ringtone playing');
+          }).catch(e => {
+            console.log('Could not play ringtone:', e.message);
+          });
+          
         } catch (e) {
-          console.log('Ringtone not available');
+          console.log('Ringtone not available:', e.message);
         }
-
+    
         // Auto-decline after 30 seconds
         const timeoutId = setTimeout(() => {
           const modalElement = document.getElementById('incoming-call-modal');
           if (modalElement && modalElement.classList.contains('flex')) {
             console.log('⏰ Call timeout - auto declining');
-            stopRingtone(); // Stop ringtone on timeout
             declineCall();
           }
         }, 30000);
-
+    
         modal.dataset.timeoutId = timeoutId;
       } else {
-        console.error('❌ Incoming call modal elements not found:', {
-          modal: !!modal,
-          callerName: !!callerName,
-          callType: !!callType,
-          avatar: !!avatar
-        });
+        console.error('❌ Incoming call modal elements not found');
       }
     }
-
+    
+    // Stop ringtone helper function
+    function stopRingtone() {
+      console.log('🛑 Stopping ringtone...');
+    
+      if (window.callRingtone) {
+        try {
+          window.callRingtone.pause();
+          window.callRingtone.currentTime = 0;
+          console.log('✅ Ringtone stopped');
+        } catch (error) {
+          console.log('⚠️ Could not stop ringtone:', error.message);
+        }
+      } else {
+        console.log('⚠️ No ringtone to stop');
+      }
+    }
+    
     function hideIncomingCallModal() {
       console.log('🔇 Hiding incoming call modal');
+    
+      // Stop ringtone first
+      stopRingtone();
+    
       const modal = document.getElementById('incoming-call-modal');
       if (modal) {
         // Multiple methods to ensure modal is hidden
@@ -4264,29 +4292,16 @@
         modal.classList.remove('flex');
         modal.style.display = 'none !important';
         modal.style.zIndex = '-1';
-
+    
         // Remove any forced styles
         modal.removeAttribute('style');
-
-        // Stop ringtone
-        if (modal.dataset.ringtone === 'playing') {
-          const ringtone = modal.dataset.ringtoneElement;
-          if (ringtone) {
-            console.log('🛑 Stopping ringtone...');
-            ringtone.pause();
-            ringtone.currentTime = 0;
-            ringtone.loop = false;
-          }
-          modal.dataset.ringtone = '';
-          modal.dataset.ringtoneElement = '';
-        }
-
+    
         // Clear timeout
         if (modal.dataset.timeoutId) {
           clearTimeout(parseInt(modal.dataset.timeoutId));
           modal.dataset.timeoutId = '';
         }
-
+    
         console.log('✅ Incoming call modal hidden completely');
       } else {
         console.log('⚠️ Incoming call modal not found');
@@ -4317,17 +4332,16 @@
         showToast('No incoming call to answer', 'error');
         return;
       }
-
+    
       if (isCallActive) {
         showToast('A call is already active. Please end the current call first.', 'error');
-        hideIncomingCallModal();
+        hideIncomingCallModal(); // This now includes stopRingtone()
         return;
       }
-
+    
       try {
-        console.log('📞 Hiding incoming call modal and stopping ringtone before answering...');
-        stopRingtone(); // Stop ringtone immediately when answering
-        hideIncomingCallModal();
+        console.log('📞 Hiding incoming call modal before answering...');
+        hideIncomingCallModal(); // Ringtone stops here automatically
 
         // Request media permissions based on call type
         const constraints = incomingCallData.callType === 'video'
@@ -4652,31 +4666,43 @@
     }
 
     function declineCall() {
-      console.log('Declining call...');
-
+      console.log('❌ Declining call...');
+    
       if (!incomingCallData) {
         console.log('⚠️ No incoming call to decline');
         return;
       }
-
-      stopRingtone(); // Stop ringtone when declining
+    
+      // Hide modal and stop ringtone
       hideIncomingCallModal();
-
+    
       // Notify caller that call was declined
-      if (socket && socket.connected && incomingCallData) {
+      if (socket && socket.connected && incomingCallData.conversationId) {
+        console.log('📡 Notifying caller that call was declined');
         socket.emit('call_ended', {
-          conversationId: currentConversationId,
+          conversationId: incomingCallData.conversationId,
           reason: 'declined'
         });
       }
-
+    
+      // Clear incoming call data
       incomingCallData = null;
-      showToast('Call declined');
+    
+      showToast('❌ Call declined');
     }
 
     async function endCall() {
       console.log('🛑 Ending call...');
-
+    
+      // Notify other user FIRST (before cleanup)
+      if (socket && socket.connected && currentConversationId && isCallActive) {
+        console.log('📡 Notifying other user that call is ending...');
+        socket.emit('call_ended', {
+          conversationId: currentConversationId,
+          reason: 'ended'
+        });
+      }
+    
       // Stop local media tracks
       if (localStream) {
         console.log('🔇 Stopping local media tracks...');
@@ -4686,14 +4712,14 @@
         });
         localStream = null;
       }
-
+    
       // Close peer connection
       if (peerConnection) {
         console.log('🔌 Closing peer connection...');
         peerConnection.close();
         peerConnection = null;
       }
-
+    
       // Clear any existing intervals/timeouts
       if (window.callerStatusInterval) {
         clearInterval(window.callerStatusInterval);
@@ -4707,23 +4733,23 @@
         clearTimeout(window.remoteStreamTimeout);
         window.remoteStreamTimeout = null;
       }
-
-      // Reset WebRTC handlers flag to allow re-initialization if needed
+    
+      // Reset WebRTC handlers flag
       window.webRTCHandlersSetup = false;
-
+    
       // Remove call modal
       const modal = document.getElementById('call-modal');
       if (modal) {
         console.log('🗑️ Removing call modal...');
         modal.remove();
       }
-
+    
       // Hide incoming call modal if visible
-      hideIncomingCallModal();
-
+      hideIncomingCallModal(); // This includes stopping ringtone
+    
       // Restore body scroll
       document.body.style.overflow = '';
-
+    
       // Clear all pending data
       console.log('🧹 Clearing pending call data...');
       window.pendingOffer = null;
@@ -4731,31 +4757,24 @@
         window.pendingIceCandidates = [];
       }
       incomingCallData = null;
-
-      // Notify other user that call ended
-      if (socket && socket.connected && currentConversationId) {
-        console.log('📡 Notifying other user call ended...');
-        socket.emit('call_ended', {
-          conversationId: currentConversationId,
-          reason: 'ended'
-        });
-      }
-
-      // Log call end in chat
-      if (currentConversationId) {
+    
+      // Log call end in chat (only if we had an active call)
+      if (currentConversationId && isCallActive) {
         await logCallEvent('call_ended');
       }
-
-      // Hide active call indicator
-      hideActiveCallIndicator();
-
+    
       // Reset call state
       console.log('🔄 Resetting call state...');
+      const wasActive = isCallActive;
       isCallActive = false;
       currentCall = null;
       isInitiator = false;
-
-      showToast('📞 Call ended');
+    
+      // Only show toast if call was actually active
+      if (wasActive) {
+        showToast('📞 Call ended');
+      }
+    
       console.log('✅ Call cleanup completed');
     }
 
