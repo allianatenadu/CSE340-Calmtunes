@@ -433,31 +433,81 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Video/Phone call events - WebRTC Signaling
+  // WebRTC signaling handlers
   socket.on("webrtc_offer", (data) => {
-    console.log("WebRTC offer received:", data);
-    socket.to(data.conversationId).emit("webrtc_offer", data);
+    console.log("📞 WebRTC offer received:", {
+      conversationId: data.conversationId,
+      callType: data.callType,
+      from: socket.userId
+    });
+
+    // Broadcast offer to other users in the conversation room (except sender)
+    socket.to(data.conversationId).emit("webrtc_offer", {
+      conversationId: data.conversationId,
+      offer: data.offer,
+      callType: data.callType,
+      fromUserId: socket.userId
+    });
   });
 
   socket.on("webrtc_answer", (data) => {
-    console.log("WebRTC answer received:", data);
-    socket.to(data.conversationId).emit("webrtc_answer", data);
+    console.log("📞 WebRTC answer received:", {
+      conversationId: data.conversationId,
+      from: socket.userId
+    });
+
+    // Broadcast answer to other users in the conversation room
+    socket.to(data.conversationId).emit("webrtc_answer", {
+      conversationId: data.conversationId,
+      answer: data.answer,
+      fromUserId: socket.userId
+    });
   });
 
   socket.on("webrtc_ice_candidate", (data) => {
-    console.log("ICE candidate received:", data);
-    socket.to(data.conversationId).emit("webrtc_ice_candidate", data);
+    console.log("📞 ICE candidate received:", {
+      conversationId: data.conversationId,
+      from: socket.userId
+    });
+
+    // Broadcast ICE candidate to other users in the conversation room
+    socket.to(data.conversationId).emit("webrtc_ice_candidate", {
+      conversationId: data.conversationId,
+      candidate: data.candidate,
+      fromUserId: socket.userId
+    });
+  });
+
+  socket.on("incoming_call", (data) => {
+    console.log("📞 Incoming call notification:", {
+      conversationId: data.conversationId,
+      callType: data.callType,
+      from: socket.userId,
+      fromUser: data.fromUser
+    });
+
+    // Broadcast incoming call to other users in the conversation room
+    socket.to(data.conversationId).emit("incoming_call", {
+      conversationId: data.conversationId,
+      callType: data.callType,
+      fromUser: data.fromUser,
+      fromUserId: socket.userId || data.fromUserId
+    });
   });
 
   socket.on("call_ended", (data) => {
-    console.log("Call ended:", data);
-    socket.to(data.conversationId).emit("call_ended", data);
-  });
+    console.log("📞 Call ended:", {
+      conversationId: data.conversationId,
+      reason: data.reason,
+      from: socket.userId
+    });
 
-  // Incoming call signaling
-  socket.on("incoming_call", (data) => {
-    console.log("Incoming call:", data);
-    socket.to(data.conversationId).emit("incoming_call", data);
+    // Broadcast call ended to other users in the conversation room
+    socket.to(data.conversationId).emit("call_ended", {
+      conversationId: data.conversationId,
+      reason: data.reason,
+      fromUserId: socket.userId
+    });
   });
 
   // Disconnect
