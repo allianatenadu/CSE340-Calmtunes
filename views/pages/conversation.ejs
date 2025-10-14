@@ -1202,13 +1202,13 @@
       socket.on('webrtc_offer', async (data) => {
         console.log('📥 Received WebRTC offer:', data);
         if (data && data.conversationId === currentConversationId) {
-          // Store the complete offer data including callType
+          // Store the complete offer data including callType IMMEDIATELY
           window.pendingOffer = {
             offer: data.offer,
             callType: data.callType,
             conversationId: data.conversationId
           };
-          console.log('💾 Stored complete pending offer:', window.pendingOffer);
+          console.log('💾 Offer stored immediately in window.pendingOffer:', window.pendingOffer);
 
           // If we're not the initiator and have a peer connection, process immediately
           if (!isInitiator && peerConnection) {
@@ -1238,7 +1238,14 @@
             }
           } else {
             console.log('⚠️ Peer connection not ready yet, offer stored for later processing');
+            console.log('📋 Current state:', {
+              isInitiator,
+              hasPeerConnection: !!peerConnection,
+              pendingOffer: !!window.pendingOffer
+            });
           }
+        } else {
+          console.log('⚠️ Offer for different conversation:', data?.conversationId, 'vs', currentConversationId);
         }
       });
 
@@ -3438,20 +3445,32 @@
         await peerConnection.setLocalDescription(offer);
         console.log('✅ Local description set');
 
-        // Send offer and incoming call notification to other user via socket
-        console.log('📹 Emitting webrtc_offer and incoming_call events...');
+        // Send offer FIRST and store it immediately
+        console.log('📹 Sending WebRTC offer...');
         socket.emit('webrtc_offer', {
           conversationId: currentConversationId,
           offer: offer,
           callType: 'video'
         });
 
-        socket.emit('incoming_call', {
-          conversationId: currentConversationId,
+        // Store offer locally for immediate availability
+        window.pendingOffer = {
+          offer: offer,
           callType: 'video',
-          fromUser: '<%= user.name %>',
-          fromUserId: currentUserId
-        });
+          conversationId: currentConversationId
+        };
+        console.log('💾 Offer stored locally for immediate availability');
+
+        // Small delay to ensure offer is processed before incoming_call notification
+        setTimeout(() => {
+          console.log('📲 Sending incoming_call notification...');
+          socket.emit('incoming_call', {
+            conversationId: currentConversationId,
+            callType: 'video',
+            fromUser: '<%= user.name %>',
+            fromUserId: currentUserId
+          });
+        }, 100);
         console.log('✅ Call signals sent to server');
 
         // Show call interface
@@ -3463,6 +3482,35 @@
           localVideo.srcObject = localStream;
           console.log('✅ Local video stream set');
         }
+
+        // Set up caller status monitoring
+        const callerStatusInterval = setInterval(() => {
+          if (peerConnection) {
+            console.log('🔍 Caller connection state check:', {
+              connectionState: peerConnection.connectionState,
+              iceConnectionState: peerConnection.iceConnectionState,
+              iceGatheringState: peerConnection.iceGatheringState,
+              signalingState: peerConnection.signalingState
+            });
+
+            const statusEl = document.getElementById('call-status');
+            if (peerConnection.connectionState === 'connected') {
+              if (statusEl) {
+                statusEl.textContent = 'Connected';
+                console.log('✅ Caller status updated to: Connected');
+              }
+              clearInterval(callerStatusInterval);
+              showToast('✅ Video call connected!');
+            } else if (peerConnection.connectionState === 'failed') {
+              if (statusEl) {
+                statusEl.textContent = 'Connection Failed';
+                console.error('❌ Caller status updated to: Connection Failed');
+              }
+              clearInterval(callerStatusInterval);
+              showToast('❌ Video call connection failed', 'error');
+            }
+          }
+        }, 500);
 
         // Log call start in chat
         await logCallEvent('video_call_started');
@@ -3517,24 +3565,65 @@
         await peerConnection.setLocalDescription(offer);
         console.log('✅ Local description set');
 
-        // Send offer and incoming call notification to other user via socket
-        console.log('📞 Emitting webrtc_offer and incoming_call events...');
+        // Send offer FIRST and store it immediately
+        console.log('📞 Sending WebRTC offer...');
         socket.emit('webrtc_offer', {
           conversationId: currentConversationId,
           offer: offer,
           callType: 'audio'
         });
 
-        socket.emit('incoming_call', {
-          conversationId: currentConversationId,
+        // Store offer locally for immediate availability
+        window.pendingOffer = {
+          offer: offer,
           callType: 'audio',
-          fromUser: '<%= user.name %>',
-          fromUserId: currentUserId
-        });
+          conversationId: currentConversationId
+        };
+        console.log('💾 Offer stored locally for immediate availability');
+
+        // Small delay to ensure offer is processed before incoming_call notification
+        setTimeout(() => {
+          console.log('📲 Sending incoming_call notification...');
+          socket.emit('incoming_call', {
+            conversationId: currentConversationId,
+            callType: 'audio',
+            fromUser: '<%= user.name %>',
+            fromUserId: currentUserId
+          });
+        }, 100);
         console.log('✅ Call signals sent to server');
 
         // Show call interface
         showCallInterface('audio');
+
+        // Set up caller status monitoring for audio calls
+        const callerAudioStatusInterval = setInterval(() => {
+          if (peerConnection) {
+            console.log('🔍 Caller audio connection state check:', {
+              connectionState: peerConnection.connectionState,
+              iceConnectionState: peerConnection.iceConnectionState,
+              iceGatheringState: peerConnection.iceGatheringState,
+              signalingState: peerConnection.signalingState
+            });
+
+            const statusEl = document.getElementById('call-status');
+            if (peerConnection.connectionState === 'connected') {
+              if (statusEl) {
+                statusEl.textContent = 'Connected';
+                console.log('✅ Caller audio status updated to: Connected');
+              }
+              clearInterval(callerAudioStatusInterval);
+              showToast('✅ Phone call connected!');
+            } else if (peerConnection.connectionState === 'failed') {
+              if (statusEl) {
+                statusEl.textContent = 'Connection Failed';
+                console.error('❌ Caller audio status updated to: Connection Failed');
+              }
+              clearInterval(callerAudioStatusInterval);
+              showToast('❌ Phone call connection failed', 'error');
+            }
+          }
+        }, 500);
 
         // Log call start in chat
         await logCallEvent('audio_call_started');
@@ -3799,13 +3888,42 @@
         });
 
         // CRITICAL FIX: Process the pending offer and create answer
+        console.log('🔍 Looking for offer in multiple locations...');
+        console.log('📋 window.pendingOffer:', window.pendingOffer);
+        console.log('📋 incomingCallData:', incomingCallData);
+
+        let offerData = null;
+
+        // Try multiple sources for the offer
         if (window.pendingOffer && window.pendingOffer.offer) {
-          console.log('🔧 Processing pending WebRTC offer...');
+          offerData = window.pendingOffer;
+          console.log('✅ Found offer in window.pendingOffer');
+        } else if (incomingCallData && incomingCallData.offer) {
+          offerData = incomingCallData;
+          console.log('✅ Found offer in incomingCallData');
+        }
+
+        if (offerData && offerData.offer) {
+          console.log('🔧 Processing WebRTC offer...');
 
           try {
+            // Wait for peer connection to be in the right state
+            let retries = 0;
+            const maxRetries = 10;
+
+            while (retries < maxRetries && peerConnection.signalingState !== 'stable') {
+              console.log(`⏳ Waiting for stable signaling state... (attempt ${retries + 1}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, 200));
+              retries++;
+            }
+
+            if (peerConnection.signalingState !== 'stable') {
+              throw new Error(`Peer connection not in stable state after ${maxRetries} attempts. Current state: ${peerConnection.signalingState}`);
+            }
+
             // Set remote description from the offer
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(window.pendingOffer.offer));
-            console.log('✅ Remote description set from pending offer');
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offerData.offer));
+            console.log('✅ Remote description set from offer');
 
             // Create answer
             const answer = await peerConnection.createAnswer();
@@ -3843,7 +3961,49 @@
             throw error;
           }
         } else {
-          console.warn('⚠️ No pending offer found - waiting for offer...');
+          console.warn('⚠️ No offer found - starting timeout polling...');
+
+          // Start polling for offer with timeout
+          const offerTimeout = 5000; // 5 seconds
+          const pollInterval = 200; // Check every 200ms
+          const startTime = Date.now();
+
+          while (Date.now() - startTime < offerTimeout) {
+            console.log('🔄 Polling for offer...');
+
+            // Check again for offer
+            if (window.pendingOffer && window.pendingOffer.offer) {
+              offerData = window.pendingOffer;
+              console.log('✅ Offer found during polling!');
+              break;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+          }
+
+          if (offerData && offerData.offer) {
+            console.log('🔧 Processing offer found during polling...');
+            try {
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(offerData.offer));
+              const answer = await peerConnection.createAnswer();
+              await peerConnection.setLocalDescription(answer);
+
+              if (socket && socket.connected) {
+                socket.emit('webrtc_answer', {
+                  conversationId: currentConversationId,
+                  answer: answer
+                });
+              }
+
+              window.pendingOffer = null;
+              console.log('✅ Answer sent after polling');
+            } catch (error) {
+              console.error('❌ Error processing offer after polling:', error);
+              throw error;
+            }
+          } else {
+            throw new Error(`Offer not received within ${offerTimeout}ms timeout`);
+          }
         }
 
         // Show call interface
@@ -3858,11 +4018,40 @@
           }
         }
 
-        // Update call status
+        // Update call status with better feedback
         const statusEl = document.getElementById('call-status');
         if (statusEl) {
           statusEl.textContent = 'Connecting...';
+          console.log('📊 Call status updated to: Connecting...');
         }
+
+        // Set up status monitoring
+        const statusCheckInterval = setInterval(() => {
+          if (peerConnection) {
+            console.log('🔍 Connection state check:', {
+              connectionState: peerConnection.connectionState,
+              iceConnectionState: peerConnection.iceConnectionState,
+              iceGatheringState: peerConnection.iceGatheringState,
+              signalingState: peerConnection.signalingState
+            });
+
+            if (peerConnection.connectionState === 'connected') {
+              if (statusEl) {
+                statusEl.textContent = 'Connected';
+                console.log('✅ Call status updated to: Connected');
+              }
+              clearInterval(statusCheckInterval);
+              showToast('✅ Call connected successfully!');
+            } else if (peerConnection.connectionState === 'failed') {
+              if (statusEl) {
+                statusEl.textContent = 'Connection Failed';
+                console.error('❌ Call status updated to: Connection Failed');
+              }
+              clearInterval(statusCheckInterval);
+              showToast('❌ Call connection failed', 'error');
+            }
+          }
+        }, 500);
 
         // Log call answer in chat
         await logCallEvent(`${currentCall}_call_started`);
