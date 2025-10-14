@@ -1326,10 +1326,17 @@
 
       // Handle call ended
       socket.on('call_ended', (data) => {
-        console.log('📞 Call ended by remote user:', data);
-        if (data && data.conversationId === currentConversationId) {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log('📞 Call ended by remote user:', data);
+        }
+        if (data && data.conversationId === currentConversationId && isCallActive) {
+          console.log('🛑 Ending call due to remote user action');
           endCall();
           showToast('Call ended by other user');
+        } else {
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('⚠️ Ignoring call_ended event - not active or wrong conversation');
+          }
         }
       });
 
@@ -1631,7 +1638,7 @@
         return;
       }
 
-      // Only log avatar updates in development or if there's an issue
+      // Only log avatar updates in development mode
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         console.log("🔍 Updating avatar - otherUser:", otherUser.name);
       }
@@ -1654,7 +1661,9 @@
 
         console.log("✅ Using profile image URL:", imageUrl);
       } else {
-        console.log("⚠️ No valid image found, using letter avatar");
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log("⚠️ No valid image found, using letter avatar");
+        }
       }
 
       // Get first letter for fallback
@@ -1680,7 +1689,9 @@
             onerror="console.error('❌ Image failed to load:', this.src); this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-12 h-12 ${bgColor} rounded-full flex items-center justify-center\\'><span class=\\'text-white font-semibold text-lg\\'>${firstLetter}</span></div>'"
           >
         `;
-        console.log("✅ Avatar set to image successfully");
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log("✅ Avatar set to image successfully");
+        }
       } else {
         // Use letter avatar
         avatarContainer.innerHTML = `
@@ -1688,7 +1699,9 @@
             <span class="text-white font-semibold text-lg">${firstLetter}</span>
           </div>
         `;
-        console.log("ℹ️ Avatar set to letter:", firstLetter);
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log("ℹ️ Avatar set to letter:", firstLetter);
+        }
       }
     }
 
@@ -2691,7 +2704,9 @@
               } else {
                 avatarUrl = "/uploads/profiles/" + userProfileImage;
               }
-              console.log("Own message - Using profile image:", avatarUrl);
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log("Own message - Using profile image:", avatarUrl);
+              }
             }
           } else {
             // FIXED: Other user message - use the new simplified image fields
@@ -2699,12 +2714,18 @@
  
             if (msg.sender_therapist_profile_image && msg.sender_therapist_profile_image.trim() !== "" && msg.sender_therapist_profile_image !== "null") {
               imageFilename = msg.sender_therapist_profile_image;
-              console.log("Other user message - Using therapist profile image:", imageFilename);
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log("Other user message - Using therapist profile image:", imageFilename);
+              }
             } else if (msg.sender_user_profile_image && msg.sender_user_profile_image.trim() !== "" && msg.sender_user_profile_image !== "null") {
               imageFilename = msg.sender_user_profile_image;
-              console.log("Other user message - Using user profile image:", imageFilename);
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log("Other user message - Using user profile image:", imageFilename);
+              }
             } else {
-              console.log("Other user message - No profile image found, using fallback");
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log("Other user message - No profile image found, using fallback");
+              }
             }
  
             if (imageFilename) {
@@ -2721,7 +2742,9 @@
                 // Just a filename - add the profiles path
                 avatarUrl = "/uploads/profiles/" + imageFilename;
               }
-              console.log("Other user message - Final avatar URL:", avatarUrl);
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log("Other user message - Final avatar URL:", avatarUrl);
+              }
             }
           }
 
@@ -3667,7 +3690,9 @@
         // Handle ICE candidates
         peerConnection.onicecandidate = (event) => {
           if (event && event.candidate) {
-            console.log('📡 New ICE candidate:', event.candidate.candidate);
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('📡 New ICE candidate:', event.candidate.candidate);
+            }
             // Send ICE candidate to other user via socket
             if (socket && socket.connected) {
               socket.emit('webrtc_ice_candidate', {
@@ -3676,24 +3701,34 @@
               });
             }
           } else {
-            console.log('📡 ICE candidate gathering complete');
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('📡 ICE candidate gathering complete');
+            }
           }
         };
 
         // Handle remote stream
         peerConnection.ontrack = (event) => {
-          console.log('🎥 Received remote track:', event.track.kind);
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('🎥 Received remote track:', event.track.kind);
+          }
           if (event && event.streams && event.streams[0]) {
-            console.log('✅ Setting remote stream');
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('✅ Setting remote stream');
+            }
             const remoteVideo = document.getElementById('remote-video');
             const remoteAudio = document.getElementById('remote-audio');
 
             if (currentCall === 'video' && remoteVideo) {
               remoteVideo.srcObject = event.streams[0];
-              console.log('✅ Remote video stream set');
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log('✅ Remote video stream set');
+              }
             } else if (currentCall === 'audio' && remoteAudio) {
               remoteAudio.srcObject = event.streams[0];
-              console.log('✅ Remote audio stream set');
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log('✅ Remote audio stream set');
+              }
             }
           }
         };
@@ -3701,19 +3736,25 @@
         // Handle ICE connection state changes
         peerConnection.oniceconnectionstatechange = () => {
           if (peerConnection) {
-            console.log('❄️ ICE connection state:', peerConnection.iceConnectionState);
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('❄️ ICE connection state:', peerConnection.iceConnectionState);
+            }
           }
         };
 
         // Handle connection state changes
         peerConnection.onconnectionstatechange = () => {
           if (peerConnection) {
-            console.log('🔗 Connection state:', peerConnection.connectionState);
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('🔗 Connection state:', peerConnection.connectionState);
+            }
             if (peerConnection.connectionState === 'connected') {
               showToast(`✅ ${currentCall === 'video' ? 'Video' : 'Phone'} call connected!`);
               logCallEvent('call_connected');
             } else if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
-              console.error('❌ Connection failed or disconnected');
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.error('❌ Connection failed or disconnected');
+              }
               endCall();
               showToast('Call disconnected', 'error');
             }
@@ -3873,12 +3914,17 @@
       console.log('🔇 Hiding incoming call modal');
       const modal = document.getElementById('incoming-call-modal');
       if (modal) {
+        // Multiple methods to ensure modal is hidden
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        modal.style.display = 'none !important';
+        modal.style.zIndex = '-1';
+
+        // Remove any forced styles
+        modal.removeAttribute('style');
 
         // Stop ringtone
         if (modal.dataset.ringtone === 'playing') {
-          // Audio will stop when modal is hidden
           modal.dataset.ringtone = '';
         }
 
@@ -3887,6 +3933,10 @@
           clearTimeout(parseInt(modal.dataset.timeoutId));
           modal.dataset.timeoutId = '';
         }
+
+        console.log('✅ Incoming call modal hidden completely');
+      } else {
+        console.log('⚠️ Incoming call modal not found');
       }
     }
 
@@ -3898,6 +3948,7 @@
       }
 
       try {
+        console.log('📞 Hiding incoming call modal before answering...');
         hideIncomingCallModal();
 
         // Request media permissions based on call type
