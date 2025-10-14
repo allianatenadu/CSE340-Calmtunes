@@ -1053,6 +1053,9 @@
 
         // Authenticate socket connection
         socket.emit("authenticate", { userId: currentUserId, role: userRole });
+
+        // ✅ SETUP WEBRTC HANDLERS HERE - AFTER SOCKET IS CONNECTED
+        setupWebRTCHandlers();
       });
 
       socket.on("disconnect", () => {
@@ -1165,6 +1168,119 @@
           console.log("❌ Stop typing event for different conversation");
         }
       });
+    }
+
+    // ✅ NEW FUNCTION: Setup WebRTC handlers AFTER socket is ready
+    function setupWebRTCHandlers() {
+      console.log("📞 Setting up WebRTC socket handlers...");
+
+      if (!socket) {
+        console.error("❌ Socket not available for WebRTC handlers");
+        return;
+      }
+
+      // Handle incoming call notification
+      socket.on('incoming_call', (data) => {
+        console.log('📲 Incoming call event received:', data);
+        if (data && data.conversationId === currentConversationId) {
+          console.log('✅ Call is for current conversation, showing modal');
+          incomingCallData = data;
+          showIncomingCallModal(data);
+        } else {
+          console.log('⚠️ Call is for different conversation:', data.conversationId, 'vs', currentConversationId);
+        }
+      });
+
+      // Handle WebRTC offer
+      socket.on('webrtc_offer', async (data) => {
+        console.log('📥 Received WebRTC offer:', data);
+        if (data && data.conversationId === currentConversationId) {
+          // Store the offer
+          window.pendingOffer = data;
+          console.log('💾 Stored pending offer');
+
+          // If we're not the initiator and have a peer connection, process immediately
+          if (!isInitiator && peerConnection) {
+            try {
+              console.log('🔧 Processing WebRTC offer immediately...');
+
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+              console.log('✅ Remote description set');
+
+              const answer = await peerConnection.createAnswer();
+              await peerConnection.setLocalDescription(answer);
+              console.log('✅ Answer created and local description set');
+
+              if (socket && socket.connected) {
+                socket.emit('webrtc_answer', {
+                  conversationId: currentConversationId,
+                  answer: answer
+                });
+                console.log('✅ Answer sent to caller');
+              }
+
+              // Clear pending offer since we processed it
+              window.pendingOffer = null;
+            } catch (error) {
+              console.error('❌ Error handling WebRTC offer:', error);
+              showToast('Failed to process call offer', 'error');
+            }
+          } else {
+            console.log('⚠️ Peer connection not ready yet, offer stored for later processing');
+          }
+        }
+      });
+
+      // Handle WebRTC answer
+      socket.on('webrtc_answer', async (data) => {
+        console.log('📥 Received WebRTC answer:', data);
+        if (data && data.conversationId === currentConversationId && isInitiator && peerConnection && data.answer) {
+          try {
+            console.log('🔧 Setting remote description from answer...');
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            console.log('✅ Answer processed successfully');
+
+            // Update call status
+            const statusEl = document.getElementById('call-status');
+            if (statusEl) {
+              statusEl.textContent = 'Connected';
+            }
+          } catch (error) {
+            console.error('❌ Error handling WebRTC answer:', error);
+            showToast('Failed to connect call', 'error');
+          }
+        }
+      });
+
+      // Handle ICE candidates
+      socket.on('webrtc_ice_candidate', async (data) => {
+        console.log('📥 Received ICE candidate:', data);
+        if (data && data.conversationId === currentConversationId && data.candidate) {
+          if (peerConnection && peerConnection.remoteDescription) {
+            try {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+              console.log('✅ ICE candidate added');
+            } catch (error) {
+              console.error('❌ Error adding ICE candidate:', error);
+            }
+          } else {
+            // Store ICE candidate for later if peer connection isn't ready
+            console.log('💾 Storing ICE candidate for later');
+            pendingIceCandidates.push(data.candidate);
+          }
+        }
+      });
+
+      // Handle call ended
+      socket.on('call_ended', (data) => {
+        console.log('📞 Call ended by remote user:', data);
+        if (data && data.conversationId === currentConversationId) {
+          endCall();
+          showToast('Call ended by other user');
+        }
+      });
+
+      console.log("✅ WebRTC socket handlers setup complete");
     }
 
     // Set up event listeners
@@ -3779,93 +3895,6 @@
       }
     }
 
-    // Socket event handlers for WebRTC - Place these at the end of your script
-    socket.on('incoming_call', (data) => {
-      console.log('📲 Incoming call event received:', data);
-      if (data && data.conversationId === currentConversationId) {
-        console.log('✅ Call is for current conversation, showing modal');
-        incomingCallData = data;
-        showIncomingCallModal(data);
-      } else {
-        console.log('⚠️ Call is for different conversation:', data.conversationId, 'vs', currentConversationId);
-      }
-    });
-
-    socket.on('webrtc_offer', async (data) => {
-      console.log('📥 Received WebRTC offer:', data);
-      if (data && data.conversationId === currentConversationId && !isInitiator) {
-        try {
-          console.log('🔧 Processing WebRTC offer...');
-
-          if (!peerConnection) {
-            console.log('⚠️ No peer connection, waiting for answer call...');
-            // Store offer to process after answering
-            window.pendingOffer = data;
-            return;
-          }
-
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-          console.log('✅ Remote description set');
-
-          if (peerConnection) {
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            console.log('✅ Answer created and local description set');
-
-            if (socket && socket.connected) {
-              socket.emit('webrtc_answer', {
-                conversationId: currentConversationId,
-                answer: answer
-              });
-              console.log('✅ Answer sent to caller');
-            }
-          }
-        } catch (error) {
-          console.error('❌ Error handling WebRTC offer:', error);
-          showToast('Failed to process call offer', 'error');
-        }
-      }
-    });
-
-    socket.on('webrtc_answer', async (data) => {
-      console.log('📥 Received WebRTC answer:', data);
-      if (data && data.conversationId === currentConversationId && isInitiator && peerConnection && data.answer) {
-        try {
-          console.log('🔧 Setting remote description from answer...');
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-          console.log('✅ Answer processed successfully');
-
-          // Update call status
-          const statusEl = document.getElementById('call-status');
-          if (statusEl) {
-            statusEl.textContent = 'Connected';
-          }
-        } catch (error) {
-          console.error('❌ Error handling WebRTC answer:', error);
-          showToast('Failed to connect call', 'error');
-        }
-      }
-    });
-
-    socket.on('webrtc_ice_candidate', async (data) => {
-      console.log('📥 Received ICE candidate:', data);
-      if (data && data.conversationId === currentConversationId && peerConnection && data.candidate) {
-        try {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-          console.log('✅ ICE candidate added');
-        } catch (error) {
-          console.error('❌ Error adding ICE candidate:', error);
-        }
-      }
-    });
-
-    socket.on('call_ended', (data) => {
-      console.log('📞 Call ended by remote user:', data);
-      if (data && data.conversationId === currentConversationId) {
-        endCall();
-        showToast('Call ended by other user');
-      }
-    });
 
     // Initialize chat mode for therapists
     document.addEventListener("DOMContentLoaded", function () {
