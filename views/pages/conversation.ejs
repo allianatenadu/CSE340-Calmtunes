@@ -1184,7 +1184,14 @@
         console.log('📲 Incoming call event received:', data);
         if (data && data.conversationId === currentConversationId) {
           console.log('✅ Call is for current conversation, showing modal');
-          incomingCallData = data;
+          // Store complete call data including callType
+          incomingCallData = {
+            conversationId: data.conversationId,
+            callType: data.callType,
+            fromUser: data.fromUser,
+            fromUserId: data.fromUserId
+          };
+          console.log('💾 Stored incoming call data:', incomingCallData);
           showIncomingCallModal(data);
         } else {
           console.log('⚠️ Call is for different conversation:', data.conversationId, 'vs', currentConversationId);
@@ -1195,9 +1202,13 @@
       socket.on('webrtc_offer', async (data) => {
         console.log('📥 Received WebRTC offer:', data);
         if (data && data.conversationId === currentConversationId) {
-          // Store the offer
-          window.pendingOffer = data;
-          console.log('💾 Stored pending offer');
+          // Store the complete offer data including callType
+          window.pendingOffer = {
+            offer: data.offer,
+            callType: data.callType,
+            conversationId: data.conversationId
+          };
+          console.log('💾 Stored complete pending offer:', window.pendingOffer);
 
           // If we're not the initiator and have a peer connection, process immediately
           if (!isInitiator && peerConnection) {
@@ -1245,10 +1256,34 @@
             if (statusEl) {
               statusEl.textContent = 'Connected';
             }
+
+            // Process any pending ICE candidates that arrived before the answer
+            if (window.pendingIceCandidates && window.pendingIceCandidates.length > 0) {
+              console.log(`📡 Processing ${window.pendingIceCandidates.length} pending ICE candidates`);
+              for (const candidate of window.pendingIceCandidates) {
+                try {
+                  await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                  console.log('✅ Added pending ICE candidate');
+                } catch (e) {
+                  console.error('❌ Error adding pending ICE candidate:', e);
+                }
+              }
+              window.pendingIceCandidates = [];
+            }
+
+            showToast('✅ Call connected successfully!');
           } catch (error) {
             console.error('❌ Error handling WebRTC answer:', error);
             showToast('Failed to connect call', 'error');
           }
+        } else {
+          console.log('⚠️ Answer conditions not met:', {
+            hasData: !!data,
+            conversationMatch: data?.conversationId === currentConversationId,
+            isInitiator,
+            hasPeerConnection: !!peerConnection,
+            hasAnswer: !!data?.answer
+          });
         }
       });
 
@@ -1266,7 +1301,10 @@
           } else {
             // Store ICE candidate for later if peer connection isn't ready
             console.log('💾 Storing ICE candidate for later');
-            pendingIceCandidates.push(data.candidate);
+            if (!window.pendingIceCandidates) {
+              window.pendingIceCandidates = [];
+            }
+            window.pendingIceCandidates.push(data.candidate);
           }
         }
       });
@@ -3263,6 +3301,7 @@
     let callStartTime = null;
     let isInitiator = false;
     let incomingCallData = null;
+    let pendingIceCandidates = []; // Store ICE candidates that arrive before peer connection is ready
 
     // WebRTC configuration with multiple STUN servers for better connectivity
     const rtcConfiguration = {
@@ -3759,6 +3798,54 @@
           console.log('✅ Added track:', track.kind);
         });
 
+        // CRITICAL FIX: Process the pending offer and create answer
+        if (window.pendingOffer && window.pendingOffer.offer) {
+          console.log('🔧 Processing pending WebRTC offer...');
+
+          try {
+            // Set remote description from the offer
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(window.pendingOffer.offer));
+            console.log('✅ Remote description set from pending offer');
+
+            // Create answer
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            console.log('✅ Answer created and local description set');
+
+            // Send answer back to caller
+            if (socket && socket.connected) {
+              socket.emit('webrtc_answer', {
+                conversationId: currentConversationId,
+                answer: answer
+              });
+              console.log('✅ Answer sent to caller');
+            }
+
+            // Clear pending offer
+            window.pendingOffer = null;
+
+            // Process any pending ICE candidates
+            if (window.pendingIceCandidates && window.pendingIceCandidates.length > 0) {
+              console.log(`📡 Processing ${window.pendingIceCandidates.length} pending ICE candidates`);
+              for (const candidate of window.pendingIceCandidates) {
+                try {
+                  await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                  console.log('✅ Added pending ICE candidate');
+                } catch (e) {
+                  console.error('❌ Error adding pending ICE candidate:', e);
+                }
+              }
+              window.pendingIceCandidates = [];
+            }
+
+          } catch (error) {
+            console.error('❌ Error processing offer:', error);
+            throw error;
+          }
+        } else {
+          console.warn('⚠️ No pending offer found - waiting for offer...');
+        }
+
         // Show call interface
         showCallInterface(currentCall);
 
@@ -3774,13 +3861,13 @@
         // Update call status
         const statusEl = document.getElementById('call-status');
         if (statusEl) {
-          statusEl.textContent = 'Connected';
+          statusEl.textContent = 'Connecting...';
         }
 
         // Log call answer in chat
         await logCallEvent(`${currentCall}_call_started`);
 
-        showToast(`✅ ${currentCall === 'video' ? 'Video' : 'Phone'} call connected!`);
+        showToast(`✅ Answering ${currentCall === 'video' ? 'video' : 'phone'} call...`);
 
       } catch (error) {
         console.error('❌ Error answering call:', error);
@@ -3829,6 +3916,12 @@
 
       // Restore body scroll
       document.body.style.overflow = '';
+
+      // Clear pending data
+      window.pendingOffer = null;
+      if (window.pendingIceCandidates) {
+        window.pendingIceCandidates = [];
+      }
 
       // Notify other user that call ended
       if (socket && socket.connected) {
