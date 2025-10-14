@@ -3525,10 +3525,19 @@
         // Initialize peer connection
         await initializePeerConnection();
 
-        // Add local stream to peer connection
+        // Add local stream to peer connection - ENSURE TRACKS ARE ENABLED
         localStream.getTracks().forEach(track => {
+          console.log('➕ Adding track to peer connection:', {
+            kind: track.kind,
+            enabled: track.enabled,
+            id: track.id
+          });
+
+          // CRITICAL: Ensure track is enabled before adding
+          track.enabled = true;
+
           peerConnection.addTrack(track, localStream);
-          console.log('✅ Added track to peer connection:', track.kind);
+          console.log('✅ Track added successfully');
         });
 
         // Create offer
@@ -3641,9 +3650,24 @@
         console.log('📞 Requesting audio permissions...');
         localStream = await navigator.mediaDevices.getUserMedia({
           video: false,
-          audio: true
+          audio: {
+            echoCancellation: true,  // IMPORTANT: Prevent echo
+            noiseSuppression: true,  // IMPORTANT: Reduce background noise
+            autoGainControl: true    // IMPORTANT: Normalize volume
+          }
         });
         console.log('✅ Audio permissions granted');
+
+        // Verify audio track
+        const audioTracks = localStream.getAudioTracks();
+        if (audioTracks.length === 0) {
+          throw new Error('No audio track found in local stream');
+        }
+        console.log('🎤 Audio track:', {
+          enabled: audioTracks[0].enabled,
+          label: audioTracks[0].label,
+          readyState: audioTracks[0].readyState
+        });
 
         currentCall = 'audio';
         isInitiator = true;
@@ -3652,15 +3676,27 @@
         // Initialize peer connection
         await initializePeerConnection();
 
-        // Add local stream to peer connection
+        // Add local stream to peer connection - ENSURE TRACKS ARE ENABLED
         localStream.getTracks().forEach(track => {
+          console.log('➕ Adding track to peer connection:', {
+            kind: track.kind,
+            enabled: track.enabled,
+            id: track.id
+          });
+
+          // CRITICAL: Ensure track is enabled before adding
+          track.enabled = true;
+
           peerConnection.addTrack(track, localStream);
-          console.log('✅ Added audio track to peer connection');
+          console.log('✅ Track added successfully');
         });
 
         // Create offer
         console.log('📞 Creating WebRTC offer...');
-        const offer = await peerConnection.createOffer();
+        const offer = await peerConnection.createOffer({
+          offerToReceiveAudio: true,  // IMPORTANT: Request audio from remote peer
+          offerToReceiveVideo: false
+        });
         await peerConnection.setLocalDescription(offer);
         console.log('✅ Local description set');
 
@@ -3732,7 +3768,15 @@
 
       } catch (error) {
         console.error('❌ Error starting phone call:', error);
-        showToast('Failed to start phone call: ' + error.message, 'error');
+
+        if (error.name === 'NotAllowedError') {
+          showToast('Microphone permission denied. Please allow microphone access.', 'error');
+        } else if (error.name === 'NotFoundError') {
+          showToast('No microphone found. Please connect a microphone.', 'error');
+        } else {
+          showToast('Failed to start phone call: ' + error.message, 'error');
+        }
+
         endCall();
       }
     }
@@ -3772,49 +3816,59 @@
           }
         };
 
-        // Handle remote stream
+        // Handle remote stream - ENHANCED VERSION
         peerConnection.ontrack = (event) => {
           console.log('🎥 Received remote track:', event.track.kind, 'for call type:', currentCall);
+          console.log('🔍 Track details:', {
+            kind: event.track.kind,
+            id: event.track.id,
+            enabled: event.track.enabled,
+            readyState: event.track.readyState,
+            streams: event.streams.length
+          });
 
           if (event && event.streams && event.streams[0]) {
             const track = event.track;
             const remoteVideo = document.getElementById('remote-video');
             const remoteAudio = document.getElementById('remote-audio');
 
-            console.log('🔍 Track details:', {
-              kind: track.kind,
-              id: track.id,
-              label: track.label,
-              enabled: track.enabled,
-              readyState: track.readyState
-            });
-
-            if (track.kind === 'video' && remoteVideo) {
-              console.log('📹 Setting remote video track');
-              // For video calls, set the entire stream to remote video
-              if (currentCall === 'video') {
-                remoteVideo.srcObject = event.streams[0];
-                console.log('✅ Remote video stream set successfully');
-              }
-            } else if (track.kind === 'audio' && remoteAudio) {
-              console.log('🎵 Setting remote audio track');
-              // For audio calls or video call audio track, set to remote audio
-              remoteAudio.srcObject = event.streams[0];
-              console.log('✅ Remote audio stream set successfully');
-            } else {
-              console.warn('⚠️ No appropriate remote element found for track kind:', track.kind);
-            }
-
-            // Additional handling for video calls - ensure both elements get their streams
+            // CRITICAL FIX: Always set the ENTIRE stream, not individual tracks
             if (currentCall === 'video') {
-              if (track.kind === 'video' && remoteVideo) {
+              if (remoteVideo) {
+                console.log('📹 Setting remote video stream...');
                 remoteVideo.srcObject = event.streams[0];
-              } else if (track.kind === 'audio' && remoteAudio) {
-                remoteAudio.srcObject = event.streams[0];
+
+                // Force video to play
+                remoteVideo.play().then(() => {
+                  console.log('✅ Remote video playing successfully');
+
+                  // Update UI to show video is working
+                  const connectionInfo = document.getElementById('connection-info');
+                  if (connectionInfo) {
+                    connectionInfo.textContent = 'Video connected!';
+                  }
+                }).catch(err => {
+                  console.error('❌ Error playing remote video:', err);
+                  // Try one more time
+                  setTimeout(() => remoteVideo.play(), 500);
+                });
+              } else {
+                console.error('❌ Remote video element not found!');
               }
             }
+
+            // Also set audio stream
+            if (remoteAudio) {
+              console.log('🎵 Setting remote audio stream...');
+              remoteAudio.srcObject = event.streams[0];
+              remoteAudio.play().catch(err => {
+                console.error('❌ Error playing remote audio:', err);
+              });
+            }
+
+            console.log('✅ Remote stream attached successfully');
           } else {
-            console.warn('⚠️ No remote stream received in ontrack event');
+            console.warn('⚠️ No remote stream in ontrack event:', event);
           }
         };
 
@@ -3845,6 +3899,27 @@
             }
           }
         };
+
+        // Add stream monitoring
+        peerConnection.addEventListener('track', (event) => {
+          console.log('🎯 Track event fired!', {
+            kind: event.track.kind,
+            streams: event.streams.length,
+            trackId: event.track.id
+          });
+
+          // Verify remote video element exists and set stream
+          setTimeout(() => {
+            const remoteVideo = document.getElementById('remote-video');
+            if (remoteVideo && event.streams[0]) {
+              if (!remoteVideo.srcObject) {
+                console.log('🔧 Setting stream in track event listener');
+                remoteVideo.srcObject = event.streams[0];
+                remoteVideo.play();
+              }
+            }
+          }, 100);
+        });
 
         console.log('✅ Peer connection initialized successfully');
       } catch (error) {
@@ -3886,8 +3961,21 @@
           <div class="p-4">
             ${type === 'video' ? `
               <div class="relative bg-black rounded-lg" style="height: 480px;">
-                <video id="remote-video" autoplay playsinline class="w-full h-full object-cover rounded-lg" style="background: #1f2937;"></video>
-                <video id="local-video" autoplay playsinline muted class="absolute bottom-4 right-4 w-32 h-24 bg-gray-800 rounded-lg border-2 border-white shadow-lg object-cover" style="background: #374151;"></video>
+                <video
+                  id="remote-video"
+                  autoplay
+                  playsinline
+                  class="w-full h-full object-cover rounded-lg"
+                  style="background: #1f2937;"
+                ></video>
+                <video
+                  id="local-video"
+                  autoplay
+                  playsinline
+                  muted
+                  class="absolute bottom-4 right-4 w-32 h-24 bg-gray-800 rounded-lg border-2 border-white shadow-lg object-cover"
+                  style="background: #374151;"
+                ></video>
                 <div class="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
                   <i class="fas fa-circle text-red-500 animate-pulse mr-2"></i>
                   <span id="call-status">Connecting...</span>
@@ -3905,7 +3993,13 @@
                 </div>
                 <p class="text-2xl font-medium mb-2">${otherUser?.name || 'User'}</p>
                 <p class="text-lg text-gray-600" id="call-status">Connecting...</p>
-                <audio id="remote-audio" autoplay></audio>
+
+                <!-- CRITICAL: Audio element with autoplay -->
+                <audio
+                  id="remote-audio"
+                  autoplay
+                  playsinline
+                ></audio>
               </div>
             `}
             <div class="flex justify-center gap-4 mt-6">
@@ -4054,7 +4148,7 @@
 
         // Play ringtone (optional)
         try {
-          const ringtone = new Audio('/sounds/ringtone.mp3');
+          const ringtone = new Audio('/audio/ringtone.mp3');
           ringtone.loop = true;
           ringtone.play().catch(e => console.log('Could not play ringtone:', e));
           modal.dataset.ringtone = 'playing';
@@ -4132,11 +4226,30 @@
         // Request media permissions based on call type
         const constraints = incomingCallData.callType === 'video'
           ? { video: true, audio: true }
-          : { video: false, audio: true };
+          : {
+              video: false,
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+              }
+            };
 
         console.log('🎤 Requesting media permissions:', constraints);
         localStream = await navigator.mediaDevices.getUserMedia(constraints);
         console.log('✅ Media permissions granted');
+
+        // Verify we got audio track for phone calls
+        if (incomingCallData.callType === 'audio') {
+          const audioTracks = localStream.getAudioTracks();
+          if (audioTracks.length === 0) {
+            throw new Error('No audio track received');
+          }
+          console.log('🎤 Audio track ready:', {
+            enabled: audioTracks[0].enabled,
+            label: audioTracks[0].label
+          });
+        }
 
         currentCall = incomingCallData.callType;
         isInitiator = false;
@@ -4145,10 +4258,19 @@
         // Initialize peer connection
         await initializePeerConnection();
 
-        // Add local stream to peer connection
+        // Add local stream to peer connection - ENSURE TRACKS ARE ENABLED
         localStream.getTracks().forEach(track => {
+          console.log('➕ Adding track to peer connection:', {
+            kind: track.kind,
+            enabled: track.enabled,
+            id: track.id
+          });
+
+          // CRITICAL: Ensure track is enabled before adding
+          track.enabled = true;
+
           peerConnection.addTrack(track, localStream);
-          console.log('✅ Added track:', track.kind);
+          console.log('✅ Track added successfully');
         });
 
         // CRITICAL FIX: Process the pending offer and create answer
@@ -4273,6 +4395,19 @@
         // Show call interface
         showCallInterface(currentCall);
 
+        // After showing call interface, verify audio element for phone calls
+        if (currentCall === 'audio') {
+          setTimeout(() => {
+            const remoteAudio = document.getElementById('remote-audio');
+            if (!remoteAudio) {
+              console.error('❌ Remote audio element not found!');
+              showToast('Audio element missing - call may not work', 'error');
+            } else {
+              console.log('✅ Remote audio element ready');
+            }
+          }, 500);
+        }
+
         // Set local video if video call - with enhanced setup
         if (currentCall === 'video') {
           const localVideo = document.getElementById('local-video');
@@ -4385,7 +4520,15 @@
 
       } catch (error) {
         console.error('❌ Error answering call:', error);
-        showToast('Failed to answer call: ' + error.message, 'error');
+
+        if (error.name === 'NotAllowedError') {
+          showToast('Microphone permission denied. Please allow microphone access.', 'error');
+        } else if (error.name === 'NotFoundError') {
+          showToast('No microphone found. Please connect a microphone.', 'error');
+        } else {
+          showToast('Failed to answer call: ' + error.message, 'error');
+        }
+
         declineCall();
       }
     }
@@ -4564,6 +4707,88 @@
       }
     }
 
+    // Debug function to verify tracks
+    function verifyTracks() {
+      if (!peerConnection) {
+        console.log('❌ No peer connection');
+        return;
+      }
+
+      const senders = peerConnection.getSenders();
+      console.log('📤 Current senders:', senders.length);
+
+      senders.forEach(sender => {
+        if (sender.track) {
+          console.log('📤 Sender track:', {
+            kind: sender.track.kind,
+            enabled: sender.track.enabled,
+            readyState: sender.track.readyState,
+            id: sender.track.id
+          });
+        }
+      });
+
+      const receivers = peerConnection.getReceivers();
+      console.log('📥 Current receivers:', receivers.length);
+
+      receivers.forEach(receiver => {
+        if (receiver.track) {
+          console.log('📥 Receiver track:', {
+            kind: receiver.track.kind,
+            enabled: receiver.track.enabled,
+            readyState: receiver.track.readyState,
+            id: receiver.track.id
+          });
+        }
+      });
+    }
+
+    // Call this after connection is established
+    window.verifyTracks = verifyTracks;
+
+    // Verify audio tracks for phone calls
+    function verifyAudioCall() {
+      console.log('🎵 Verifying audio call setup...');
+
+      // Check local stream
+      if (localStream) {
+        const audioTracks = localStream.getAudioTracks();
+        console.log('📤 Local audio tracks:', audioTracks.length);
+        audioTracks.forEach(track => {
+          console.log('  - Track:', {
+            id: track.id,
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState
+          });
+        });
+      }
+
+      // Check peer connection
+      if (peerConnection) {
+        const senders = peerConnection.getSenders();
+        console.log('📤 Audio senders:', senders.filter(s => s.track?.kind === 'audio').length);
+
+        const receivers = peerConnection.getReceivers();
+        console.log('📥 Audio receivers:', receivers.filter(r => r.track?.kind === 'audio').length);
+      }
+
+      // Check remote audio element
+      const remoteAudio = document.getElementById('remote-audio');
+      if (remoteAudio) {
+        console.log('🔊 Remote audio element:', {
+          exists: true,
+          srcObject: !!remoteAudio.srcObject,
+          muted: remoteAudio.muted,
+          volume: remoteAudio.volume,
+          paused: remoteAudio.paused
+        });
+      } else {
+        console.error('❌ Remote audio element not found!');
+      }
+    }
+
+    window.verifyAudioCall = verifyAudioCall;
 
     // Initialize chat mode for therapists
     document.addEventListener("DOMContentLoaded", function () {
