@@ -1069,15 +1069,21 @@
       });
 
       socket.on("new_message", (data) => {
-        console.log("New message received via socket:", data);
-        console.log("Current conversation ID:", currentConversationId);
+        // Only log in development
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log("New message received via socket:", data);
+          console.log("Current conversation ID:", currentConversationId);
+        }
 
         if (
           data &&
           data.conversationId === currentConversationId &&
-          data.message
+          data.message &&
+          data.message.content
         ) {
-          console.log("Message is for current conversation, processing...");
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log("Message is for current conversation, processing...");
+          }
 
           // Enhanced duplicate detection to avoid duplicates
           const messageExists = messages.some(
@@ -1096,39 +1102,31 @@
               ) < 5000 // 5 seconds
           );
 
-          console.log("Message exists:", messageExists);
-          console.log("Is recent own message:", isRecentOwnMessage);
-
           if (!messageExists || !isRecentOwnMessage) {
-            console.log("Adding new message to array");
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log("Adding new message to array");
+            }
             messages.push(data.message);
-            console.log("Messages array after push:", messages);
             displayMessages();
-            showToast("New message received");
 
             // Scroll to bottom to show new message
             const container = document.getElementById("messages-container");
             if (container) {
               setTimeout(() => {
                 container.scrollTop = container.scrollHeight;
-                console.log(
-                  "Scrolled after socket message, height:",
-                  container.scrollHeight
-                );
               }, 100);
             }
-          } else {
-            console.log("Duplicate message ignored:", data.message.id, {
-              messageExists,
-              isRecentOwnMessage,
-            });
           }
         } else if (data && data.conversationId !== currentConversationId) {
-          console.log("Message for different conversation, updating list");
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log("Message for different conversation, updating list");
+          }
           // Update conversation list for unread count
           loadConversations();
         } else {
-          console.log("Invalid socket message data:", data);
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log("Invalid socket message data:", data);
+          }
         }
       });
 
@@ -1618,16 +1616,15 @@
         return;
       }
 
-      console.log("🔍 Updating avatar - otherUser:", otherUser);
-
       if (!otherUser) {
         console.error("❌ No otherUser provided");
         return;
       }
 
-      console.log("📸 otherUser.image value:", otherUser.image);
-      console.log("👤 otherUser.name:", otherUser.name);
-      console.log("🎭 otherUser.role:", otherUser.role);
+      // Only log avatar updates in development or if there's an issue
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log("🔍 Updating avatar - otherUser:", otherUser.name);
+      }
 
       // Build the image URL properly
       let imageUrl = null;
@@ -2638,7 +2635,10 @@
         return;
       }
 
-      console.log("Displaying messages:", messages.length);
+      // Only log in development
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log("Displaying messages:", messages.length);
+      }
 
       // Hide loading indicator
       const loadingElement = document.getElementById("chat-loading");
@@ -3484,29 +3484,30 @@
         }
 
         // Set up caller status monitoring
-        const callerStatusInterval = setInterval(() => {
+        window.callerStatusInterval = setInterval(() => {
           if (peerConnection) {
-            console.log('🔍 Caller connection state check:', {
-              connectionState: peerConnection.connectionState,
-              iceConnectionState: peerConnection.iceConnectionState,
-              iceGatheringState: peerConnection.iceGatheringState,
-              signalingState: peerConnection.signalingState
-            });
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('🔍 Caller connection state check:', {
+                connectionState: peerConnection.connectionState,
+                iceConnectionState: peerConnection.iceConnectionState,
+                signalingState: peerConnection.signalingState
+              });
+            }
 
             const statusEl = document.getElementById('call-status');
             if (peerConnection.connectionState === 'connected') {
               if (statusEl) {
                 statusEl.textContent = 'Connected';
-                console.log('✅ Caller status updated to: Connected');
               }
-              clearInterval(callerStatusInterval);
+              clearInterval(window.callerStatusInterval);
+              window.callerStatusInterval = null;
               showToast('✅ Video call connected!');
             } else if (peerConnection.connectionState === 'failed') {
               if (statusEl) {
                 statusEl.textContent = 'Connection Failed';
-                console.error('❌ Caller status updated to: Connection Failed');
               }
-              clearInterval(callerStatusInterval);
+              clearInterval(window.callerStatusInterval);
+              window.callerStatusInterval = null;
               showToast('❌ Video call connection failed', 'error');
             }
           }
@@ -3597,29 +3598,30 @@
         showCallInterface('audio');
 
         // Set up caller status monitoring for audio calls
-        const callerAudioStatusInterval = setInterval(() => {
+        window.callerStatusInterval = setInterval(() => {
           if (peerConnection) {
-            console.log('🔍 Caller audio connection state check:', {
-              connectionState: peerConnection.connectionState,
-              iceConnectionState: peerConnection.iceConnectionState,
-              iceGatheringState: peerConnection.iceGatheringState,
-              signalingState: peerConnection.signalingState
-            });
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('🔍 Caller audio connection state check:', {
+                connectionState: peerConnection.connectionState,
+                iceConnectionState: peerConnection.iceConnectionState,
+                signalingState: peerConnection.signalingState
+              });
+            }
 
             const statusEl = document.getElementById('call-status');
             if (peerConnection.connectionState === 'connected') {
               if (statusEl) {
                 statusEl.textContent = 'Connected';
-                console.log('✅ Caller audio status updated to: Connected');
               }
-              clearInterval(callerAudioStatusInterval);
+              clearInterval(window.callerStatusInterval);
+              window.callerStatusInterval = null;
               showToast('✅ Phone call connected!');
             } else if (peerConnection.connectionState === 'failed') {
               if (statusEl) {
                 statusEl.textContent = 'Connection Failed';
-                console.error('❌ Caller audio status updated to: Connection Failed');
               }
-              clearInterval(callerAudioStatusInterval);
+              clearInterval(window.callerStatusInterval);
+              window.callerStatusInterval = null;
               showToast('❌ Phone call connection failed', 'error');
             }
           }
@@ -4026,28 +4028,29 @@
         }
 
         // Set up status monitoring
-        const statusCheckInterval = setInterval(() => {
+        window.statusCheckInterval = setInterval(() => {
           if (peerConnection) {
-            console.log('🔍 Connection state check:', {
-              connectionState: peerConnection.connectionState,
-              iceConnectionState: peerConnection.iceConnectionState,
-              iceGatheringState: peerConnection.iceGatheringState,
-              signalingState: peerConnection.signalingState
-            });
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('🔍 Connection state check:', {
+                connectionState: peerConnection.connectionState,
+                iceConnectionState: peerConnection.iceConnectionState,
+                signalingState: peerConnection.signalingState
+              });
+            }
 
             if (peerConnection.connectionState === 'connected') {
               if (statusEl) {
                 statusEl.textContent = 'Connected';
-                console.log('✅ Call status updated to: Connected');
               }
-              clearInterval(statusCheckInterval);
+              clearInterval(window.statusCheckInterval);
+              window.statusCheckInterval = null;
               showToast('✅ Call connected successfully!');
             } else if (peerConnection.connectionState === 'failed') {
               if (statusEl) {
                 statusEl.textContent = 'Connection Failed';
-                console.error('❌ Call status updated to: Connection Failed');
               }
-              clearInterval(statusCheckInterval);
+              clearInterval(window.statusCheckInterval);
+              window.statusCheckInterval = null;
               showToast('❌ Call connection failed', 'error');
             }
           }
@@ -4082,21 +4085,39 @@
     }
 
     async function endCall() {
-      console.log('Ending call...');
+      console.log('🛑 Ending call...');
 
+      // Stop local media tracks
       if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
+        console.log('🔇 Stopping local media tracks...');
+        localStream.getTracks().forEach(track => {
+          track.stop();
+          console.log('⏹️ Stopped track:', track.kind);
+        });
         localStream = null;
       }
 
+      // Close peer connection
       if (peerConnection) {
+        console.log('🔌 Closing peer connection...');
         peerConnection.close();
         peerConnection = null;
+      }
+
+      // Clear any existing intervals/timeouts
+      if (window.callerStatusInterval) {
+        clearInterval(window.callerStatusInterval);
+        window.callerStatusInterval = null;
+      }
+      if (window.statusCheckInterval) {
+        clearInterval(window.statusCheckInterval);
+        window.statusCheckInterval = null;
       }
 
       // Remove call modal
       const modal = document.getElementById('call-modal');
       if (modal) {
+        console.log('🗑️ Removing call modal...');
         modal.remove();
       }
 
@@ -4106,14 +4127,17 @@
       // Restore body scroll
       document.body.style.overflow = '';
 
-      // Clear pending data
+      // Clear all pending data
+      console.log('🧹 Clearing pending call data...');
       window.pendingOffer = null;
       if (window.pendingIceCandidates) {
         window.pendingIceCandidates = [];
       }
+      incomingCallData = null;
 
       // Notify other user that call ended
-      if (socket && socket.connected) {
+      if (socket && socket.connected && currentConversationId) {
+        console.log('📡 Notifying other user call ended...');
         socket.emit('call_ended', {
           conversationId: currentConversationId,
           reason: 'ended'
@@ -4121,14 +4145,18 @@
       }
 
       // Log call end in chat
-      await logCallEvent('call_ended');
+      if (currentConversationId) {
+        await logCallEvent('call_ended');
+      }
 
+      // Reset call state
+      console.log('🔄 Resetting call state...');
       isCallActive = false;
       currentCall = null;
       isInitiator = false;
-      incomingCallData = null;
 
-      showToast('Call ended');
+      showToast('📞 Call ended');
+      console.log('✅ Call cleanup completed');
     }
 
     function toggleMute() {
