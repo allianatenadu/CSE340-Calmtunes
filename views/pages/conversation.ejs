@@ -955,6 +955,9 @@
         testBtn.style.display = "block";
       }
 
+      // Ensure clean state on page load
+      resetCallState();
+
       // Initialize Socket.IO
       initializeSocket();
 
@@ -1063,6 +1066,9 @@
       socket.on("disconnect", () => {
         console.log("Socket disconnected");
         updateConnectionStatus(false);
+
+        // Reset WebRTC handlers flag so they can be re-established on reconnect
+        window.webRTCHandlersSetup = false;
       });
 
       socket.on("connect_error", (error) => {
@@ -1178,6 +1184,13 @@
         console.error("❌ Socket not available for WebRTC handlers");
         return;
       }
+
+      // Ensure we don't set up handlers multiple times
+      if (window.webRTCHandlersSetup) {
+        console.log("⚠️ WebRTC handlers already set up, skipping...");
+        return;
+      }
+      window.webRTCHandlersSetup = true;
 
       // Handle incoming call notification
       socket.on('incoming_call', (data) => {
@@ -1341,6 +1354,31 @@
       });
 
       console.log("✅ WebRTC socket handlers setup complete");
+    }
+
+    // Reset call state to ensure clean startup
+    function resetCallState() {
+      console.log('🔄 Resetting call state on page load...');
+      isCallActive = false;
+      currentCall = null;
+      isInitiator = false;
+      incomingCallData = null;
+      window.pendingOffer = null;
+      if (window.pendingIceCandidates) {
+        window.pendingIceCandidates = [];
+      }
+      window.webRTCHandlersSetup = false;
+
+      // Hide any existing modals
+      hideIncomingCallModal();
+
+      // Remove any existing call modals
+      const existingModal = document.getElementById('call-modal');
+      if (existingModal) {
+        existingModal.remove();
+      }
+
+      console.log('✅ Call state reset completed');
     }
 
     // Set up event listeners
@@ -3450,6 +3488,11 @@
         return;
       }
 
+      if (isCallActive) {
+        showToast('A call is already active. Please end the current call first.', 'error');
+        return;
+      }
+
       try {
         // Request camera and microphone permissions
         console.log('📹 Requesting media permissions...');
@@ -3568,6 +3611,11 @@
 
       if (!socket || !socket.connected) {
         showToast('Not connected to server. Please refresh the page.', 'error');
+        return;
+      }
+
+      if (isCallActive) {
+        showToast('A call is already active. Please end the current call first.', 'error');
         return;
       }
 
@@ -3947,6 +3995,12 @@
         return;
       }
 
+      if (isCallActive) {
+        showToast('A call is already active. Please end the current call first.', 'error');
+        hideIncomingCallModal();
+        return;
+      }
+
       try {
         console.log('📞 Hiding incoming call modal before answering...');
         hideIncomingCallModal();
@@ -4154,6 +4208,12 @@
 
     function declineCall() {
       console.log('Declining call...');
+
+      if (!incomingCallData) {
+        console.log('⚠️ No incoming call to decline');
+        return;
+      }
+
       hideIncomingCallModal();
 
       // Notify caller that call was declined
@@ -4197,6 +4257,9 @@
         clearInterval(window.statusCheckInterval);
         window.statusCheckInterval = null;
       }
+
+      // Reset WebRTC handlers flag to allow re-initialization if needed
+      window.webRTCHandlersSetup = false;
 
       // Remove call modal
       const modal = document.getElementById('call-modal');
@@ -4244,8 +4307,14 @@
     }
 
     function toggleMute() {
-      if (localStream && localStream.getAudioTracks().length > 0) {
-        const audioTrack = localStream.getAudioTracks()[0];
+      if (!localStream) {
+        console.log('⚠️ No local stream available for mute toggle');
+        return;
+      }
+
+      const audioTracks = localStream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        const audioTrack = audioTracks[0];
         if (audioTrack) {
           audioTrack.enabled = !audioTrack.enabled;
           const btn = document.getElementById('mute-btn');
@@ -4255,20 +4324,32 @@
             btn?.classList.remove('bg-red-500');
             btn?.classList.add('bg-gray-600');
             if (icon) icon.className = 'fas fa-microphone text-xl';
-            console.log('🎤 Microphone unmuted');
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('🎤 Microphone unmuted');
+            }
           } else {
             btn?.classList.remove('bg-gray-600');
             btn?.classList.add('bg-red-500');
             if (icon) icon.className = 'fas fa-microphone-slash text-xl';
-            console.log('🔇 Microphone muted');
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('🔇 Microphone muted');
+            }
           }
         }
+      } else {
+        console.log('⚠️ No audio tracks found in local stream');
       }
     }
 
     function toggleVideo() {
-      if (localStream && localStream.getVideoTracks().length > 0) {
-        const videoTrack = localStream.getVideoTracks()[0];
+      if (!localStream) {
+        console.log('⚠️ No local stream available for video toggle');
+        return;
+      }
+
+      const videoTracks = localStream.getVideoTracks();
+      if (videoTracks.length > 0) {
+        const videoTrack = videoTracks[0];
         if (videoTrack) {
           videoTrack.enabled = !videoTrack.enabled;
           const btn = document.getElementById('video-btn');
@@ -4278,14 +4359,20 @@
             btn?.classList.remove('bg-red-500');
             btn?.classList.add('bg-gray-600');
             if (icon) icon.className = 'fas fa-video text-xl';
-            console.log('📹 Video enabled');
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('📹 Video enabled');
+            }
           } else {
             btn?.classList.remove('bg-gray-600');
             btn?.classList.add('bg-red-500');
             if (icon) icon.className = 'fas fa-video-slash text-xl';
-            console.log('📹 Video disabled');
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('📹 Video disabled');
+            }
           }
         }
+      } else {
+        console.log('⚠️ No video tracks found in local stream');
       }
     }
 
