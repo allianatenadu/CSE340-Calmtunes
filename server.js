@@ -432,17 +432,68 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Video/Phone call events
+  // ================== WEBRTC VIDEO CALLING SIGNALING ==================
+
+  // Handle call offer (WebRTC)
+  socket.on("call-offer", (data) => {
+    console.log(`Call offer from ${socket.userId} to ${data.targetUserId}`);
+    // Send offer to target user
+    socket.to(data.targetUserId).emit("call-offer", {
+      offer: data.offer,
+      fromUserId: socket.userId,
+      callerName: data.callerName
+    });
+  });
+
+  // Handle call answer (WebRTC)
+  socket.on("call-answer", (data) => {
+    console.log(`Call answer from ${socket.userId} to ${data.targetUserId}`);
+    // Send answer to caller
+    socket.to(data.targetUserId).emit("call-answer", {
+      answer: data.answer,
+      fromUserId: socket.userId
+    });
+  });
+
+  // Handle ICE candidates (WebRTC)
+  socket.on("ice-candidate", (data) => {
+    console.log(`ICE candidate from ${socket.userId} to ${data.targetUserId}`);
+    // Send ICE candidate to the other peer
+    socket.to(data.targetUserId).emit("ice-candidate", {
+      candidate: data.candidate,
+      fromUserId: socket.userId
+    });
+  });
+
+  // Handle call ended (WebRTC)
+  socket.on("call-ended", (data) => {
+    console.log(`Call ended by ${socket.userId} for ${data.targetUserId}`);
+    // Notify the other party that call has ended
+    socket.to(data.targetUserId).emit("call-ended", {
+      fromUserId: socket.userId
+    });
+  });
+
+  // Handle user disconnected during call
+  socket.on("disconnect", () => {
+    if (socket.userId) {
+      console.log(`User disconnected during call: ${socket.userId}`);
+      // Notify all connected users that this user disconnected
+      socket.broadcast.emit("user-disconnected", {
+        userId: socket.userId
+      });
+    }
+  });
+
+  // ================== LEGACY CALL EVENTS (Keep for compatibility) ==================
+
+  // Video/Phone call events (legacy support)
   socket.on("call_made", (data) => {
     socket.to(data.conversationId).emit("call_made", data);
   });
 
   socket.on("call_answered", (data) => {
     socket.to(data.conversationId).emit("call_answered", data);
-  });
-
-  socket.on("ice_candidate", (data) => {
-    socket.to(data.conversationId).emit("ice_candidate", data);
   });
 
   socket.on("call_ended", (data) => {
