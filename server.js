@@ -73,7 +73,8 @@ app.use(expressLayouts);
 
 // Static files
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+app.use("/uploads/profiles", express.static(path.join(__dirname, "public/uploads/profiles")));
 app.use("/uploads/chat-files", express.static(path.join(__dirname, "public/uploads/chat-files")));
 
 // Serve panic session audio files (add this BEFORE your general routes)
@@ -432,72 +433,31 @@ io.on("connection", (socket) => {
     });
   });
 
-  // ================== WEBRTC VIDEO CALLING SIGNALING ==================
-
-  // Handle call offer (WebRTC)
-  socket.on("call-offer", (data) => {
-    console.log(`Call offer from ${socket.userId} to ${data.targetUserId}`);
-    // Send offer to target user
-    socket.to(data.targetUserId).emit("call-offer", {
-      offer: data.offer,
-      fromUserId: socket.userId,
-      callerName: data.callerName
-    });
+  // Video/Phone call events - WebRTC Signaling
+  socket.on("webrtc_offer", (data) => {
+    console.log("WebRTC offer received:", data);
+    socket.to(data.conversationId).emit("webrtc_offer", data);
   });
 
-  // Handle call answer (WebRTC)
-  socket.on("call-answer", (data) => {
-    console.log(`Call answer from ${socket.userId} to ${data.targetUserId}`);
-    // Send answer to caller
-    socket.to(data.targetUserId).emit("call-answer", {
-      answer: data.answer,
-      fromUserId: socket.userId
-    });
+  socket.on("webrtc_answer", (data) => {
+    console.log("WebRTC answer received:", data);
+    socket.to(data.conversationId).emit("webrtc_answer", data);
   });
 
-  // Handle ICE candidates (WebRTC)
-  socket.on("ice-candidate", (data) => {
-    console.log(`ICE candidate from ${socket.userId} to ${data.targetUserId}`);
-    // Send ICE candidate to the other peer
-    socket.to(data.targetUserId).emit("ice-candidate", {
-      candidate: data.candidate,
-      fromUserId: socket.userId
-    });
-  });
-
-  // Handle call ended (WebRTC)
-  socket.on("call-ended", (data) => {
-    console.log(`Call ended by ${socket.userId} for ${data.targetUserId}`);
-    // Notify the other party that call has ended
-    socket.to(data.targetUserId).emit("call-ended", {
-      fromUserId: socket.userId
-    });
-  });
-
-  // Handle user disconnected during call
-  socket.on("disconnect", () => {
-    if (socket.userId) {
-      console.log(`User disconnected during call: ${socket.userId}`);
-      // Notify all connected users that this user disconnected
-      socket.broadcast.emit("user-disconnected", {
-        userId: socket.userId
-      });
-    }
-  });
-
-  // ================== LEGACY CALL EVENTS (Keep for compatibility) ==================
-
-  // Video/Phone call events (legacy support)
-  socket.on("call_made", (data) => {
-    socket.to(data.conversationId).emit("call_made", data);
-  });
-
-  socket.on("call_answered", (data) => {
-    socket.to(data.conversationId).emit("call_answered", data);
+  socket.on("webrtc_ice_candidate", (data) => {
+    console.log("ICE candidate received:", data);
+    socket.to(data.conversationId).emit("webrtc_ice_candidate", data);
   });
 
   socket.on("call_ended", (data) => {
+    console.log("Call ended:", data);
     socket.to(data.conversationId).emit("call_ended", data);
+  });
+
+  // Incoming call signaling
+  socket.on("incoming_call", (data) => {
+    console.log("Incoming call:", data);
+    socket.to(data.conversationId).emit("incoming_call", data);
   });
 
   // Disconnect

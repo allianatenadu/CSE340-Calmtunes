@@ -1,10 +1,4 @@
 <div class="flex-1 p-4 md:p-8" data-user-authenticated="<%= user ? 'true' : 'false' %>">
-  <%
-    // Filter out the user's assigned therapist to prevent duplication
-    const availableTherapists = userTherapist ?
-      approvedTherapists.filter(therapist => therapist.id !== userTherapist.therapist_id) :
-      approvedTherapists;
-  %>
   <div class="max-w-7xl mx-auto">
   <!-- Header -->
   <div class="flex flex-wrap justify-between gap-3 p-4 mb-6">
@@ -18,39 +12,18 @@
     <div class="flex items-center gap-3">
       <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
         <div class="flex items-center gap-3">
-          <div class="flex-shrink-0 relative">
-            <%
-              // Clean therapist image URL
-              let hasTherapistImage = false;
-              let therapistImageUrl = null;
-
-              if (userTherapist.therapist_image &&
-                  userTherapist.therapist_image.trim() !== '' &&
-                  userTherapist.therapist_image !== 'null' &&
-                  userTherapist.therapist_image !== 'undefined') {
-                hasTherapistImage = true;
-                therapistImageUrl = userTherapist.therapist_image.startsWith('/') ?
-                  userTherapist.therapist_image : `/uploads/${userTherapist.therapist_image}`;
-              }
-            %>
-
-            <!-- Actual Image (Show the specific image that exists) -->
+          <div class="flex-shrink-0">
+            <% if (userTherapist.therapist_image) { %>
             <img
-              src="/uploads/profiles/optimized_user_3_1760143083316.png"
+              src="<%= userTherapist.therapist_image.startsWith('/') ? userTherapist.therapist_image : `/uploads/profiles/${userTherapist.therapist_image}` %>"
               alt="<%= userTherapist.therapist_name %>"
               class="w-10 h-10 rounded-full object-cover"
-              onload="this.style.display='block';"
-              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
             />
-
-            <!-- Fallback to default image if the specific image fails -->
-            <img
-              id="my-therapist-img"
-              src="/images/default-image.jpg"
-              alt="<%= userTherapist.therapist_name %>"
-              class="w-10 h-10 rounded-full object-cover hidden"
-              style="display: none;"
-            />
+            <% } else { %>
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <i class="fas fa-user-md text-primary"></i>
+            </div>
+            <% } %>
           </div>
           <div class="flex flex-col">
             <p class="text-sm font-semibold text-gray-900">My Therapist</p>
@@ -115,14 +88,14 @@
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold text-textMain">Available Therapists</h2>
       <div class="text-sm text-gray-600">
-        <span id="therapist-count"><%= availableTherapists.length %></span>
+        <span id="therapist-count"><%= approvedTherapists.length %></span>
         therapists available
       </div>
     </div>
 
     <div class="space-y-4" id="therapists-grid">
       <% if (approvedTherapists && approvedTherapists.length > 0) { %>
-        <% availableTherapists.forEach(therapist => { %>
+        <% approvedTherapists.forEach(therapist => { %>
         <div
           class="therapist-card flex items-stretch justify-between gap-4 rounded-xl p-4"
           data-specialty="<%= therapist.specialty %>"
@@ -147,14 +120,6 @@
               >
                 <span class="truncate">View Profile</span>
               </button>
-              <button
-                onclick="startVideoCall('<%= therapist.id %>', '<%= therapist.name %>')"
-                class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-8 px-4 flex-row-reverse bg-green-500 text-white text-sm font-medium leading-normal w-fit hover:bg-green-600 transition-colors"
-                title="Start video call"
-              >
-                <i class="fas fa-video mr-2"></i>
-                <span class="truncate">Video Call</span>
-              </button>
               <% } else { %>
               <a
                 href="/login"
@@ -165,43 +130,22 @@
               <% } %>
             </div>
           </div>
-          <!-- THERAPIST IMAGE SECTION - SMART FALLBACK -->
-          <div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl flex-1 relative overflow-hidden">
-            <%
-              // Check if therapist has uploaded a profile image
-              let therapistProfileImage = therapist.profile_image || therapist.user_profile_image;
-              let hasTherapistImage = false;
-              let therapistImageUrl = null;
-
-              if (therapistProfileImage &&
-                  typeof therapistProfileImage === 'string' &&
-                  therapistProfileImage.trim() !== '' &&
-                  therapistProfileImage.toLowerCase() !== 'null' &&
-                  therapistProfileImage.toLowerCase() !== 'undefined') {
-                hasTherapistImage = true;
-                therapistImageUrl = therapistProfileImage.startsWith('/') ?
-                  therapistProfileImage : `/uploads/profiles/${therapistProfileImage}`;
-              }
-            %>
-
-            <!-- Default Image (Shows when no profile image uploaded) -->
+          <div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl flex-1">
+            <% let profileImageUrl = null; if (therapist.profile_image) {
+              profileImageUrl = therapist.profile_image.startsWith('/') ?
+              therapist.profile_image : `/uploads/profiles/${therapist.profile_image}`; } %>
+            <% if (profileImageUrl) { %>
             <img
-              id="therapist-default-<%= therapist.id %>"
+              src="<%= profileImageUrl %>"
+              alt="<%= therapist.name %>"
+              class="w-full h-full object-cover rounded-xl"
+              onerror="this.onerror=null; this.src='/images/default-image.jpg';"
+            />
+            <% } else { %>
+            <img
               src="/images/default-image.jpg"
               alt="<%= therapist.name %>"
-              class="w-full h-full object-cover rounded-xl absolute inset-0 <%= hasTherapistImage ? 'hidden' : '' %>"
-              style="z-index: 1;"
-            />
-
-            <!-- Actual Profile Image (Only shows if therapist uploaded one) -->
-            <% if (hasTherapistImage && therapistImageUrl) { %>
-            <img
-              src="<%= therapistImageUrl %>"
-              alt="<%= therapist.name %>"
-              class="w-full h-full object-cover rounded-xl absolute inset-0"
-              onload="this.style.display='block'; this.style.zIndex='2'; document.getElementById('therapist-default-<%= therapist.id %>').style.display='none';"
-              onerror="this.style.display='none'; document.getElementById('therapist-default-<%= therapist.id %>').style.display='block';"
-              style="display: none; z-index: 2;"
+              class="w-full h-full object-cover rounded-xl"
             />
             <% } %>
           </div>
@@ -225,95 +169,10 @@
     </div>
   </div>
 
-  <!-- Video Call Modal -->
-  <div
-    id="video-call-modal"
-    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden"
-    style="display: none;"
-  >
-    <div class="flex items-center justify-center min-h-screen p-4">
-      <div class="bg-white rounded-xl w-full max-w-4xl p-6 relative">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-xl font-semibold" id="call-title">Video Call</h3>
-          <button
-            onclick="endVideoCall()"
-            class="text-red-500 hover:text-red-700 text-2xl"
-          >
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-
-        <div class="flex flex-col md:flex-row gap-4 h-96 md:h-80">
-          <!-- Local Video -->
-          <div class="flex-1 bg-gray-900 rounded-lg relative">
-            <video
-              id="local-video"
-              class="w-full h-full object-cover rounded-lg"
-              autoplay
-              muted
-              playsinline
-            ></video>
-            <div class="absolute bottom-2 left-2 text-white text-sm bg-black bg-opacity-50 px-2 py-1 rounded">
-              You
-            </div>
-          </div>
-
-          <!-- Remote Video -->
-          <div class="flex-1 bg-gray-900 rounded-lg relative">
-            <video
-              id="remote-video"
-              class="w-full h-full object-cover rounded-lg"
-              autoplay
-              playsinline
-            ></video>
-            <div class="absolute bottom-2 left-2 text-white text-sm bg-black bg-opacity-50 px-2 py-1 rounded" id="remote-name">
-              Therapist
-            </div>
-          </div>
-        </div>
-
-        <!-- Call Controls -->
-        <div class="flex items-center justify-center gap-4 mt-4">
-          <button
-            id="mute-btn"
-            onclick="toggleMute()"
-            class="flex items-center justify-center w-12 h-12 rounded-full bg-gray-600 text-white hover:bg-gray-700 transition-colors"
-            title="Mute/Unmute"
-          >
-            <i class="fas fa-microphone"></i>
-          </button>
-
-          <button
-            id="video-btn"
-            onclick="toggleVideo()"
-            class="flex items-center justify-center w-12 h-12 rounded-full bg-gray-600 text-white hover:bg-gray-700 transition-colors"
-            title="Turn camera on/off"
-          >
-            <i class="fas fa-video"></i>
-          </button>
-
-          <button
-            onclick="endVideoCall()"
-            class="flex items-center justify-center w-16 h-16 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors text-xl"
-            title="End call"
-          >
-            <i class="fas fa-phone"></i>
-          </button>
-        </div>
-
-        <!-- Call Status -->
-        <div class="text-center mt-4">
-          <p id="call-status" class="text-sm text-gray-600">Connecting...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Booking Modal -->
   <div
     id="booking-modal"
-    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden"
-    style="display: none;"
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4"
   >
     <div class="bg-white rounded-xl max-w-md w-full p-6">
       <div class="flex items-center justify-between mb-4">
@@ -468,14 +327,14 @@
     function scheduleConsultation(therapistId, therapistName) {
       document.getElementById("therapist-id").value = therapistId;
       const modal = document.getElementById("booking-modal");
-      modal.style.display = "flex";
       modal.classList.remove("hidden");
+      modal.classList.add("flex");
     }
 
     function closeBookingModal() {
       const modal = document.getElementById("booking-modal");
-      modal.style.display = "none";
       modal.classList.add("hidden");
+      modal.classList.remove("flex");
     }
 
     // Handle appointment booking
@@ -910,372 +769,5 @@
         window.location.href = `/book-session?therapistId=${therapistId}`;
       });
     }
-
-    // ================== WEBRTC VIDEO CALLING SYSTEM ==================
-
-    let localStream = null;
-    let remoteStream = null;
-    let peerConnection = null;
-    let socket = null;
-    let currentCallTherapistId = null;
-    let isInitiator = false;
-    let isAudioMuted = false;
-    let isVideoOff = false;
-
-    // Initialize Socket.io connection for signaling
-    function initializeSocket() {
-      if (socket) return; // Already initialized
-
-      socket = io();
-
-      socket.on('connect', () => {
-        console.log('Connected to signaling server');
-
-        // Authenticate user with socket server
-        if (document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true') {
-          socket.emit('authenticate', {
-            userId: '<%= user ? user.id : null %>',
-            role: '<%= user ? user.role : null %>'
-          });
-        }
-      });
-
-      socket.on('call-offer', handleCallOffer);
-      socket.on('call-answer', handleCallAnswer);
-      socket.on('ice-candidate', handleIceCandidate);
-      socket.on('call-ended', handleCallEnded);
-      socket.on('user-disconnected', handleUserDisconnected);
-    }
-
-    // Start video call
-    async function startVideoCall(therapistId, therapistName) {
-      try {
-        // Check if user is authenticated
-        const isAuthenticated = document.querySelector('[data-user-authenticated]')?.dataset.userAuthenticated === 'true';
-        if (!isAuthenticated) {
-          alert("Please login to make video calls.");
-          window.location.href = "/login";
-          return;
-        }
-
-        // Check session validity
-        const sessionValid = await checkSessionValidity();
-        if (!sessionValid) {
-          alert("Your session has expired. Please login again.");
-          window.location.href = "/login";
-          return;
-        }
-
-        currentCallTherapistId = therapistId;
-
-        // Initialize socket connection
-        initializeSocket();
-
-        // Get user media (camera and microphone)
-        await getUserMedia();
-
-        // Show call modal
-        showCallModal(therapistName);
-
-        // Create peer connection
-        await createPeerConnection();
-
-        // Start call as initiator
-        isInitiator = true;
-        await createOffer();
-
-      } catch (error) {
-        console.error('Error starting video call:', error);
-        alert('Failed to start video call. Please check your camera and microphone permissions.');
-      }
-    }
-
-    // Get user media (camera and microphone)
-    async function getUserMedia() {
-      try {
-        const constraints = {
-          video: true,
-          audio: true
-        };
-
-        localStream = await navigator.mediaDevices.getUserMedia(constraints);
-
-        const localVideo = document.getElementById('local-video');
-        if (localVideo) {
-          localVideo.srcObject = localStream;
-        }
-
-        console.log('Local media stream obtained');
-      } catch (error) {
-        console.error('Error accessing media devices:', error);
-        throw error;
-      }
-    }
-
-    // Create RTCPeerConnection
-    async function createPeerConnection() {
-      const configuration = {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
-      };
-
-      peerConnection = new RTCPeerConnection(configuration);
-
-      // Add local stream tracks to peer connection
-      if (localStream) {
-        localStream.getTracks().forEach(track => {
-          peerConnection.addTrack(track, localStream);
-        });
-      }
-
-      // Handle remote stream
-      peerConnection.ontrack = (event) => {
-        console.log('Received remote stream');
-        remoteStream = event.streams[0];
-
-        const remoteVideo = document.getElementById('remote-video');
-        if (remoteVideo) {
-          remoteVideo.srcObject = remoteStream;
-        }
-
-        updateCallStatus('Connected');
-      };
-
-      // Handle ICE candidates
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate && socket) {
-          socket.emit('ice-candidate', {
-            candidate: event.candidate,
-            targetUserId: currentCallTherapistId
-          });
-        }
-      };
-
-      // Handle connection state changes
-      peerConnection.onconnectionstatechange = () => {
-        console.log('Connection state:', peerConnection.connectionState);
-
-        if (peerConnection.connectionState === 'connected') {
-          updateCallStatus('Connected');
-        } else if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
-          updateCallStatus('Disconnected');
-        }
-      };
-    }
-
-    // Create and send call offer
-    async function createOffer() {
-      try {
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-
-        if (socket) {
-          socket.emit('call-offer', {
-            offer: offer,
-            targetUserId: currentCallTherapistId,
-            callerName: '<%= user ? user.name : "User" %>'
-          });
-        }
-
-        updateCallStatus('Calling...');
-      } catch (error) {
-        console.error('Error creating offer:', error);
-      }
-    }
-
-    // Handle incoming call offer
-    async function handleCallOffer(data) {
-      if (data.fromUserId === currentCallTherapistId) {
-        console.log('Receiving call offer');
-        isInitiator = false;
-
-        // Get user media if not already obtained
-        if (!localStream) {
-          await getUserMedia();
-        }
-
-        // Create peer connection
-        await createPeerConnection();
-
-        // Set remote description
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-
-        // Create and send answer
-        await createAnswer();
-      }
-    }
-
-    // Create and send call answer
-    async function createAnswer() {
-      try {
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-
-        if (socket) {
-          socket.emit('call-answer', {
-            answer: answer,
-            targetUserId: currentCallTherapistId
-          });
-        }
-      } catch (error) {
-        console.error('Error creating answer:', error);
-      }
-    }
-
-    // Handle call answer
-    async function handleCallAnswer(data) {
-      if (isInitiator) {
-        try {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-          console.log('Call answered');
-        } catch (error) {
-          console.error('Error handling call answer:', error);
-        }
-      }
-    }
-
-    // Handle ICE candidates
-    function handleIceCandidate(data) {
-      if (data.fromUserId === currentCallTherapistId) {
-        peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
-          .catch(error => console.error('Error adding ICE candidate:', error));
-      }
-    }
-
-    // Handle call ended
-    function handleCallEnded(data) {
-      if (data.fromUserId === currentCallTherapistId) {
-        endVideoCall();
-        alert('Call ended by the other party');
-      }
-    }
-
-    // Handle user disconnected
-    function handleUserDisconnected(data) {
-      if (data.userId === currentCallTherapistId) {
-        endVideoCall();
-        alert('The other party disconnected');
-      }
-    }
-
-    // Show call modal
-    function showCallModal(therapistName) {
-      const modal = document.getElementById('video-call-modal');
-      const remoteName = document.getElementById('remote-name');
-
-      if (modal) {
-        modal.style.display = 'flex';
-        modal.classList.remove('hidden');
-      }
-
-      if (remoteName) {
-        remoteName.textContent = therapistName;
-      }
-
-      updateCallStatus('Connecting...');
-    }
-
-    // End video call
-    function endVideoCall() {
-      // Close peer connection
-      if (peerConnection) {
-        peerConnection.close();
-        peerConnection = null;
-      }
-
-      // Stop local stream
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-        localStream = null;
-      }
-
-      // Clear remote stream
-      remoteStream = null;
-
-      // Hide call modal
-      const modal = document.getElementById('video-call-modal');
-      if (modal) {
-        modal.style.display = 'none';
-        modal.classList.add('hidden');
-      }
-
-      // Clear videos
-      const localVideo = document.getElementById('local-video');
-      const remoteVideo = document.getElementById('remote-video');
-
-      if (localVideo) localVideo.srcObject = null;
-      if (remoteVideo) remoteVideo.srcObject = null;
-
-      // Reset call state
-      currentCallTherapistId = null;
-      isInitiator = false;
-      isAudioMuted = false;
-      isVideoOff = false;
-
-      // Notify other party
-      if (socket) {
-        socket.emit('call-ended', { targetUserId: currentCallTherapistId });
-      }
-    }
-
-    // Toggle mute
-    function toggleMute() {
-      if (localStream) {
-        const audioTrack = localStream.getAudioTracks()[0];
-        if (audioTrack) {
-          isAudioMuted = !isAudioMuted;
-          audioTrack.enabled = !isAudioMuted;
-
-          const muteBtn = document.getElementById('mute-btn');
-          if (muteBtn) {
-            muteBtn.innerHTML = isAudioMuted ?
-              '<i class="fas fa-microphone-slash"></i>' :
-              '<i class="fas fa-microphone"></i>';
-            muteBtn.classList.toggle('bg-red-500', isAudioMuted);
-            muteBtn.classList.toggle('bg-gray-600', !isAudioMuted);
-          }
-        }
-      }
-    }
-
-    // Toggle video
-    function toggleVideo() {
-      if (localStream) {
-        const videoTrack = localStream.getVideoTracks()[0];
-        if (videoTrack) {
-          isVideoOff = !isVideoOff;
-          videoTrack.enabled = !isVideoOff;
-
-          const videoBtn = document.getElementById('video-btn');
-          if (videoBtn) {
-            videoBtn.innerHTML = isVideoOff ?
-              '<i class="fas fa-video-slash"></i>' :
-              '<i class="fas fa-video"></i>';
-            videoBtn.classList.toggle('bg-red-500', isVideoOff);
-            videoBtn.classList.toggle('bg-gray-600', !isVideoOff);
-          }
-        }
-      }
-    }
-
-    // Update call status
-    function updateCallStatus(status) {
-      const statusElement = document.getElementById('call-status');
-      if (statusElement) {
-        statusElement.textContent = status;
-      }
-    }
-
-    // Initialize video calling when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-      // Add Socket.io script if not already present
-      if (!document.querySelector('script[src*="socket.io"]')) {
-        const socketScript = document.createElement('script');
-        socketScript.src = '/socket.io/socket.io.js';
-        document.head.appendChild(socketScript);
-      }
-    });
   </script>
 </div>

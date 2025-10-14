@@ -868,6 +868,50 @@
         </div>
       </div>
 
+      <!-- Incoming Call Modal -->
+      <div
+        id="incoming-call-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg max-w-md w-full mx-4">
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold">Incoming Call</h3>
+              <button
+                onclick="declineCall()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="p-6 text-center">
+            <div class="mb-4">
+              <div id="incoming-call-avatar" class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user text-white text-2xl"></i>
+              </div>
+              <h4 class="text-xl font-semibold mb-2" id="incoming-caller-name">Unknown Caller</h4>
+              <p class="text-gray-600 mb-2" id="incoming-call-type">Video Call</p>
+              <p class="text-sm text-gray-500">Calling...</p>
+            </div>
+            <div class="flex justify-center space-x-4">
+              <button
+                onclick="declineCall()"
+                class="flex items-center justify-center w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
+              >
+                <i class="fas fa-phone-slash text-lg"></i>
+              </button>
+              <button
+                onclick="answerCall()"
+                class="flex items-center justify-center w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors"
+              >
+                <i class="fas fa-phone text-lg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Toast Notification -->
       <div
         id="toast-notification"
@@ -3101,6 +3145,8 @@
     let currentCall = null; // 'video' or 'audio'
     let isCallActive = false;
     let callStartTime = null;
+    let isInitiator = false; // Track if we're the call initiator
+    let incomingCallData = null; // Store incoming call data
 
     // Function to log call events in chat
     async function logCallEvent(eventType) {
@@ -3206,10 +3252,10 @@
         });
 
         currentCall = 'video';
-        showCallInterface('video');
+        isInitiator = true;
         isCallActive = true;
 
-        // Initialize peer connection for the other user
+        // Initialize peer connection
         await initializePeerConnection();
 
         // Add local stream to peer connection
@@ -3217,7 +3263,31 @@
           peerConnection.addTrack(track, localStream);
         });
 
-        // Create and set local video
+        // Create offer
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        // Send offer to other user via socket
+        if (socket && socket.connected) {
+          socket.emit('webrtc_offer', {
+            conversationId: currentConversationId,
+            offer: offer,
+            callType: 'video'
+          });
+
+          // Also emit incoming call for UI notification
+          socket.emit('incoming_call', {
+            conversationId: currentConversationId,
+            callType: 'video',
+            fromUser: '<%= user.name %>',
+            fromUserId: currentUserId
+          });
+        }
+
+        // Show call interface
+        showCallInterface('video');
+
+        // Set local video
         const localVideo = document.getElementById('local-video');
         if (localVideo) {
           localVideo.srcObject = localStream;
@@ -3226,11 +3296,12 @@
         // Log call start in chat
         await logCallEvent('video_call_started');
 
-        showToast('Video call started. Waiting for connection...');
+        showToast('Video call started. Waiting for therapist to answer...');
 
       } catch (error) {
         console.error('Error starting video call:', error);
         showToast('Failed to start video call: ' + error.message, 'error');
+        endCall();
       }
     }
 
@@ -3244,10 +3315,10 @@
         });
 
         currentCall = 'audio';
-        showCallInterface('audio');
+        isInitiator = true;
         isCallActive = true;
 
-        // Initialize peer connection for the other user
+        // Initialize peer connection
         await initializePeerConnection();
 
         // Add local stream to peer connection
@@ -3255,14 +3326,39 @@
           peerConnection.addTrack(track, localStream);
         });
 
+        // Create offer
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        // Send offer to other user via socket
+        if (socket && socket.connected) {
+          socket.emit('webrtc_offer', {
+            conversationId: currentConversationId,
+            offer: offer,
+            callType: 'audio'
+          });
+
+          // Also emit incoming call for UI notification
+          socket.emit('incoming_call', {
+            conversationId: currentConversationId,
+            callType: 'audio',
+            fromUser: '<%= user.name %>',
+            fromUserId: currentUserId
+          });
+        }
+
+        // Show call interface
+        showCallInterface('audio');
+
         // Log call start in chat
         await logCallEvent('audio_call_started');
 
-        showToast('Phone call started. Waiting for connection...');
+        showToast('Phone call started. Waiting for therapist to answer...');
 
       } catch (error) {
         console.error('Error starting phone call:', error);
         showToast('Failed to start phone call: ' + error.message, 'error');
+        endCall();
       }
     }
 
@@ -3385,6 +3481,112 @@
       document.body.style.overflow = 'hidden';
     }
 
+    function showIncomingCallModal(data) {
+      console.log('Showing incoming call modal:', data);
+
+      const modal = document.getElementById('incoming-call-modal');
+      const callerName = document.getElementById('incoming-caller-name');
+      const callType = document.getElementById('incoming-call-type');
+      const avatar = document.getElementById('incoming-call-avatar');
+
+      if (modal && callerName && callType) {
+        callerName.textContent = data.fromUser || 'Unknown Caller';
+        callType.textContent = data.callType === 'video' ? 'Video Call' : 'Phone Call';
+
+        // Update avatar
+        if (data.fromUser) {
+          const firstLetter = data.fromUser.charAt(0).toUpperCase();
+          avatar.innerHTML = `<span class="text-white font-semibold text-2xl">${firstLetter}</span>`;
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Auto-decline after 30 seconds
+        setTimeout(() => {
+          if (document.getElementById('incoming-call-modal').classList.contains('flex')) {
+            declineCall();
+          }
+        }, 30000);
+      }
+    }
+
+    function hideIncomingCallModal() {
+      const modal = document.getElementById('incoming-call-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    async function answerCall() {
+      console.log('Answering call...');
+      if (!incomingCallData) {
+        showToast('No incoming call to answer', 'error');
+        return;
+      }
+
+      try {
+        hideIncomingCallModal();
+
+        // Request media permissions based on call type
+        const constraints = incomingCallData.callType === 'video'
+          ? { video: true, audio: true }
+          : { video: false, audio: true };
+
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        currentCall = incomingCallData.callType;
+        isInitiator = false;
+        isCallActive = true;
+
+        // Initialize peer connection
+        await initializePeerConnection();
+
+        // Add local stream to peer connection
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+
+        // Show call interface
+        showCallInterface(currentCall);
+
+        // Set local video if video call
+        if (currentCall === 'video') {
+          const localVideo = document.getElementById('local-video');
+          if (localVideo) {
+            localVideo.srcObject = localStream;
+          }
+        }
+
+        // Log call answer in chat
+        await logCallEvent(`${currentCall}_call_started`);
+
+        showToast(`${currentCall === 'video' ? 'Video' : 'Phone'} call connected!`);
+
+      } catch (error) {
+        console.error('Error answering call:', error);
+        showToast('Failed to answer call: ' + error.message, 'error');
+        declineCall();
+      }
+    }
+
+    function declineCall() {
+      console.log('Declining call...');
+      hideIncomingCallModal();
+
+      // Notify caller that call was declined
+      if (socket && socket.connected && incomingCallData) {
+        socket.emit('call_ended', {
+          conversationId: currentConversationId,
+          reason: 'declined'
+        });
+      }
+
+      incomingCallData = null;
+      showToast('Call declined');
+    }
+
     async function endCall() {
       console.log('Ending call...');
 
@@ -3404,14 +3606,27 @@
         modal.remove();
       }
 
+      // Hide incoming call modal if visible
+      hideIncomingCallModal();
+
       // Restore body scroll
       document.body.style.overflow = '';
+
+      // Notify other user that call ended
+      if (socket && socket.connected) {
+        socket.emit('call_ended', {
+          conversationId: currentConversationId,
+          reason: 'ended'
+        });
+      }
 
       // Log call end in chat
       await logCallEvent('call_ended');
 
       isCallActive = false;
       currentCall = null;
+      isInitiator = false;
+      incomingCallData = null;
 
       showToast('Call ended');
     }
@@ -3437,10 +3652,19 @@
     }
 
     // Socket event handlers for WebRTC
+    socket.on('incoming_call', (data) => {
+      console.log('Incoming call received:', data);
+      if (data && data.conversationId === currentConversationId) {
+        incomingCallData = data;
+        showIncomingCallModal(data);
+      }
+    });
+
     socket.on('webrtc_offer', async (data) => {
       console.log('Received WebRTC offer:', data);
-      if (data && data.conversationId === currentConversationId && peerConnection && data.offer) {
+      if (data && data.conversationId === currentConversationId && !isInitiator) {
         try {
+          isInitiator = false;
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
 
           if (peerConnection) {
@@ -3456,17 +3680,20 @@
           }
         } catch (error) {
           console.error('Error handling WebRTC offer:', error);
+          showToast('Failed to process call offer', 'error');
         }
       }
     });
 
     socket.on('webrtc_answer', async (data) => {
       console.log('Received WebRTC answer:', data);
-      if (data && data.conversationId === currentConversationId && peerConnection && data.answer) {
+      if (data && data.conversationId === currentConversationId && isInitiator && peerConnection && data.answer) {
         try {
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+          console.log('Answer set successfully');
         } catch (error) {
           console.error('Error handling WebRTC answer:', error);
+          showToast('Failed to connect call', 'error');
         }
       }
     });
@@ -3479,6 +3706,14 @@
         } catch (error) {
           console.error('Error adding ICE candidate:', error);
         }
+      }
+    });
+
+    socket.on('call_ended', (data) => {
+      console.log('Call ended by remote user:', data);
+      if (data && data.conversationId === currentConversationId) {
+        endCall();
+        showToast('Call ended by other user');
       }
     });
 

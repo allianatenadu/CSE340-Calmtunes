@@ -38,6 +38,9 @@ router.get("/find-therapist", requirePatient, async (req, res) => {
         // Ensure name starts with "Dr." if it doesn't already
         if (userTherapist.therapist_name && !userTherapist.therapist_name.toLowerCase().startsWith('dr.')) {
           userTherapist.therapist_name = 'Dr. ' + userTherapist.therapist_name;
+        } else if (userTherapist.therapist_name && userTherapist.therapist_name.toLowerCase().startsWith('dr.')) {
+          // Remove existing "Dr." and add it properly to avoid duplication
+          userTherapist.therapist_name = 'Dr. ' + userTherapist.therapist_name.substring(4).trim();
         }
       }
     } catch (error) {
@@ -46,7 +49,7 @@ router.get("/find-therapist", requirePatient, async (req, res) => {
   }
 
   // Conservative query that only uses columns we know exist
-  const query = `
+  const baseQuery = `
     SELECT
       u.id,
       u.name,
@@ -79,17 +82,26 @@ router.get("/find-therapist", requirePatient, async (req, res) => {
       AND ta.status = 'approved'
       AND ta.status IS NOT NULL
       AND (active_patients.count IS NULL OR active_patients.count < 5)
-    ORDER BY ta.updated_at DESC NULLS LAST, u.name ASC
   `;
+
+  let query;
+  let queryParams = [];
+
+  if (req.session?.user?.id) {
+    query = baseQuery + ` AND u.id NOT IN (SELECT therapist_id FROM therapist_patient_relationships WHERE patient_id = $1 AND status = 'active') ORDER BY ta.updated_at DESC NULLS LAST, u.name ASC`;
+    queryParams = [req.session.user.id];
+  } else {
+    query = baseQuery + ` ORDER BY ta.updated_at DESC NULLS LAST, u.name ASC`;
+  }
 
   console.log("Executing query for approved therapists...");
 
-  db.query(query, (err, results) => {
+  db.query(query, queryParams, (err, results) => {
     if (err) {
       console.error("DB fetch error:", err);
       
       // Ultra-safe fallback query with only guaranteed columns
-      const safeFallbackQuery = `
+      const fallbackBaseQuery = `
         SELECT
           u.id,
           u.name,
@@ -113,10 +125,19 @@ router.get("/find-therapist", requirePatient, async (req, res) => {
         WHERE u.role = 'therapist'
           AND ta.status = 'approved'
           AND (active_patients.count IS NULL OR active_patients.count < 5)
-        ORDER BY u.name
       `;
-      
-      db.query(safeFallbackQuery, (fallbackErr, fallbackResults) => {
+
+      let fallbackQuery;
+      let fallbackParams = [];
+
+      if (req.session?.user?.id) {
+        fallbackQuery = fallbackBaseQuery + ` AND u.id NOT IN (SELECT therapist_id FROM therapist_patient_relationships WHERE patient_id = $1 AND status = 'active') ORDER BY u.name`;
+        fallbackParams = [req.session.user.id];
+      } else {
+        fallbackQuery = fallbackBaseQuery + ` ORDER BY u.name`;
+      }
+
+      db.query(fallbackQuery, fallbackParams, (fallbackErr, fallbackResults) => {
         if (fallbackErr) {
           console.error("Even fallback query failed:", fallbackErr);
           return res.render("pages/find-therapist", {
@@ -150,11 +171,8 @@ router.get("/find-therapist", requirePatient, async (req, res) => {
             average_rating: "5.0",
             review_count: Math.floor(Math.random() * 50),
             patient_count: Math.floor(Math.random() * 20),
-            profile_image: therapist.user_profile_image,
-            profileImageUrl: therapist.user_profile_image ?
-              (therapist.user_profile_image.startsWith('/') ?
-                therapist.user_profile_image :
-                `/uploads/profiles/${therapist.user_profile_image}`) : null
+            profile_image: null, // Force to null so they use default image
+            profileImageUrl: null // Force to null so they use default image
           };
         });
         
@@ -194,11 +212,8 @@ router.get("/find-therapist", requirePatient, async (req, res) => {
           average_rating: "5.0",
           review_count: Math.floor(Math.random() * 50),
           patient_count: Math.floor(Math.random() * 20),
-          profile_image: therapist.profile_image || therapist.user_profile_image,
-          profileImageUrl: (therapist.profile_image || therapist.user_profile_image) ?
-            ((therapist.profile_image || therapist.user_profile_image).startsWith('/') ?
-              (therapist.profile_image || therapist.user_profile_image) :
-              `/uploads/profiles/${therapist.user_profile_image || therapist.profile_image}`) : null
+          profile_image: null, // Force to null so they use default image
+          profileImageUrl: null // Force to null so they use default image
         };
       });
 
